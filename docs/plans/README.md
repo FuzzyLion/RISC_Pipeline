@@ -10,7 +10,10 @@
 4. [阶段 3：系统化验证环境](phase-3-verification.md)
 5. [阶段 4：CSR、异常与中断](phase-4-csr-exception-interrupt.md)
 6. [阶段 5：SoC 集成与 FPGA 上板](phase-5-soc-fpga.md)
-7. [阶段 6：标准测试、RTOS 与增强项](phase-6-system-tests-rtos.md)
+7. [阶段 6：系统级测试与软件基线](phase-6-system-validation.md)
+8. [阶段 7：Cache 设计与集成](phase-7-cache.md)
+9. [阶段 8：FPU 设计与集成](phase-8-fpu.md)
+10. [阶段 9：RTOS 与最终系统联调](phase-9-rtos-final-integration.md)
 
 ## 当前全局原则
 
@@ -18,12 +21,14 @@
 2. `branch` 第一版在 `EX` 阶段判定。
 3. 存储接口采用极简握手式接口。
 4. `riscv-tests` 在阶段 2 和阶段 3 就开始接入。
-5. 验证与实现必须同步推进。
+5. Cache 和 FPU 是明确必做项，但必须在主线稳定后分阶段推进。
+6. 验证与实现必须同步推进。
 
 ## 每阶段统一产出
 
 1. 本阶段目标。
-2. 已实现模块或已完成设计。
-3. 已运行测试。
-4. 遗留问题列表。
-5. 下一阶段入口条件。
+2. Time Limit。
+3. 已实现模块或已完成设计。
+4. 已运行测试。
+5. 遗留问题列表或风险点。
+6. 下一阶段入口条件。
