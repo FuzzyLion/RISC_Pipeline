@@ -51,16 +51,29 @@
 
 ## 阶段列表
 
-1. [阶段 0：第一版架构边界](phase-0-architecture-boundary.md)
-2. [阶段 1：五级流水线 CPU 主体](phase-1-pipeline-core.md)
-3. [阶段 2：Hazard Unit 与控制闭环](phase-2-hazard-control.md)
-4. [阶段 3：系统化验证环境](phase-3-verification.md)
-5. [阶段 4：CSR、异常与中断](phase-4-csr-exception-interrupt.md)
-6. [阶段 5：SoC 集成与 FPGA 上板](phase-5-soc-fpga.md)
-7. [阶段 6：系统级测试与软件基线](phase-6-system-validation.md)
-8. [阶段 7：Cache 设计与集成](phase-7-cache.md)
-9. [阶段 8：FPU 设计与集成](phase-8-fpu.md)
-10. [阶段 9：RTOS 与最终系统联调](phase-9-rtos-final-integration.md)
+### Foundation
+
+1. [阶段 0：第一版架构边界](foundation/phase-0-architecture-boundary.md)
+2. [阶段 0 Q&A：评审与建议](foundation/phase-0-Q%26A.md)
+3. [Phase 1 前准备整理稿](foundation/phase-1-preparation-sheet.md)
+
+### Core Bring-up
+
+1. [阶段 1：五级流水线 CPU 主体](core/phase-1-pipeline-core.md)
+2. [阶段 2：Hazard Unit 与控制闭环](core/phase-2-hazard-control.md)
+3. [阶段 3：系统化验证环境](core/phase-3-verification.md)
+
+### System Bring-up
+
+1. [阶段 4：CSR、异常与中断](system/phase-4-csr-exception-interrupt.md)
+2. [阶段 5：SoC 集成与 FPGA 上板](system/phase-5-soc-fpga.md)
+3. [阶段 6：系统级测试与软件基线](system/phase-6-system-validation.md)
+
+### Extensions
+
+1. [阶段 7：Cache 设计与集成](extensions/phase-7-cache.md)
+2. [阶段 8：FPU 设计与集成](extensions/phase-8-fpu.md)
+3. [阶段 9：RTOS 与最终系统联调](extensions/phase-9-rtos-final-integration.md)
 
 ## 当前全局原则
 
@@ -86,61 +99,11 @@
 
 1. [README.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/README.md)
    作为规划区首页，负责总览、阶段入口、全局原则和项目目标清单。
-2. [phase-0-architecture-boundary.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/phase-0-architecture-boundary.md)
+2. [phase-0-architecture-boundary.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/foundation/phase-0-architecture-boundary.md)
    负责第一版架构边界冻结。
-3. 各阶段文档
+3. [phase-1-preparation-sheet.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/foundation/phase-1-preparation-sheet.md)
+   负责把 Phase 1 开工前的最小指令子集、decode 控制表、pipeline register 字段和控制动作语义整理成可执行草案。
+4. 各阶段文档
    负责逐阶段执行计划、产出、验证点和退出条件。
-4. [requirements.md](/Users/qi/Documents/RISC_Pipeline/requirements.md)
+5. [requirements.md](/Users/qi/Documents/RISC_Pipeline/requirements.md)
    更像“项目需求与验收标准”，仍然有保留价值。
-5. [initial.md](/Users/qi/Documents/RISC_Pipeline/initial.md)
-   目前大部分内容已经被阶段文档和本 README 吸收，重复度较高。
-6. [implementation_steps.md](/Users/qi/Documents/RISC_Pipeline/implementation_steps.md)
-   目前主要是阶段索引，和本 README 的重叠度也比较高。
-
-## 对根目录那三份文档的建议
-
-### `requirements.md`
-
-建议保留。
-
-原因是它承担的是：
-
-1. 项目范围定义
-2. 功能需求
-3. 非功能需求
-4. 验收标准
-
-这类文档和阶段计划不是一回事。  
-阶段文档告诉你“怎么推进”，需求文档告诉你“最终要做到什么程度”。
-
-### `initial.md`
-
-我觉得可以删，或者至少不再继续维护。
-
-原因是：
-
-1. 它的“项目目标、关键决策、主线规划”已经被 phase 文档体系覆盖
-2. 它现在更像项目早期 brainstorming 的沉淀
-3. 继续保留容易和后续正式文档发生重复
-
-### `implementation_steps.md`
-
-我也倾向于删，前提是你认可本 README 以后就是唯一阶段索引入口。
-
-原因是：
-
-1. 它本质上就是索引页
-2. 现在 [README.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/README.md) 已经能承担这个角色
-3. 两个索引并存，后面很容易只更新一个
-
-## 我的总体建议
-
-如果你想让文档体系更干净，我建议最后收敛成：
-
-1. 保留 [README.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/README.md) 作为规划总入口
-2. 保留各阶段文档作为执行主线
-3. 保留 [requirements.md](/Users/qi/Documents/RISC_Pipeline/requirements.md) 作为需求与验收文档
-4. 删除 [initial.md](/Users/qi/Documents/RISC_Pipeline/initial.md)
-5. 删除 [implementation_steps.md](/Users/qi/Documents/RISC_Pipeline/implementation_steps.md)
-
-这样结构最清晰，也最不容易后续重复维护。
