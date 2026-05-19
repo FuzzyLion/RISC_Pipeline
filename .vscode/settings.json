@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "*.v": "verilog",
+    "*.vh": "verilog",
+    "*.sv": "systemverilog",
+    "*.svh": "systemverilog"
+  },
+  "verilog.linting.linter": "verilator",
+  "verilog.linting.verilator.arguments": "--sv --lint-only"
+}
