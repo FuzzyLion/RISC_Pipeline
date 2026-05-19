@@ -1,4 +1,7 @@
-module ID_EX (
+module ID_EX #(
+    parameter WORD_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
     input logic clk,
     input logic reset,
     input logic flush_E,
@@ -12,15 +15,15 @@ module ID_EX (
     input logic alu_src_D,
 
     input logic valid_D,
-    input logic [31:0] pc_D,
-    input logic [31:0] pc_plus4_D,
-    input logic [4:0] rs1_idx_D,
-    input logic [4:0] rs2_idx_D,
-    input logic [4:0] rd_idx_D,
+    input logic [WORD_WIDTH - 1:0] pc_D,
+    input logic [WORD_WIDTH - 1:0] pc_plus4_D,
+    input logic [ADDR_WIDTH - 1:0] rs1_idx_D,
+    input logic [ADDR_WIDTH - 1:0] rs2_idx_D,
+    input logic [ADDR_WIDTH - 1:0] rd_idx_D,
     // All value variables are 32 bits large in RV32
-    input logic [31:0] rs1_val_D, 
-    input logic [31:0] rs2_val_D,
-    input logic [31:0] imm_D,
+    input logic [WORD_WIDTH - 1:0] rs1_val_D, 
+    input logic [WORD_WIDTH - 1:0] rs2_val_D,
+    input logic [WORD_WIDTH - 1:0] imm_D,
 
     output logic rf_write_E,
     output logic [1:0] result_src_E,
@@ -31,14 +34,14 @@ module ID_EX (
     output logic alu_src_E,
 
     output logic valid_E,
-    output logic [31:0] pc_E,
-    output logic [31:0] pc_plus4_E,
-    output logic [4:0] rs1_idx_E,
-    output logic [4:0] rs2_idx_E,
-    output logic [4:0] rd_idx_E,
-    output logic [31:0] rs1_val_E,
-    output logic [31:0] rs2_val_E,
-    output logic [31:0] imm_E
+    output logic [WORD_WIDTH - 1:0] pc_E,
+    output logic [WORD_WIDTH - 1:0] pc_plus4_E,
+    output logic [ADDR_WIDTH - 1:0] rs1_idx_E,
+    output logic [ADDR_WIDTH - 1:0] rs2_idx_E,
+    output logic [ADDR_WIDTH - 1:0] rd_idx_E,
+    output logic [WORD_WIDTH - 1:0] rs1_val_E,
+    output logic [WORD_WIDTH - 1:0] rs2_val_E,
+    output logic [WORD_WIDTH - 1:0] imm_E
 );
 
 always_ff @(posedge clk) begin

@@ -1,4 +1,7 @@
-module MEM_WB (
+module MEM_WB #(
+    parameter WORD_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
     input logic clk,
     input logic reset,
 
@@ -6,19 +9,19 @@ module MEM_WB (
     input logic [1:0] result_src_M,
 
     input logic valid_M,
-    input logic [31:0] alu_result_M,
-    input logic [31:0] mem_rdata_M,
-    input logic [4:0] rd_idx_M,
-    input logic [31:0] pc_plus4_M,
+    input logic [WORD_WIDTH - 1:0] alu_result_M,
+    input logic [WORD_WIDTH - 1:0] mem_rdata_M,
+    input logic [ADDR_WIDTH - 1:0] rd_idx_M,
+    input logic [WORD_WIDTH - 1:0] pc_plus4_M,
 
     output logic rf_write_W,
     output logic [1:0] result_src_W,
 
     output logic valid_W,
-    output logic [31:0] alu_result_W,
-    output logic [31:0] mem_rdata_W,
-    output logic [4:0] rd_idx_W,
-    output logic [31:0] pc_plus4_W
+    output logic [WORD_WIDTH - 1:0] alu_result_W,
+    output logic [WORD_WIDTH - 1:0] mem_rdata_W,
+    output logic [ADDR_WIDTH - 1:0] rd_idx_W,
+    output logic [WORD_WIDTH - 1:0] pc_plus4_W
 );
 
 always_ff @(posedge clk) begin
@@ -30,7 +33,7 @@ always_ff @(posedge clk) begin
         alu_result_W <= 32'b0;
         mem_rdata_W <= 32'b0;
         rd_idx_W <= 5'b0;
-        pc_plus4_W <=32'b0;
+        pc_plus4_W <= 32'b0;
     end
     else begin
         rf_write_W <= rf_write_M;

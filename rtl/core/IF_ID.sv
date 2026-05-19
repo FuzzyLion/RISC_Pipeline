@@ -1,18 +1,21 @@
-module IF_ID (
+module IF_ID #(
+    parameter WORD_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
     input logic clk,
     input logic reset, //The signal from the chips/FPGA
     input logic stall_D,
     input logic flush_D,
 
     input logic valid_F,
-    input logic [31:0] pc_F,
-    input logic [31:0] instr_F,
-    input logic [31:0] pc_plus4_F,
+    input logic [WORD_WIDTH - 1:0] pc_F,
+    input logic [WORD_WIDTH - 1:0] instr_F,
+    input logic [WORD_WIDTH - 1:0] pc_plus4_F,
 
     output logic valid_D,
-    output logic [31:0] pc_D,
-    output logic [31:0] instr_D,
-    output logic [31:0] pc_plus4_D
+    output logic [WORD_WIDTH - 1:0] pc_D,
+    output logic [WORD_WIDTH - 1:0] instr_D,
+    output logic [WORD_WIDTH - 1:0] pc_plus4_D
 );
 
 always_ff @(posedge clk) begin

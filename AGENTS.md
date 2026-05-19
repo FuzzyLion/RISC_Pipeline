@@ -71,6 +71,8 @@ Unless the user explicitly asks for direct implementation, prefer this order:
 4. Review the user's code or draft.
 5. Only then provide targeted code help where needed.
 
+Unless the user explicitly asks for full implementation, agents should avoid generating large blocks of ready-made code. Prefer explanation, design reasoning, review, and small illustrative snippets that help the user think through and write the solution themselves.
+
 If the user asks for code directly, agents may still write code, but should:
 
 1. Explain why the code is structured that way.

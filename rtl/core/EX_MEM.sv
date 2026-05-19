@@ -1,4 +1,7 @@
-module EX_MEM (
+module EX_MEM #(
+    parameter WORD_WIDTH = 32,
+    parameter ADDR_WIDTH = 5
+)(
     input logic clk,
     input logic reset,
 
@@ -7,20 +10,20 @@ module EX_MEM (
     input logic mem_write_E,
     
     input logic valid_E,
-    input logic [31:0] alu_result_E,
-    input logic [31:0] write_data_E,
-    input logic [4:0] rd_idx_E,
-    input logic [31:0] pc_plus4_E,
+    input logic [WORD_WIDTH - 1:0] alu_result_E,
+    input logic [WORD_WIDTH - 1:0] write_data_E,
+    input logic [ADDR_WIDTH - 1:0] rd_idx_E,
+    input logic [WORD_WIDTH - 1:0] pc_plus4_E,
 
     output logic rf_write_M,
     output logic [1:0] result_src_M,
     output logic mem_write_M,
 
     output logic valid_M,
-    output logic [31:0] alu_result_M,
-    output logic [31:0] write_data_M,
-    output logic [4:0] rd_idx_M,
-    output logic [31:0] pc_plus4_M
+    output logic [WORD_WIDTH - 1:0] alu_result_M,
+    output logic [WORD_WIDTH - 1:0] write_data_M,
+    output logic [ADDR_WIDTH - 1:0] rd_idx_M,
+    output logic [WORD_WIDTH - 1:0] pc_plus4_M
 );
 
 always_ff @(posedge clk) begin
