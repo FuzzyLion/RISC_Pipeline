@@ -329,3 +329,95 @@
 1. 最小测试程序列表
 2. flush / stall / redirect / memory wait 优先级表
 3. 具体的模块边界草图
+
+---
+
+## 10. 当前 RTL 命名版 datapath 约定
+
+这一节记录当前手画 datapath 图和 RTL 字段名之间的约定，防止新线程重新讨论同一批细节。
+
+### 10.1 `valid` 的来源与流动
+
+`valid` 是随指令一起穿过流水线的字段，用来表示当前级里是真实指令还是 bubble。它不是从 instruction bit 里解码出来的，也不是 control unit 产生的普通控制信号。
+
+当前第一版取指存储器可以先把 `imem_resp_valid` 在 reset 结束后恒置为 1，然后 Fetch 级接成：
+
+```systemverilog
+assign valid_F = imem_resp_valid;
+```
+
+如果以后 instruction memory 改成握手式接口、同步 ROM、I-Cache 或总线访问，`valid_F` 应改为来自真实取指响应。必须保持一个不变量：`valid_F=1` 时，`pc_F` 和 `instr_F` 是同一次取指响应对应的一对字段。
+
+`valid` 在 pipeline register 中按下面路径单独携带：
+
+```text
+valid_F -> IF/ID -> valid_D -> ID/EX -> valid_E -> EX/MEM -> valid_M -> MEM/WB -> valid_W
+```
+
+### 10.2 `reset` 和 `clk` 的画图规则
+
+`reset` 和 `clk` 是全局时序基础设施，不是随指令流动的 datapath 字段。RTL 里 `PC`、`IF/ID`、`ID/EX`、`EX/MEM`、`MEM/WB` 都应接 reset；未来 CSR、Cache FSM、SoC 控制状态机也要接 reset。
+
+在 datapath 主图里不需要把 reset 像普通数据线一样画满全图。推荐在图角落写全局说明：
+
+```text
+Global:
+clk   -> all sequential modules
+reset -> PC, IF/ID, ID/EX, EX/MEM, MEM/WB, future CSR/cache FSMs
+```
+
+这样图能保留重点：指令字段和控制字段如何跨级流动。
+
+### 10.3 Pipeline register 当前字段名
+
+当前 RTL 中阶段间寄存器采用以下命名风格：
+
+1. `IF/ID`
+   `valid_D, pc_D, instr_D, pc_plus4_D`
+2. `ID/EX`
+   `valid_E, pc_E, pc_plus4_E, rs1_idx_E, rs2_idx_E, rd_idx_E, rs1_val_E, rs2_val_E, imm_E`
+   控制字段包括 `rf_write_E, result_src_E, mem_write_E, jump_E, branch_E, alu_ctrl_E, alu_src_E`
+3. `EX/MEM`
+   `valid_M, alu_result_M, write_data_M, rd_idx_M, pc_plus4_M`
+   控制字段包括 `rf_write_M, result_src_M, mem_write_M`
+4. `MEM/WB`
+   `valid_W, alu_result_W, mem_rdata_W, rd_idx_W, pc_plus4_W`
+   控制字段包括 `rf_write_W, result_src_W`
+
+`imm_D/imm_E` 应是 Decode 阶段已经生成好的 32-bit sign-extended immediate，不是原始 instruction bitfield。`rs1_val/rs2_val` 是 32-bit 寄存器值；`rs1_idx/rs2_idx/rd_idx` 才是 5-bit 寄存器编号。
+
+### 10.4 副作用必须由 `valid` 门控
+
+Pipeline register 可以携带 `rf_write_*`、`mem_write_*` 等控制字段，但真正写寄存器或写数据存储器时，要在 stage 边界用 `valid` 做最终门控：
+
+```systemverilog
+assign rf_write_real_W  = valid_W && rf_write_W;
+assign mem_write_real_M = valid_M && mem_write_M;
+```
+
+这类组合逻辑不要放进 pipeline register 模块里。Pipeline register 只负责保存、清空或保持字段；WB stage、MEM stage 或顶层 datapath 决定这些字段如何产生架构副作用。
+
+### 10.5 WB result mux 编码
+
+`result_src_[D/E/M/W]` 当前保留为 2-bit，第一版建议按下面语义固定：
+
+1. `2'b00`: `alu_result`
+2. `2'b01`: `mem_rdata`
+3. `2'b10`: `pc_plus4`
+4. `2'b11`: 暂时保留，未来可用于 CSR read data 或其他写回来源
+
+Control unit 和 WB mux 必须使用同一套编码。不要只在脑子里记这个约定。
+
+### 10.6 EX 阶段 operand 与 store data
+
+Forwarding 应先得到真实的寄存器操作数，再由 `alu_src_E` 决定 ALU 的 B 输入来自 forwarded `rs2` 还是 `imm_E`。Store 的 `write_data_E` 应来自 forwarded `rs2`，不能来自 ALU 的 `src_B_E`，因为 store 写入内存的数据不应该被 `alu_src_E` 切换成 immediate。
+
+### 10.7 PC redirect 约定
+
+当前图中 `pc_src_E` 表示 EX 阶段决定下一拍 PC 是否 redirect。推荐语义是：
+
+```systemverilog
+assign pc_src_E = jump_E || (branch_E && branch_taken_E);
+```
+
+第一版如果只实现 `beq`，`branch_taken_E` 可以来自相等比较；后续支持更多 branch 类型时，不要把 `alu_zero_E` 误当成所有 branch 的统一条件。
