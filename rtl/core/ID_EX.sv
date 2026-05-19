@@ -1,3 +1,5 @@
+import core_types_pkg::*;
+
 module ID_EX #(
     parameter WORD_WIDTH = 32,
     parameter ADDR_WIDTH = 5
@@ -10,8 +12,9 @@ module ID_EX #(
     input logic [1:0] result_src_D,
     input logic mem_write_D,
     input logic jump_D,
+    input logic jalr_D,
     input logic branch_D,
-    input logic [2:0] alu_ctrl_D,
+    input alu_control_e alu_ctrl_D,
     input logic alu_src_D,
 
     input logic valid_D,
@@ -29,8 +32,9 @@ module ID_EX #(
     output logic [1:0] result_src_E,
     output logic mem_write_E,
     output logic jump_E,
+    output logic jalr_E,
     output logic branch_E,
-    output logic [2:0] alu_ctrl_E,
+    output alu_control_e alu_ctrl_E,
     output logic alu_src_E,
 
     output logic valid_E,
@@ -50,8 +54,9 @@ always_ff @(posedge clk) begin
         result_src_E <= 2'b0;
         mem_write_E <= 1'b0;
         jump_E <= 1'b0;
+        jalr_E <= 1'b0;
         branch_E <= 1'b0;
-        alu_ctrl_E <= 3'b0;
+        alu_ctrl_E <= CTRL_ADD;
         alu_src_E <= 1'b0;
 
         valid_E <= 1'b0;
@@ -69,6 +74,7 @@ always_ff @(posedge clk) begin
         result_src_E <= result_src_D;
         mem_write_E <= mem_write_D;
         jump_E <= jump_D;
+        jalr_E <= jalr_D;
         branch_E <= branch_D;
         alu_ctrl_E <= alu_ctrl_D;
         alu_src_E <= alu_src_D;
