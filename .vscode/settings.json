@@ -6,5 +6,5 @@
     "*.svh": "systemverilog"
   },
   "verilog.linting.linter": "verilator",
-  "verilog.linting.verilator.arguments": "--sv --lint-only"
+  "verilog.linting.verilator.arguments": "--sv --lint-only -f rtl/filelist.f"
 }
