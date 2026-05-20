@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Verilator: lint core filelist",
+      "type": "shell",
+      "command": "verilator",
+      "args": [
+        "--sv",
+        "--lint-only",
+        "-Wno-MULTITOP",
+        "-f",
+        "rtl/core/filelist.f"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

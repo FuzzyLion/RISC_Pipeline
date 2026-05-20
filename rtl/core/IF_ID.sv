@@ -18,21 +18,21 @@ module IF_ID #(
     output logic [WORD_WIDTH - 1:0] pc_plus4_D
 );
 
-always_ff @(posedge clk) begin
-    if (reset || flush_D) begin
-        // Reset or flush turns the Decode-stage instructions into a bubble
-        valid_D <= 1'b0;
-        instr_D <= 32'b0;
-        pc_D <= 32'b0;
-        pc_plus4_D <= 32'b0;
+    always_ff @(posedge clk) begin
+        if (reset || flush_D) begin
+            // Reset or flush turns the Decode-stage instructions into a bubble
+            valid_D <= 1'b0;
+            instr_D <= 32'b0;
+            pc_D <= 32'b0;
+            pc_plus4_D <= 32'b0;
+        end
+        else if (!stall_D) begin
+            // When Decode is not stalled, IF/ID captures the next fetched instruction
+            valid_D <= valid_F;
+            instr_D <= instr_F;
+            pc_D <= pc_F;
+            pc_plus4_D <= pc_plus4_F;
+        end
     end
-    else if (!stall_D) begin
-        // When Decode is not stalled, IF/ID captures the next fetched instruction
-        valid_D <= valid_F;
-        instr_D <= instr_F;
-        pc_D <= pc_F;
-        pc_plus4_D <= pc_plus4_F;
-    end
-end
     
 endmodule

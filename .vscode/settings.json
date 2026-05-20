@@ -6,5 +6,5 @@
     "*.svh": "systemverilog"
   },
   "verilog.linting.linter": "verilator",
-  "verilog.linting.verilator.arguments": "--sv --lint-only -f rtl/filelist.f"
+  "verilog.linting.verilator.arguments": "--sv --lint-only -Wno-MULTITOP -Wno-MODDUP rtl/core/core_types_pkg.sv"
 }
