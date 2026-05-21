@@ -1,1 +1,13 @@
 .DS_Store
+
+# Temporary editor files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Local rendered/exported documentation artifacts
+docs/rendered/
+docs/exports/
+*.log
