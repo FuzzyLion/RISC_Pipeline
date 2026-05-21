@@ -7,7 +7,5 @@
 *.swo
 *~
 
-# Local rendered/exported documentation artifacts
-docs/rendered/
-docs/exports/
+# Local documentation files
 *.log

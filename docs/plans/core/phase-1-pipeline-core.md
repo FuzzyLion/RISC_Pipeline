@@ -62,6 +62,7 @@
 2. 检查寄存器写回结果和 PC 变化。
 3. 验证 `EX` 阶段分支重定向是否符合预期。
 4. 验证握手式取指接口在无等待条件下工作正常。
+5. 第一版 RV32I-only 取指假设 `pc_F[1:0] == 2'b00`。Instruction memory 只负责把 byte address 转成 word-array index，即使用 `pc_F[MEM_ADDR_WIDTH + 1:2]` 取指；本阶段不在 IM 内部处理 misaligned fetch。
 
 ## 风险与注意点
 

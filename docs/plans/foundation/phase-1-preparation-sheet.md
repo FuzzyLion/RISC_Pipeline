@@ -348,6 +348,8 @@ assign valid_F = imem_resp_valid;
 
 如果以后 instruction memory 改成握手式接口、同步 ROM、I-Cache 或总线访问，`valid_F` 应改为来自真实取指响应。必须保持一个不变量：`valid_F=1` 时，`pc_F` 和 `instr_F` 是同一次取指响应对应的一对字段。
 
+当前 instruction memory 是 32-bit word array。`pc_F` 是 byte address，所以取指 index 使用 `pc_F[MEM_ADDR_WIDTH + 1:2]`。在 RV32I-only、未实现 compressed instruction 的阶段，合法取指地址应满足 `pc_F[1:0] == 2'b00`。`jal`/branch immediate 和 `jalr` 目标规则只能保证至少 2-byte aligned；若目标地址为 `...10`，后续异常阶段应将其作为 instruction address misaligned 处理，而不是让 IM 静默截断低两位。
+
 `valid` 在 pipeline register 中按下面路径单独携带：
 
 ```text

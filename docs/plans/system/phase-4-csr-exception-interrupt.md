@@ -19,6 +19,7 @@
 
 1. 实现异常陷入流程。
 2. 实现异常返回流程。
+3. 至少处理 instruction address misaligned，以及当前支持 load/store 范围内的 address misaligned。异常检测应产生统一 trap 请求，并触发流水线 flush/redirect，而不是由 memory array 私自修正地址。
 
 ### 任务 3：实现关键 CSR
 
