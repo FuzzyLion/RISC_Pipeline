@@ -1,6 +1,6 @@
 import core_types_pkg::*;
 
-module IF_pc_mux #(
+module pc_mux #(
     WORD_WIDTH = 32
 )(
     input pc_src_e pc_src_E,
