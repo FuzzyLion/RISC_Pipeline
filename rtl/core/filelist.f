@@ -2,13 +2,15 @@ rtl/core/core_types_pkg.sv
 rtl/core/imm_ext.sv
 rtl/core/reg_file.sv
 rtl/core/alu_op.sv
+rtl/core/control_unit.sv
 rtl/core/EX_forward_muxAE.sv
 rtl/core/EX_forward_rd_muxBE.sv
 rtl/core/EX_muxBE.sv
 rtl/core/WB_result_mux.sv
-rtl/core/IF_pc_mux.sv
+rtl/core/pc_mux.sv
 rtl/core/pc_plus4_adder.sv
 rtl/core/pc_target_gen.sv
+rtl/core/pc_reg.sv
 rtl/core/IF_ID.sv
 rtl/core/ID_EX.sv
 rtl/core/EX_MEM.sv

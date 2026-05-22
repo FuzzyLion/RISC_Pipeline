@@ -3,7 +3,7 @@ import core_types_pkg::*;
 module EX_forward_rd_muxBE #(
     WORD_WIDTH = 32
 )(
-    input forward_rd_be forward_rd_BE,
+    input forward_rdata_be forward_rd_BE,
 
     input logic [WORD_WIDTH - 1:0] rs2_val_E,
     input logic [WORD_WIDTH - 1:0] result_W,
@@ -14,13 +14,13 @@ module EX_forward_rd_muxBE #(
 
     always_comb begin
         case (forward_rd_BE)
-            BE_RD_RS2_VAL: begin
+            BE_RDATA_RS2_VAL: begin
                 write_data_E = rs2_val_E;
             end 
-            BE_RD_RSLT_W: begin
+            BE_RDATA_RSLT_W: begin
                 write_data_E = result_W;
             end
-            BE_RD_ALURSLT_W: begin
+            BE_RDATA_ALURSLT_W: begin
                 write_data_E = alu_result_M;
             end
             default: begin

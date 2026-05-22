@@ -13,7 +13,7 @@ module EX_muxBE #(
 
     always_comb begin 
         case (alu_src_E)
-            BE_RD_E: begin
+            BE_RDATA_E: begin
                 alu_src_BE = write_data_E;
             end 
             BE_IMM_E: begin

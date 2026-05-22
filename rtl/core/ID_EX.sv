@@ -7,14 +7,14 @@ module ID_EX #(
     input logic clk,
     input logic reset,
     input logic flush_E,
-    
+
     input logic rf_write_D,
     input result_src_e result_src_D,
     input logic mem_write_D,
     input logic jump_D,
-    input logic jalr_D,
+    input pc_target_src_e pc_target_src_D,
     input logic branch_D,
-    input alu_control_e alu_ctrl_D,
+    input alu_ctrl_e alu_ctrl_D,
     input alu_src_e alu_src_D,
 
     input logic valid_D,
@@ -24,7 +24,7 @@ module ID_EX #(
     input logic [ADDR_WIDTH - 1:0] rs2_idx_D,
     input logic [ADDR_WIDTH - 1:0] rd_idx_D,
     // All value variables are 32 bits large in RV32
-    input logic [WORD_WIDTH - 1:0] rs1_val_D, 
+    input logic [WORD_WIDTH - 1:0] rs1_val_D,
     input logic [WORD_WIDTH - 1:0] rs2_val_D,
     input logic [WORD_WIDTH - 1:0] imm_D,
 
@@ -32,9 +32,9 @@ module ID_EX #(
     output result_src_e result_src_E,
     output logic mem_write_E,
     output logic jump_E,
-    output logic jalr_E,
+    output pc_target_src_e pc_target_src_E,
     output logic branch_E,
-    output alu_control_e alu_ctrl_E,
+    output alu_ctrl_e alu_ctrl_E,
     output alu_src_e alu_src_E,
 
     output logic valid_E,
@@ -54,10 +54,10 @@ module ID_EX #(
             result_src_E <= RSLT_ALU;
             mem_write_E <= 1'b0;
             jump_E <= 1'b0;
-            jalr_E <= 1'b0;
+            pc_target_src_E <= PC_TARGET_PC_IMM;
             branch_E <= 1'b0;
             alu_ctrl_E <= CTRL_ADD;
-            alu_src_E <= BE_RD_E;
+            alu_src_E <= BE_RDATA_E;
 
             valid_E <= 1'b0;
             pc_E <= 32'b0;
@@ -72,13 +72,22 @@ module ID_EX #(
         else begin
             rf_write_E <= valid_D && rf_write_D;
             // These kinds of instructions with "valid" confirmation will influence the further state of the processor
-            result_src_E <= result_src_D; 
+            result_src_E <= result_src_D;
             // This ain't the "Write" action itself so it doesn't need "vaild" control
             mem_write_E <= valid_D && mem_write_D;
             jump_E <= valid_D && jump_D;
-            jalr_E <= valid_D && jalr_D;
+            pc_target_src_E <= valid_D ? pc_target_src_D : PC_TARGET_PC_IMM;
+
+            /*
+            "pc_target_src_e" will only influence the fuction of the PC generator,
+            and jump_D/jump_E is the only signal decides wheather the processor will jump to the
+            new PC or not.
+            So we can only leave "pc_target_src_E" equals to "PC_TARGET_PC_IMM" (2'b00) as the default
+            value!
+            */
+
             branch_E <= valid_D && branch_D;
-            alu_ctrl_E <= alu_ctrl_D; 
+            alu_ctrl_E <= alu_ctrl_D;
             //Same reason as "result_src_E" about why they don't need "valid"
             alu_src_E <= alu_src_D;
 
@@ -93,5 +102,5 @@ module ID_EX #(
             imm_E <= imm_D;
         end
     end
-    
+
 endmodule

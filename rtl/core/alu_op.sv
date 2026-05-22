@@ -3,7 +3,7 @@ import core_types_pkg::*;
 module alu_op #(
     parameter WORD_WIDTH = 32
 )(
-    input alu_control_e alu_control_E,
+    input alu_ctrl_e alu_control_E,
 
     input logic [WORD_WIDTH - 1:0] alu_src_AE,
     input logic [WORD_WIDTH - 1:0] alu_src_BE,
