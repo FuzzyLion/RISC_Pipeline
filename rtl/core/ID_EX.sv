@@ -13,14 +13,14 @@ module ID_EX (
 );
 
     localparam control_bundle_t CTRL_NOP = '{
-        rf_write: 1'b0,
-        result_src: RSLT_ALU,
-        mem_write: 1'b0,
-        jump: 1'b0,
-        pc_target_src: PC_TARGET_PC_IMM,
-        branch: 1'b0,
-        alu_ctrl: CTRL_ADD,
-        alu_src: BE_RDATA_E
+        1'b0,              // rf_write
+        RSLT_ALU,          // result_src
+        1'b0,              // mem_write
+        1'b0,              // jump
+        PC_TARGET_PC_IMM,  // pc_target_src
+        1'b0,              // branch
+        CTRL_ADD,          // alu_ctrl
+        BE_RDATA_E         // alu_src
     };
 
     always_ff @(posedge clk) begin

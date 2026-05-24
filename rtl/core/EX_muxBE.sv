@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module EX_muxBE #(
-    WORD_WIDTH = 32
-)(
+module EX_muxBE (
     input alu_src_e alu_src_E,
 
     input logic [WORD_WIDTH - 1:0] write_data_E,

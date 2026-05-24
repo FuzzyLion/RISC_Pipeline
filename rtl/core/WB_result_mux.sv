@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module WB_result_mux #(
-    WORD_WIDTH = 32
-)(
+module WB_result_mux (
     input logic [WORD_WIDTH - 1:0] alu_result_W,
     input logic [WORD_WIDTH - 1:0] mem_rdata_W,
     input logic [WORD_WIDTH - 1:0] pc_plus4_W,

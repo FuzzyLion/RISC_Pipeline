@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module EX_forward_rd_muxBE #(
-    WORD_WIDTH = 32
-)(
+module EX_forward_rd_muxBE (
     input forward_rdata_be forward_rd_BE,
 
     input logic [WORD_WIDTH - 1:0] rs2_val_E,

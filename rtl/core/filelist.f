@@ -3,6 +3,7 @@ rtl/core/imm_ext.sv
 rtl/core/reg_file.sv
 rtl/core/alu_op.sv
 rtl/core/control_unit.sv
+rtl/core/instr_mem.sv
 rtl/core/EX_forward_muxAE.sv
 rtl/core/EX_forward_rd_muxBE.sv
 rtl/core/EX_muxBE.sv
@@ -14,4 +15,5 @@ rtl/core/pc_reg.sv
 rtl/core/IF_ID.sv
 rtl/core/ID_EX.sv
 rtl/core/EX_MEM.sv
+rtl/core/data_mem.sv
 rtl/core/MEM_WB.sv

@@ -1,6 +1,6 @@
-module pc_plus4_adder #(
-    WORD_WIDTH = 32
-)(
+import core_types_pkg::*;
+
+module pc_plus4_adder (
     input logic [WORD_WIDTH - 1:0] pc_F,
 
     output logic [WORD_WIDTH - 1:0] pc_plus4_F

@@ -142,6 +142,24 @@ package core_types_pkg;
     } control_bundle_t;
 
     typedef struct packed {
+        logic rf_write;
+        result_src_e result_src;
+        logic mem_write;
+    } ex_mem_control_t;
+
+    typedef struct packed {
+        logic rf_write;
+        result_src_e result_src;
+    } mem_wb_control_t;
+
+    typedef struct packed {
+        logic valid;
+        logic [WORD_WIDTH - 1:0] pc;
+        logic [WORD_WIDTH - 1:0] instr;
+        logic [WORD_WIDTH - 1:0] pc_plus4;
+    } if_id_data_t;
+
+    typedef struct packed {
         logic valid;
         logic [WORD_WIDTH - 1:0] pc;
         logic [WORD_WIDTH - 1:0] pc_plus4;
@@ -155,15 +173,19 @@ package core_types_pkg;
     } id_ex_data_t;
 
     typedef struct packed {
-        logic valid_E;
-        logic [WORD_WIDTH - 1:0] pc_E;
-        logic [WORD_WIDTH - 1:0] pc_plus4_E;
-        logic [ADDR_WIDTH - 1:0] rs1_idx_E;
-        logic [ADDR_WIDTH - 1:0] rs2_idx_E;
-        logic [ADDR_WIDTH - 1:0] rd_idx_E;
-        logic [WORD_WIDTH - 1:0] rs1_val_E;
-        logic [WORD_WIDTH - 1:0] rs2_val_E;
-        logic [WORD_WIDTH - 1:0] imm_E;
-    } data_flow_EX_t;
+        logic valid;
+        logic [WORD_WIDTH - 1:0] alu_result;
+        logic [WORD_WIDTH - 1:0] write_data;
+        logic [ADDR_WIDTH - 1:0] rd_idx;
+        logic [WORD_WIDTH - 1:0] pc_plus4;
+    } ex_mem_data_t;
+
+    typedef struct packed {
+        logic valid;
+        logic [WORD_WIDTH - 1:0] alu_result;
+        logic [WORD_WIDTH - 1:0] mem_rdata;
+        logic [ADDR_WIDTH - 1:0] rd_idx;
+        logic [WORD_WIDTH - 1:0] pc_plus4;
+    } mem_wb_data_t;
 
 endpackage

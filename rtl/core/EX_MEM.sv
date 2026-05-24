@@ -1,55 +1,37 @@
 import core_types_pkg::*;
 
-module EX_MEM #(
-    parameter WORD_WIDTH = 32,
-    parameter ADDR_WIDTH = 5
-)(
+module EX_MEM (
     input logic clk,
     input logic reset,
 
-    input logic rf_write_E,
-    input result_src_e result_src_E,
-    input logic mem_write_E,
+    input ex_mem_control_t ctrl_next_E,
     
-    input logic valid_E,
-    input logic [WORD_WIDTH - 1:0] alu_result_E,
-    input logic [WORD_WIDTH - 1:0] write_data_E,
-    input logic [ADDR_WIDTH - 1:0] rd_idx_E,
-    input logic [WORD_WIDTH - 1:0] pc_plus4_E,
+    input ex_mem_data_t data_E,
 
-    output logic rf_write_M,
-    output result_src_e result_src_M,
-    output logic mem_write_M,
+    output ex_mem_control_t ctrl_M,
 
-    output logic valid_M,
-    output logic [WORD_WIDTH - 1:0] alu_result_M,
-    output logic [WORD_WIDTH - 1:0] write_data_M,
-    output logic [ADDR_WIDTH - 1:0] rd_idx_M,
-    output logic [WORD_WIDTH - 1:0] pc_plus4_M
+    output ex_mem_data_t data_M
 );
+
+    localparam ex_mem_control_t CTRL_NOP = {
+        1'b0,              // rf_write_M
+        RSLT_ALU,          //result_src_M
+        1'b0               //mem_write_M
+    };
 
     always_ff @(posedge clk) begin
         if (reset) begin
-            rf_write_M <= 1'b0;
-            result_src_M <= RSLT_ALU;
-            mem_write_M <= 1'b0;
+            ctrl_M <= CTRL_NOP;
 
-            valid_M <= 1'b0;
-            alu_result_M <= 32'b0;
-            write_data_M <= 32'b0;
-            rd_idx_M <= 5'b0;
-            pc_plus4_M <= 32'b0;
+            data_M <= '0;
         end
         else begin
-            rf_write_M <= valid_E && rf_write_E;
-            result_src_M <= result_src_E;
-            mem_write_M <= valid_E && mem_write_E;
+            ctrl_M <= ctrl_next_E;
 
-            valid_M <= valid_E;
-            alu_result_M <= alu_result_E;
-            write_data_M <= write_data_E;
-            rd_idx_M <= rd_idx_E;
-            pc_plus4_M <= pc_plus4_E;
+            ctrl_M.rf_write <= data_E.valid && ctrl_next_E.rf_write;
+            ctrl_M.mem_write <= data_E.valid && ctrl_next_E.mem_write;
+
+            data_M <= data_E;
         end
     end
     

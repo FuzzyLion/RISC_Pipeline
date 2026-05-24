@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module EX_forward_muxAE #(
-    WORD_WIDTH = 32
-)(
+module EX_forward_muxAE (
     input forward_ae forward_AE,
 
     input logic [WORD_WIDTH - 1:0] rs1_val_E,

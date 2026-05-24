@@ -1,5 +1,6 @@
+import core_types_pkg::*;
+
 module data_mem #(
-    parameter int WORD_WIDTH = 32,
     parameter int MEM_WORDS = 256
 )(
     input logic clk,

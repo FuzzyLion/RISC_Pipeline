@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module pc_target_gen #(
-    WORD_WIDTH = 32
-)(
+module pc_target_gen (
     input pc_target_src_e pc_target_src_E,
 
     input logic [WORD_WIDTH - 1:0] pc_E,

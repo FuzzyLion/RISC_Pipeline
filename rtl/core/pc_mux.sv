@@ -1,8 +1,6 @@
 import core_types_pkg::*;
 
-module pc_mux #(
-    WORD_WIDTH = 32
-)(
+module pc_mux (
     input pc_src_e pc_src_E,
 
     input logic [WORD_WIDTH - 1:0] pc_target_E,

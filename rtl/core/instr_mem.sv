@@ -1,6 +1,7 @@
+import core_types_pkg::*;
+
 module instr_mem #(
-    WORD_WIDTH = 32,
-    MEM_WORDS = 256
+    parameter int MEM_WORDS = 256
 )(
     input logic [WORD_WIDTH - 1:0] pc_F,
 

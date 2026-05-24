@@ -1,6 +1,6 @@
-module pc_reg #(
-    WORD_WIDTH = 32
-)(
+import core_types_pkg::*;
+
+module pc_reg (
     input logic clk,
     input logic reset,
 

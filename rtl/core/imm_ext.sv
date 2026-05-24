@@ -1,8 +1,6 @@
 import core_types_pkg::*; //Global import
 
-module imm_ext #(
-    parameter WORD_WIDTH = 32
-)(
+module imm_ext (
     input imm_src_e imm_src_D,
 
     input logic [WORD_WIDTH - 1:0] instr_D,

@@ -1,7 +1,6 @@
-module reg_file #(
-    parameter WORD_WIDTH = 32,
-    parameter ADDR_WIDTH = 5
-)(
+import core_types_pkg::*;
+
+module reg_file (
     input logic clk,
     input logic reset,
 
