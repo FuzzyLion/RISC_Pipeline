@@ -1,221 +1,249 @@
 import core_types_pkg::*;
 
-module control_unit #(
-    WORD_WIDTH = 32,
-    FUNCT7_EN = 7'b0100000,
-    FUNCT7_DI = 7'b0000000
-)(
+module control_unit (
     input logic [WORD_WIDTH - 1:0] instr_D,
-
-    output logic rf_write_D,
-    output result_src_e result_src_D,
-    output logic mem_write_D,
-    output logic jump_D,
-    output pc_target_src_e pc_target_src_D,
-    output logic branch_D,
-    output alu_ctrl_e alu_ctrl_D,
-    output alu_src_e alu_src_D,
-    output imm_src_e imm_src_D
+    
+    output imm_src_e imm_src_D,
+    output control_bundle_t ctrl_D
 );
 
-    logic [6:0] opcode;
+    opcode_e opcode_D;
+    rtype_e rtype_D;
+    itype_load_e itype_load_D;
+    itype_imm_e itype_imm_D;
+    itype_immext_e itype_immext_D;
+    stype_e stype_D;
+    btype_e btype_D;
     logic [2:0] funct3;
     logic [6:0] funct7;
 
-    assign opcode = instr_D[6:0];
+    localparam control_bundle_t CTRL_NOP = {
+        1'b0,              // rf_write
+        RSLT_ALU,          // result_src
+        1'b0,              // mem_write
+        1'b0,              // jump
+        PC_TARGET_PC_IMM,  // pc_target_src
+        1'b0,              // branch
+        CTRL_ADD,          // alu_ctrl
+        BE_RDATA_E         // alu_src
+    };
+
+    assign opcode_D = opcode_e'(instr_D[6:0]); 
+    // Explain into "opcode_e" form and then transfer 7 bits value into 7 bit enum.
+    // Decode raw opcode bits into the opcode enum used by the control case.
+    
     assign funct3 = instr_D[14:12];
     assign funct7 = instr_D[31:25];
 
+    assign rtype_D = rtype_e'({funct3, funct7});
+    assign itype_load_D = itype_load_e'(funct3);
+    assign itype_imm_D = itype_imm_e'(funct3);
+    assign itype_immext_D = itype_immext_e'({funct3, funct7});
+    assign stype_D = stype_e'(funct3);
+    assign btype_D = btype_e'(funct3);
+
+
     always_comb begin
 
-        rf_write_D = 1'b0;
-        result_src_D = RSLT_IDLE;
-        mem_write_D = 1'b0;
-        jump_D = 1'b0;
-        pc_target_src_D = PC_TARGET_PC_IMM;
-        branch_D = 1'b0;
-        alu_ctrl_D = CTRL_IDLE;
-        alu_src_D = BE_IDLE;
-        imm_src_D = IMM_IDLE;
+        ctrl_D = CTRL_NOP;
+        imm_src_D = IMM_I;
 
-        case (opcode)
-            7'b0110011: begin // (51)
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_ALU;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_IDLE;
-                alu_src_D = BE_RDATA_E;
-                imm_src_D = IMM_IDLE;
+        
+        case (opcode_D)
+            OP_RTYPE: begin // (51)
 
-                case (funct3)
-                    3'b000: begin
-                        // ADD & SUB
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_ADD;
-                        end else if (funct7 == FUNCT7_EN) begin
-                            alu_ctrl_D = CTRL_SUB;
-                        end
+                case (rtype_D)
+                    ADD: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_ADD;
                     end 
-                    3'b001: begin
-                        // SLL
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_SLL;
-                        end else begin
-                            alu_ctrl_D = CTRL_IDLE;
-                        end
+                    SUB: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
                     end
-                    3'b010: begin
-                        //SLT
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_SLT;
-                        end
+                    SLL: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SLL;
                     end
-                    3'b011: begin
-                        // SLTU
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_SLTU;
-                        end
+                    SLT: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SLT;
                     end
-                    3'b100: begin
-                        //XOR
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_XOR;
-                        end 
+                    SLTU: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SLTU;
                     end
-                    3'b101: begin
-                        //SRL & SRA
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_SRL;
-                        end else if (funct7 == FUNCT7_EN) begin
-                            alu_ctrl_D = CTRL_SRA;
-                        end
+                    XOR: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_XOR;
                     end
-                    3'b110: begin
-                        //OR
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_OR;
-                        end 
+                    SRL: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SRL;
+                    end 
+                    SRA: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SRA;
                     end
-                    3'b111: begin
-                        //AND
-                        if (funct7 == FUNCT7_DI) begin
-                            alu_ctrl_D = CTRL_AND;
-                        end 
+                    OR: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_OR;
                     end
-                    default: alu_ctrl_D = CTRL_IDLE;
+                    AND: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_AND;
+                    end
+                    default: begin
+                        ctrl_D.rf_write = 1'b0;
+                        ctrl_D.alu_ctrl = CTRL_ADD;
+                    end
                 endcase
             end  
 
-            7'b0000011: begin // (3)
-                // LW
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_RDATA;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_ADD;
-                alu_src_D = BE_IMM_E;
-                imm_src_D = IMM_I;
+            OP_ITYPE_LOAD: begin // (3)
 
-                // Use case & if sentences to wirte more "load" instructions control here,
-                // gonna do this in the future
+                case (itype_load_D)
+                    LW: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.result_src = RSLT_RDATA;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    /*
+                    LH:
+                    LW:
+                    LBU:
+                    LHU:
+                    */
+                    default: begin
+                        ctrl_D.rf_write = 1'b0;
+                        ctrl_D.result_src = RSLT_ALU;
+                        ctrl_D.alu_src = BE_RDATA_E;
+                    end
+                endcase
             end
                 
-            7'b0010011: begin //(19)
-                // ADDI
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_ALU;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_ADD;
-                alu_src_D = BE_IMM_E;
-                imm_src_D = IMM_I;
+            OP_ITYPE_IMM: begin //(19)
 
-                // Use case & if sentences to wirte more "load" instructions control here,
-                // gonna do this in the future
+                case (itype_imm_D)
+                    ADDI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_ADD;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    /*
+                        SLTI:
+                        SLTIU:
+                        XORI:
+                        ORI:
+                        ANDI:
+                        */
+                    default: begin
+                        case (itype_immext_D)
+                            /*
+                            SLLI:
+                            SRLI:
+                            SRAI: 
+                            */ 
+                            default: begin
+                                ctrl_D.rf_write = 1'b0;
+                                ctrl_D.alu_ctrl = CTRL_ADD;
+                                ctrl_D.alu_src = BE_RDATA_E;
+                            end
+                        endcase
+                    end
+                endcase
             end
 
-            7'b0110111: begin // (55)
+            OP_UTYPE_LUI: begin // (55)
                 // LUI
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_ALU;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_PASS_B;
-                alu_src_D = BE_IMM_E;
+                ctrl_D.rf_write = 1'b1;
+                ctrl_D.alu_ctrl = CTRL_PASS_B;
+                ctrl_D.alu_src = BE_IMM_E;
                 imm_src_D = IMM_U;
             end
 
-            7'b0100011: begin // (35)
-                // SW
-                rf_write_D = 1'b0;
-                result_src_D = RSLT_IDLE;
-                mem_write_D = 1'b1;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_ADD;
-                alu_src_D = BE_IMM_E;
-                imm_src_D = IMM_S;
+            /*
+            OP_UTYPE_AUIPC: begin // (23)
+                //AUIPC
+                
+            end
+            */
+
+            OP_STYPE: begin // (35)
+
+                case (stype_D)
+                    SW: begin
+                        ctrl_D.mem_write = 1'b1;
+                        ctrl_D.alu_src = BE_IMM_E;
+                        imm_src_D = IMM_S;
+                    end 
+                    /*
+                    SB:
+                    SH:
+                    */
+                    default: begin
+                        ctrl_D.mem_write = 1'b0;
+                        ctrl_D.alu_src = BE_RDATA_E;
+                        imm_src_D = IMM_I;
+                    end
+                endcase
             end
 
-            7'b1100011: begin // (99)
-                // BEQ
-                rf_write_D = 1'b0;
-                result_src_D = RSLT_IDLE;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b1;
-                alu_ctrl_D = CTRL_SUB;
-                alu_src_D = BE_RDATA_E;
-                imm_src_D = IMM_B;
+            OP_BTYPE: begin // (99)
+
+                case (btype_D)
+                    BEQ: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                    end
+                    /*
+                    BNE: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_src = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                    end
+                    BLT:
+                    BGE:
+                    BLTU:
+                    BGEU:
+                    */
+                    default: begin
+                        ctrl_D.branch = 1'b0;
+                        ctrl_D.alu_ctrl = CTRL_ADD;
+                        imm_src_D = IMM_I;
+                    end
+                endcase
             end
 
-            7'b1100111: begin // (103)
+            OP_ITYPE_JALR: begin // (103)
                 // JALR
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_PCPLUS4;
-                mem_write_D = 1'b0;
-                jump_D = 1'b1;
-                pc_target_src_D = PC_TARGET_RS1_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_ADD;
-                alu_src_D = BE_IMM_E;
-                imm_src_D = IMM_I;
+
+                if (funct3 == JALR) begin
+                    ctrl_D.rf_write = 1'b1;
+                    ctrl_D.result_src = RSLT_PCPLUS4;
+                    ctrl_D.jump = 1'b1;
+                    ctrl_D.pc_target_src = PC_TARGET_RS1_IMM;
+                    ctrl_D.alu_src = BE_IMM_E;
+                end else begin
+                    ctrl_D.rf_write = 1'b0;
+                    ctrl_D.result_src = RSLT_ALU;
+                    ctrl_D.jump = 1'b0;
+                    ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
+                    ctrl_D.alu_src = BE_RDATA_E;
+                end
             end
 
-            7'b1101111: begin // (111)
+            OP_JTYPE_JAL: begin // (111)
                 // JAL
-                rf_write_D = 1'b1;
-                result_src_D = RSLT_PCPLUS4;
-                mem_write_D = 1'b0;
-                jump_D = 1'b1;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_IDLE;
-                alu_src_D = BE_IDLE;
+                ctrl_D.rf_write = 1'b1;
+                ctrl_D.result_src = RSLT_PCPLUS4;
+                ctrl_D.jump = 1'b1;
                 imm_src_D = IMM_J;
             end
                 
             default: begin
-                rf_write_D = 1'b0;
-                result_src_D = RSLT_IDLE;
-                mem_write_D = 1'b0;
-                jump_D = 1'b0;
-                pc_target_src_D = PC_TARGET_PC_IMM;
-                branch_D = 1'b0;
-                alu_ctrl_D = CTRL_IDLE;
-                alu_src_D = BE_IDLE;
-                imm_src_D = IMM_IDLE;
+                ctrl_D = CTRL_NOP;
             end
         endcase
 
