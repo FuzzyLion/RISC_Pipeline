@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module EX_MEM (
+module EX_MEM
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset,
 
@@ -13,10 +13,10 @@ module EX_MEM (
     output ex_mem_data_t data_M
 );
 
-    localparam ex_mem_control_t CTRL_NOP = {
-        1'b0,              // rf_write_M
-        RSLT_ALU,          //result_src_M
-        1'b0               //mem_write_M
+    localparam ex_mem_control_t CTRL_NOP = '{
+        rf_write: 1'b0,
+        result_src: RSLT_ALU,
+        mem_write: 1'b0
     };
 
     always_ff @(posedge clk) begin

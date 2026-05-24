@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module MEM_WB (
+module MEM_WB
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset,
 
@@ -13,9 +13,9 @@ module MEM_WB (
     output mem_wb_data_t data_W
 );
 
-    localparam mem_wb_control_t CTRL_NOP = {
-        1'b0,              // rf_write
-        RSLT_ALU           // result_src
+    localparam mem_wb_control_t CTRL_NOP = '{
+        rf_write: 1'b0,
+        result_src: RSLT_ALU
     };
 
     always_ff @(posedge clk) begin

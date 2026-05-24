@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module IF_ID (
+module IF_ID
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset, //The signal from the chips/FPGA
     input logic stall_D,

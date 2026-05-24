@@ -1,7 +1,8 @@
-import core_types_pkg::*;
-
-module data_mem #(
-    parameter int MEM_WORDS = 256
+module data_mem
+    import core_types_pkg::*;
+#(
+    parameter int MEM_WORDS = 256,
+    parameter string INIT_FILE = ""
 )(
     input logic clk,
     // input logic reset,
@@ -22,6 +23,16 @@ module data_mem #(
 
     logic [WORD_WIDTH - 1:0] mem [0:MEM_WORDS - 1]; // 256 entries, each entry stores one 32-bit word
     logic [MEM_ADDR_WIDTH - 1:0] word_idx; // 8 bits word index into data memory
+
+    initial begin
+        for (int i = 0; i < MEM_WORDS; i++) begin
+            mem[i] = '0;
+        end
+
+        if (INIT_FILE != "") begin
+            $readmemh(INIT_FILE, mem);
+        end
+    end
 
     /* 
     ISA view:

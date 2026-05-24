@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module EX_muxBE (
+module EX_muxBE
+    import core_types_pkg::*;
+(
     input alu_src_e alu_src_E,
 
     input logic [WORD_WIDTH - 1:0] write_data_E,
@@ -18,7 +18,7 @@ module EX_muxBE (
                 alu_src_BE = imm_E;
             end
             default: begin
-                alu_src_BE = 32'b0;
+                alu_src_BE = '0;
             end
         endcase
     end

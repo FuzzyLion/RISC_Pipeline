@@ -1,7 +1,8 @@
-import core_types_pkg::*;
-
-module instr_mem #(
-    parameter int MEM_WORDS = 256
+module instr_mem
+    import core_types_pkg::*;
+#(
+    parameter int MEM_WORDS = 256,
+    parameter string INIT_FILE = ""
 )(
     input logic [WORD_WIDTH - 1:0] pc_F,
 
@@ -12,6 +13,16 @@ module instr_mem #(
 
     logic [WORD_WIDTH - 1:0] mem_instr [0:MEM_WORDS - 1];
     logic [MEM_ADDR_WIDTH - 1:0] word_idx;
+
+    initial begin
+        for (int i = 0; i < MEM_WORDS; i++) begin
+            mem_instr[i] = '0;
+        end
+
+        if (INIT_FILE != "") begin
+            $readmemh(INIT_FILE, mem_instr);
+        end
+    end
 
     /*
     ISA view:

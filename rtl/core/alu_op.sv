@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module alu_op (
+module alu_op
+    import core_types_pkg::*;
+(
     input alu_ctrl_e alu_control_E,
 
     input logic [WORD_WIDTH - 1:0] alu_src_AE,
@@ -11,7 +11,7 @@ module alu_op (
 );
 
     always_comb begin
-        alu_result_E = 32'b0;
+        alu_result_E = '0;
 
         case (alu_control_E)
             CTRL_ADD: begin
@@ -50,7 +50,7 @@ module alu_op (
                 // Keep the MSB when it's shifting
             end
             default: begin
-                alu_result_E = 32'b0;
+                alu_result_E = '0;
             end
         endcase
         

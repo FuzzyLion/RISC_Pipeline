@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module WB_result_mux (
+module WB_result_mux
+    import core_types_pkg::*;
+(
     input logic [WORD_WIDTH - 1:0] alu_result_W,
     input logic [WORD_WIDTH - 1:0] mem_rdata_W,
     input logic [WORD_WIDTH - 1:0] pc_plus4_W,
@@ -22,7 +22,7 @@ module WB_result_mux (
                 result_W = pc_plus4_W;
             end
             default: begin
-                result_W = 32'b0;
+                result_W = '0;
             end
         endcase
     end

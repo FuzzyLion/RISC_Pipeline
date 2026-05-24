@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module ID_EX (
+module ID_EX
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset,
     input logic flush_E,
@@ -13,14 +13,14 @@ module ID_EX (
 );
 
     localparam control_bundle_t CTRL_NOP = '{
-        1'b0,              // rf_write
-        RSLT_ALU,          // result_src
-        1'b0,              // mem_write
-        1'b0,              // jump
-        PC_TARGET_PC_IMM,  // pc_target_src
-        1'b0,              // branch
-        CTRL_ADD,          // alu_ctrl
-        BE_RDATA_E         // alu_src
+        rf_write: 1'b0,
+        result_src: RSLT_ALU,
+        mem_write: 1'b0,
+        jump: 1'b0,
+        pc_target_src: PC_TARGET_PC_IMM,
+        branch: 1'b0,
+        alu_ctrl: CTRL_ADD,
+        alu_src: BE_RDATA_E
     };
 
     always_ff @(posedge clk) begin
@@ -32,27 +32,13 @@ module ID_EX (
         else begin
             ctrl_E <= ctrl_D;
 
-            // *** Musk ***
+            // Only controls that can cause architectural side effects or PC redirect are valid-gated.
             ctrl_E.rf_write <= data_D.valid && ctrl_D.rf_write;
-            // These kinds of instructions with "valid" confirmation will influence the further state of the processor
-            // This ain't the "Write" action itself so it doesn't need "vaild" control
             ctrl_E.mem_write <= data_D.valid && ctrl_D.mem_write;
             ctrl_E.jump <= data_D.valid && ctrl_D.jump;
-
-            /*
-            pc_target_src only selects how the target address is formed.
-            It has no effect unless the valid-masked jump/branch controls
-            actually redirect the PC.
-            */
-
             ctrl_E.branch <= data_D.valid && ctrl_D.branch;
-            // Same reason as "result_src_E" about why they don't need "valid"
 
             data_E <= data_D;
-            /* 
-            In fact data transfers as the bits moving, so we need to make sure there's
-            a generic payload for both in & output
-            */
         end
     end
 

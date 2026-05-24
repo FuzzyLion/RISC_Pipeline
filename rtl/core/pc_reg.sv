@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module pc_reg (
+module pc_reg
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset,
 
@@ -13,7 +13,7 @@ module pc_reg (
 
     always_ff @(posedge clk) begin
         if (reset) begin
-            pc_F <= 32'b0;
+            pc_F <= '0;
         end
         else if (!stall_F) begin
             // When register is not stalled, then it can fetch the next PC

@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module control_unit (
+module control_unit
+    import core_types_pkg::*;
+(
     input logic [WORD_WIDTH - 1:0] instr_D,
     
     output imm_src_e imm_src_D,
@@ -17,15 +17,15 @@ module control_unit (
     logic [2:0] funct3;
     logic [6:0] funct7;
 
-    localparam control_bundle_t CTRL_NOP = {
-        1'b0,              // rf_write
-        RSLT_ALU,          // result_src
-        1'b0,              // mem_write
-        1'b0,              // jump
-        PC_TARGET_PC_IMM,  // pc_target_src
-        1'b0,              // branch
-        CTRL_ADD,          // alu_ctrl
-        BE_RDATA_E         // alu_src
+    localparam control_bundle_t CTRL_NOP = '{
+        rf_write: 1'b0,
+        result_src: RSLT_ALU,
+        mem_write: 1'b0,
+        jump: 1'b0,
+        pc_target_src: PC_TARGET_PC_IMM,
+        branch: 1'b0,
+        alu_ctrl: CTRL_ADD,
+        alu_src: BE_RDATA_E
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 

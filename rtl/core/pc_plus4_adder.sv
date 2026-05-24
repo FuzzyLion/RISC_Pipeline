@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module pc_plus4_adder (
+module pc_plus4_adder
+    import core_types_pkg::*;
+(
     input logic [WORD_WIDTH - 1:0] pc_F,
 
     output logic [WORD_WIDTH - 1:0] pc_plus4_F

@@ -1,6 +1,6 @@
-import core_types_pkg::*; //Global import
-
-module imm_ext (
+module imm_ext
+    import core_types_pkg::*;
+(
     input imm_src_e imm_src_D,
 
     input logic [WORD_WIDTH - 1:0] instr_D,
@@ -9,7 +9,7 @@ module imm_ext (
 );
 
     always_comb begin
-        imm_D = 32'b0;
+        imm_D = '0;
 
         case (imm_src_D)
             IMM_I: begin
@@ -33,7 +33,7 @@ module imm_ext (
                 //U-Type Instructions - 20-bits signed immediate
             end
             default: begin
-                imm_D = 32'b0;
+                imm_D = '0;
             end
         endcase
     end

@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module pc_target_gen (
+module pc_target_gen
+    import core_types_pkg::*;
+(
     input pc_target_src_e pc_target_src_E,
 
     input logic [WORD_WIDTH - 1:0] pc_E,

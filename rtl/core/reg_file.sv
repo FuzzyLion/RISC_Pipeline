@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module reg_file (
+module reg_file
+    import core_types_pkg::*;
+(
     input logic clk,
     input logic reset,
 
@@ -20,7 +20,7 @@ module reg_file (
     always_ff @(posedge clk) begin
         if (reset) begin
             for (int i = 0; i < 32; i++) begin //Set i as a local variable
-                regs[i] <= 32'b0;
+                regs[i] <= '0;
             end
         end else begin
             if (rf_write_W && (rd_idx_W != 5'b0)) begin
@@ -29,7 +29,7 @@ module reg_file (
         end
     end
 
-    assign rs1_val_D = (rs1_idx_rf == 5'b0) ? 32'b0 : regs[rs1_idx_rf];
-    assign rs2_val_D = (rs2_idx_rf == 5'b0) ? 32'b0 : regs[rs2_idx_rf];
+    assign rs1_val_D = (rs1_idx_rf == 5'b0) ? '0 : regs[rs1_idx_rf];
+    assign rs2_val_D = (rs2_idx_rf == 5'b0) ? '0 : regs[rs2_idx_rf];
     
 endmodule

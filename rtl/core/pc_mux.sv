@@ -1,6 +1,6 @@
-import core_types_pkg::*;
-
-module pc_mux (
+module pc_mux
+    import core_types_pkg::*;
+(
     input pc_src_e pc_src_E,
 
     input logic [WORD_WIDTH - 1:0] pc_target_E,
@@ -18,7 +18,7 @@ module pc_mux (
                 pc_pre_F = pc_target_E;
             end
             default: begin
-                pc_pre_F = 32'b0;
+                pc_pre_F = '0;
             end
         endcase
     end
