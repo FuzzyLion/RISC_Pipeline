@@ -1,4 +1,6 @@
 rtl/core/core_types_pkg.sv
+rtl/core/core.sv
+rtl/core/top.sv
 rtl/core/imm_ext.sv
 rtl/core/reg_file.sv
 rtl/core/alu_op.sv
@@ -17,3 +19,4 @@ rtl/core/ID_EX.sv
 rtl/core/EX_MEM.sv
 rtl/core/data_mem.sv
 rtl/core/MEM_WB.sv
+rtl/core/instr_field.sv

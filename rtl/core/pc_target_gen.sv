@@ -2,12 +2,17 @@ module pc_target_gen
     import core_types_pkg::*;
 (
     input pc_target_src_e pc_target_src_E,
+    input logic jump_E,
+    input logic branch_E,
+    input logic zero_E,
 
     input logic [WORD_WIDTH - 1:0] pc_E,
     input logic [WORD_WIDTH - 1:0] alu_src_AE,
+    // Make sure there's no forward to disturb the behaviour
     input logic [WORD_WIDTH - 1:0] imm_E,
 
-    output logic [WORD_WIDTH - 1:0] pc_target_E
+    output logic [WORD_WIDTH - 1:0] pc_target_E,
+    output pc_src_e pc_src_E
 );
     
     always_comb begin
@@ -30,6 +35,8 @@ module pc_target_gen
                 pc_target_E = pc_E + imm_E; // Default function of this generator
             end
         endcase
+
+        pc_src_E = pc_src_e'(jump_E || (branch_E && zero_E));
     end
 
 endmodule

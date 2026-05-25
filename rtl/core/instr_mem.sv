@@ -1,8 +1,10 @@
 module instr_mem
     import core_types_pkg::*;
 #(
-    parameter int MEM_WORDS = 256,
-    parameter string INIT_FILE = ""
+    parameter int MEM_WORDS = 256, // Amount
+    parameter string INIT_FILE = "" 
+    // Transfer a file, "" means it is an empty string at first,
+    // you can add .hex file into the mem when you're using instance
 )(
     input logic [WORD_WIDTH - 1:0] pc_F,
 
@@ -21,6 +23,10 @@ module instr_mem
 
         if (INIT_FILE != "") begin
             $readmemh(INIT_FILE, mem_instr);
+            /*
+            Read file in hexademical form
+            $readmemh("file_name.hex", memory_array, 0, 255);
+            */
         end
     end
 
