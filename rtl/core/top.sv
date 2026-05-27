@@ -1,11 +1,15 @@
 // Future for board/SoC wrapper: clock/reset/memory/peripherals
 
-module top (
+module top #(
+    parameter string IMEM_INIT_FILE = ""
+) (
     input logic clk,
     input logic reset
 );
 
-    core core_processor (
+    core #(
+        .IMEM_INIT_FILE(IMEM_INIT_FILE)
+    ) core_processor (
         .clk(clk),
         .reset(reset)
     );

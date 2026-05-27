@@ -9,3 +9,6 @@
 
 # Local documentation files
 *.log
+
+# Simulation/build outputs
+scripts/build/

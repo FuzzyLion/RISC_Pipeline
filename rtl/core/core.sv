@@ -2,6 +2,9 @@
 
 module core 
     import core_types_pkg::*;
+#(
+    parameter string IMEM_INIT_FILE = ""
+) 
 (
     input logic clk,
     input logic reset
@@ -180,7 +183,9 @@ module core
     );
 
     // Instruction Memory
-    instr_mem instr_mem1 (
+    instr_mem #(
+        .INIT_FILE(IMEM_INIT_FILE)
+    ) instr_mem1 (
         .pc_F(pc_F_out),
         .instr_F(instr_F_out)
     );
