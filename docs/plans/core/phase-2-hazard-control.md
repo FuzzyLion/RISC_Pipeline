@@ -146,3 +146,14 @@ Bubble 的统一语义是 `valid=0`，下游不得因为 bubble 写寄存器、�
 1. 常见 hazard 场景已形成稳定闭环。
 2. CPU 可以通过一批基础程序和部分 `riscv-tests`。
 3. 可以进入系统化验证阶段。
+
+--
+### Attachment:
+
+Situation                         stall_F  stall_D  flush_D  flush_E  forward_AE / forward_BE
+
+No hazard                         0        0        0        0        normal
+RAW from MEM ALU result           0        0        0        0        select MEM when rs matches
+RAW from WB result                0        0        0        0        select WB when rs matches
+Load-use: E load feeds D          1        1        0        1        normal this cycle
+Taken branch or jump in EX        0        0        1        1        computed normally

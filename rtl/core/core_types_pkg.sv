@@ -188,4 +188,13 @@ package core_types_pkg;
         logic [WORD_WIDTH - 1:0] pc_plus4;
     } mem_wb_data_t;
 
+    typedef struct packed {
+        logic stall_F;
+        logic stall_D;
+        logic flush_D;
+        logic flush_E;
+        forward_ae forward_AE;
+        forward_rdata_be forward_BE;
+    } hazard_bundle_t;
+
 endpackage
