@@ -6,7 +6,7 @@ module core_smoke_tb;
     logic reset;
 
     /*
-    core_smoke_tb
+    core_smoke_tb: (smoke_basic.hex)
         -> top dut
             -> core core_processor
                 -> instr_mem instr_mem1
