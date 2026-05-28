@@ -29,7 +29,7 @@ module core_smoke_tb;
     end
 
     initial begin
-        $dumpfile("scripts/build/sim/core_smoke.vcd"); 
+        $dumpfile("sim/build/smoke/core_smoke.vcd"); 
         // Create the VCD (Value Change Dump) files to observe the waveforms
         $dumpvars(0, core_smoke_tb);
         // Variables oberservations control
