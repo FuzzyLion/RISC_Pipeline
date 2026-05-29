@@ -1,6 +1,7 @@
 rtl/core/core_types_pkg.sv
 rtl/core/core.sv
 rtl/core/top.sv
+rtl/core/hazard_unit.sv
 rtl/core/imm_ext.sv
 rtl/core/reg_file.sv
 rtl/core/alu_op.sv

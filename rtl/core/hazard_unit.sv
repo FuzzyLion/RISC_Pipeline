@@ -1,6 +1,9 @@
 module hazard_unit 
     import core_types_pkg::*;
 (
+    input logic valid_D,
+    input logic valid_E,
+
     input logic [ADDR_WIDTH - 1:0] rs1_idx_D,
     input logic [ADDR_WIDTH - 1:0] rs2_idx_D,
 
@@ -22,6 +25,8 @@ module hazard_unit
 
     logic m_can_forward;
     logic w_can_forward;
+    logic lwstall;
+    logic redirect;
 
     localparam hazard_bundle_t HAZARD_CTRL_NOP = '{
         stall_F: 1'b0,
@@ -56,22 +61,25 @@ module hazard_unit
             hazard_ctrl.forward_BE = BE_RDATA_RESULT_W;
         end
 
-        // Case 2: Load use
+        // Case 2 & 3: Load use & Branch
+        lwstall =   valid_D &&
+                    valid_E &&
+                    (rs1_idx_D != '0) &&
+                    (ctrl_E.result_src == RSLT_RDATA) &&
+                    ((rs1_idx_D == rd_idx_E) || (rs2_idx_D == rd_idx_E));
+
+        redirect = (pc_src_E == PC_TARGET);
+
         // Load-use: E load feeds D
-        if ((((rs1_idx_D == rd_idx_E) && (rs1_idx_D != '0)) ||
-            ((rs2_idx_D == rd_idx_E) && (rs2_idx_D != '0))) &&            
-            (ctrl_E.result_src == RSLT_RDATA)) begin
-            // In Systemverilog "&&" always has the priority than "||"
+        if (lwstall) begin
             hazard_ctrl.stall_F = 1'b1;
             hazard_ctrl.stall_D = 1'b1;
             hazard_ctrl.flush_E = 1'b1;
         end
-
-        // Case 3: Branch
         // Taken branch or jump in EX
-        if (pc_src_E == PC_TARGET) begin
+        else if (redirect) begin
             hazard_ctrl.flush_D = 1'b1;
-            hazard_ctrl.flush_E = 1'b1;
+            hazard_ctrl.flush_E = 1'b1; 
         end
     end
     

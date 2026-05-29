@@ -10,6 +10,9 @@ module core
     input logic reset
 );
 
+    // Hazard Unit
+    hazard_bundle_t hazard_ctrl;
+
     // Control Unit
     control_bundle_t ctrl_D;
     imm_src_e imm_src_D;
@@ -27,7 +30,6 @@ module core
     logic [WORD_WIDTH - 1:0] pc_pre_out;
 
     // pc_reg
-    logic stall_F_in;
     logic [WORD_WIDTH - 1:0] pc_F_out;
 
     // pc_plus4_adder
@@ -37,8 +39,6 @@ module core
     logic [WORD_WIDTH - 1:0] instr_F_out;
 
     // IF_ID
-    logic stall_D_in;
-    logic flush_D_in;
     if_id_data_t data_F_ifid;
     if_id_data_t data_D_ifid;
 
@@ -55,17 +55,14 @@ module core
     logic [ADDR_WIDTH - 1:0] rd_idx_D_out;
 
     // ID_EX
-    logic flush_E_in;
     id_ex_data_t data_D_idex;
     id_ex_data_t data_E_idex;
 
     // EX_forward_muxAE
-    forward_ae forward_AE_in;
     logic [WORD_WIDTH - 1:0] result_W_out;
     logic [WORD_WIDTH - 1:0] alu_src_AE_out;
 
     // EX_forward_rd_muxBE
-    forward_rdata_be forward_rd_BE_in;
     logic [WORD_WIDTH - 1:0] write_data_E_out;
 
     // EX_muxBE
@@ -144,12 +141,14 @@ module core
 
     // ---------------------- TEMPORARY ASSIGNMENTS ----------------------
     // For Hazard Unit
+    /*
     assign stall_F_in = 1'b0;
     assign stall_D_in = 1'b0;
     assign flush_D_in = 1'b0;
     assign flush_E_in = 1'b0;
     assign forward_AE_in = AE_RS1_VAL;
     assign forward_rd_BE_in = BE_RDATA_RS2_VAL;
+    */
 
     // ---------------------- MODULE INSTANTIATIONS ----------------------
     // Control Unit
@@ -157,6 +156,24 @@ module core
         .instr_D(data_D_ifid.instr),
         .imm_src_D(imm_src_D),
         .ctrl_D(ctrl_D)
+    );
+
+    // Hazard Unit
+    hazard_unit hazard_unit1 (
+        .valid_D(data_D_idex.valid),
+        .valid_E(data_E_idex.valid),
+        .rs1_idx_D(data_D_idex.rs1_idx),
+        .rs2_idx_D(data_D_idex.rs2_idx),
+        .rs1_idx_E(data_E_idex.rs1_idx),
+        .rs2_idx_E(data_E_idex.rs2_idx),
+        .rd_idx_E(data_E_idex.rd_idx),
+        .rd_idx_M(data_M_exmem.rd_idx),
+        .rd_idx_W(data_W_memwb.rd_idx),
+        .ctrl_E(ctrl_E),
+        .ctrl_M(ctrl_M),
+        .ctrl_W(ctrl_W),
+        .pc_src_E(pc_src_E),
+        .hazard_ctrl(hazard_ctrl)
     );
 
     // PC MUX
@@ -171,7 +188,7 @@ module core
     pc_reg pc_reg1 (
         .clk(clk),
         .reset(reset),
-        .stall_F(stall_F_in),
+        .stall_F(hazard_ctrl.stall_F),
         .pc_pre_F(pc_pre_out),
         .pc_F(pc_F_out)
     );
@@ -194,8 +211,8 @@ module core
     IF_ID IF_ID1 (
         .clk(clk),
         .reset(reset),
-        .stall_D(stall_D_in),
-        .flush_D(flush_D_in),
+        .stall_D(hazard_ctrl.stall_D),
+        .flush_D(hazard_ctrl.flush_D),
         .data_F(data_F_ifid),
         .data_D(data_D_ifid)
     );
@@ -232,7 +249,7 @@ module core
     ID_EX ID_EX1 (
         .clk(clk),
         .reset(reset),
-        .flush_E(flush_E_in),
+        .flush_E(hazard_ctrl.flush_E),
         .ctrl_D(ctrl_D),
         .ctrl_E(ctrl_E),
         .data_D(data_D_idex),
@@ -241,7 +258,7 @@ module core
 
     // EX Source AE MUX for Forwarding & ALU
     EX_forward_muxAE EX_forward_muxAE1 (
-        .forward_AE(forward_AE_in),
+        .forward_AE(hazard_ctrl.forward_AE),
         .rs1_val_E(data_E_idex.rs1_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),
@@ -250,7 +267,7 @@ module core
 
     // EX Source BE MUX for Forwarding
     EX_forward_rd_muxBE EX_forward_rd_muxBE1 (
-        .forward_rd_BE(forward_rd_BE_in),
+        .forward_rd_BE(hazard_ctrl.forward_BE),
         .rs2_val_E(data_E_idex.rs2_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),
