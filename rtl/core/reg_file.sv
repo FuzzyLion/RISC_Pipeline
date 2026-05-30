@@ -29,7 +29,12 @@ module reg_file
         end
     end
 
-    assign rs1_val_D = (rs1_idx_rf == 5'b0) ? '0 : regs[rs1_idx_rf];
-    assign rs2_val_D = (rs2_idx_rf == 5'b0) ? '0 : regs[rs2_idx_rf];
+    // Bypass - Read the value from WB procedure first and lter write!
+    assign rs1_val_D =  (rs1_idx_rf == 5'b0) ? '0 :
+                        (rf_write_W && (rs1_idx_rf == rd_idx_W)) ? WB_mux_result :
+                         regs[rs1_idx_rf];
+    assign rs2_val_D =  (rs2_idx_rf == 5'b0) ? '0 : 
+                        (rf_write_W && (rs2_idx_rf == rd_idx_W)) ? WB_mux_result :
+                         regs[rs2_idx_rf];
     
 endmodule

@@ -21,6 +21,15 @@ module data_mem
     According to the data size to derive to the MEM_ADDR_WIDTH
     */
 
+    /* 
+    Regs are always 32 bits large in RV32, so it will have 2^32 kinds of byte address.
+    
+    Relationship:
+    byte address 0..3       -> mem[0]
+    byte address 4..7       -> mem[1]
+    ...
+    byte address 1020..1023 -> mem[255]
+    */
     logic [WORD_WIDTH - 1:0] mem [0:MEM_WORDS - 1]; // 256 entries, each entry stores one 32-bit word
     logic [MEM_ADDR_WIDTH - 1:0] word_idx; // 8 bits word index into data memory
 

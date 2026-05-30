@@ -9,7 +9,7 @@ cd "$REPO_ROOT"
 
 mkdir -p "$SIM_BUILD_DIR"
 
-verilator -sv --timing --binary --trace -Wall -Wno-fatal \
+verilator -sv --timing --binary --trace -Wall -Wno-fatal -Werror-UNOPTFLAT \
   -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
   --top-module core_smoke_tb \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
