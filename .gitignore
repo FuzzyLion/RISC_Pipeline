@@ -13,3 +13,6 @@
 # Simulation/build outputs
 sim/build/
 scripts/build/
+
+# Hook
+.codex/
