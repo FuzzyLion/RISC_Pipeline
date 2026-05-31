@@ -8,12 +8,64 @@
       "args": [
         "--sv",
         "--lint-only",
+        "--timing",
+        "-Wall",
+        "-Wno-fatal",
         "-Wno-MULTITOP",
+        "-Wno-MODDUP",
+        "-Wno-DECLFILENAME",
+        "-Wno-TIMESCALEMOD",
+        "-Wno-UNUSEDSIGNAL",
         "-f",
         "rtl/core/filelist.f"
       ],
       "group": "test",
-      "problemMatcher": []
+      "problemMatcher": {
+        "owner": "verilator",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^%(Warning|Error)(?:-[^:]+)?:\\s+([^:]+):(\\d+):(\\d+):\\s+(.*)$",
+          "severity": 1,
+          "file": 2,
+          "line": 3,
+          "column": 4,
+          "message": 5
+        }
+      }
+    },
+    {
+      "label": "Verilator: elaborate smoke",
+      "type": "shell",
+      "command": "verilator",
+      "args": [
+        "--sv",
+        "--lint-only",
+        "--timing",
+        "-Wall",
+        "-Wno-fatal",
+        "-Werror-UNOPTFLAT",
+        "-Wno-DECLFILENAME",
+        "-Wno-TIMESCALEMOD",
+        "-Wno-UNUSEDSIGNAL",
+        "--top-module",
+        "core_smoke_tb",
+        "-f",
+        "rtl/core/filelist.f",
+        "tb/core_smoke_tb.sv"
+      ],
+      "group": "test",
+      "problemMatcher": {
+        "owner": "verilator",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^%(Warning|Error)(?:-[^:]+)?:\\s+([^:]+):(\\d+):(\\d+):\\s+(.*)$",
+          "severity": 1,
+          "file": 2,
+          "line": 3,
+          "column": 4,
+          "message": 5
+        }
+      }
     }
   ]
 }

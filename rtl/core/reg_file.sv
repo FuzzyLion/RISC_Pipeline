@@ -15,6 +15,14 @@ module reg_file
     output logic [WORD_WIDTH - 1:0] rs2_val_D
 );
 
+    /*
+    Function:
+    1. regs array: architectural register state
+    2. synchronous write: WB stage commits rd
+    3. combinational read: ID stage reads rs1/rs2
+    4. read-side bypass: same-cycle WB-to-ID forwarding
+    */
+
     logic [WORD_WIDTH - 1:0] regs [31:0]; // Declaration all of the inner registers in RV32
 
     always_ff @(posedge clk) begin
@@ -29,7 +37,7 @@ module reg_file
         end
     end
 
-    // Bypass - Read the value from WB procedure first and lter write!
+    // Read-side WB bypass: if WB writes the same register being read, return the new WB value
     assign rs1_val_D =  (rs1_idx_rf == 5'b0) ? '0 :
                         (rf_write_W && (rs1_idx_rf == rd_idx_W)) ? WB_mux_result :
                          regs[rs1_idx_rf];

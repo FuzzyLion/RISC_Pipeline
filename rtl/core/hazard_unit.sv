@@ -20,7 +20,8 @@ module hazard_unit
     
     input pc_src_e pc_src_E,
 
-    output hazard_bundle_t hazard_ctrl
+    output hazard_forward_t hazard_forward_ctrl,
+    output hazard_stallflush_t hazard_stallflush_ctrl
 ); 
 
     logic m_can_forward;
@@ -28,17 +29,20 @@ module hazard_unit
     logic lwstall;
     logic redirect;
 
-    localparam hazard_bundle_t HAZARD_CTRL_NOP = '{
-        stall_F: 1'b0,
-        stall_D: 1'b0,
-        flush_D: 1'b0,
-        flush_E: 1'b0,
+    localparam hazard_forward_t HAZARD_FORWARD_NOP = '{
         forward_AE: AE_RS1_VAL,
         forward_BE: BE_RDATA_RS2_VAL
     };
+    localparam hazard_stallflush_t HAZARD_STALLFLUSH_NOP = '{
+        stall_F: '0,
+        stall_D: '0,
+        flush_D: '0,
+        flush_E: '0
+    };
 
     always_comb begin
-        hazard_ctrl = HAZARD_CTRL_NOP;
+        hazard_forward_ctrl = HAZARD_FORWARD_NOP;
+        hazard_stallflush_ctrl = HAZARD_STALLFLUSH_NOP;
 
         // Case 1: Forward
         // Gerneral patterns
@@ -47,39 +51,41 @@ module hazard_unit
 
         // RAW from MEM ALU result
         if (m_can_forward && (rs1_idx_E == rd_idx_M)) begin
-            hazard_ctrl.forward_AE = AE_ALU_RESULT_M;
+            hazard_forward_ctrl.forward_AE = AE_ALU_RESULT_M;
         end
         else if (w_can_forward && (rs1_idx_E == rd_idx_W)) begin
-            hazard_ctrl.forward_AE = AE_RESULT_W;
+            hazard_forward_ctrl.forward_AE = AE_RESULT_W;
         end 
 
         // RAW from WB result
         if (m_can_forward && (rs2_idx_E == rd_idx_M)) begin
-            hazard_ctrl.forward_BE = BE_RDATA_ALU_RESULT_M;
+            hazard_forward_ctrl.forward_BE = BE_RDATA_ALU_RESULT_M;
         end
         else if (w_can_forward && (rs2_idx_E == rd_idx_W)) begin
-            hazard_ctrl.forward_BE = BE_RDATA_RESULT_W;
+            hazard_forward_ctrl.forward_BE = BE_RDATA_RESULT_W;
         end
 
         // Case 2 & 3: Load use & Branch
         lwstall =   valid_D &&
                     valid_E &&
-                    (rs1_idx_D != '0) &&
+                    ctrl_E.rf_write &&
+                    (rd_idx_E != '0) && // Make sure no architectual effect is existing (x0)
                     (ctrl_E.result_src == RSLT_RDATA) &&
                     ((rs1_idx_D == rd_idx_E) || (rs2_idx_D == rd_idx_E));
 
         redirect = (pc_src_E == PC_TARGET);
 
-        // Load-use: E load feeds D
-        if (lwstall) begin
-            hazard_ctrl.stall_F = 1'b1;
-            hazard_ctrl.stall_D = 1'b1;
-            hazard_ctrl.flush_E = 1'b1;
-        end
         // Taken branch or jump in EX
-        else if (redirect) begin
-            hazard_ctrl.flush_D = 1'b1;
-            hazard_ctrl.flush_E = 1'b1; 
+        if (redirect) begin
+            // Jump & Branch have the higher priority than lwstall!!
+            hazard_stallflush_ctrl.flush_D = 1'b1;
+            hazard_stallflush_ctrl.flush_E = 1'b1; 
+        end
+        // Load-use: E load feeds D
+        else if (lwstall) begin
+            hazard_stallflush_ctrl.stall_F = 1'b1;
+            hazard_stallflush_ctrl.stall_D = 1'b1; // No flush_D indeed
+            hazard_stallflush_ctrl.flush_E = 1'b1;
         end
     end
     

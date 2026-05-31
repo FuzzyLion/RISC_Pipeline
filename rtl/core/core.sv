@@ -11,7 +11,8 @@ module core
 );
 
     // Hazard Unit
-    hazard_bundle_t hazard_ctrl;
+    hazard_forward_t hazard_forward_ctrl;
+    hazard_stallflush_t hazard_stallflush_ctrl;
 
     // Control Unit
     control_bundle_t ctrl_D;
@@ -173,7 +174,8 @@ module core
         .ctrl_M(ctrl_M),
         .ctrl_W(ctrl_W),
         .pc_src_E(pc_src_E),
-        .hazard_ctrl(hazard_ctrl)
+        .hazard_forward_ctrl(hazard_forward_ctrl),
+        .hazard_stallflush_ctrl(hazard_stallflush_ctrl)
     );
 
     // PC MUX
@@ -188,7 +190,7 @@ module core
     pc_reg pc_reg1 (
         .clk(clk),
         .reset(reset),
-        .stall_F(hazard_ctrl.stall_F),
+        .stall_F(hazard_stallflush_ctrl.stall_F),
         .pc_pre_F(pc_pre_out),
         .pc_F(pc_F_out)
     );
@@ -211,8 +213,8 @@ module core
     IF_ID IF_ID1 (
         .clk(clk),
         .reset(reset),
-        .stall_D(hazard_ctrl.stall_D),
-        .flush_D(hazard_ctrl.flush_D),
+        .stall_D(hazard_stallflush_ctrl.stall_D),
+        .flush_D(hazard_stallflush_ctrl.flush_D),
         .data_F(data_F_ifid),
         .data_D(data_D_ifid)
     );
@@ -249,7 +251,7 @@ module core
     ID_EX ID_EX1 (
         .clk(clk),
         .reset(reset),
-        .flush_E(hazard_ctrl.flush_E),
+        .flush_E(hazard_stallflush_ctrl.flush_E),
         .ctrl_D(ctrl_D),
         .ctrl_E(ctrl_E),
         .data_D(data_D_idex),
@@ -258,7 +260,7 @@ module core
 
     // EX Source AE MUX for Forwarding & ALU
     EX_forward_muxAE EX_forward_muxAE1 (
-        .forward_AE(hazard_ctrl.forward_AE),
+        .forward_AE(hazard_forward_ctrl.forward_AE),
         .rs1_val_E(data_E_idex.rs1_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),
@@ -267,7 +269,7 @@ module core
 
     // EX Source BE MUX for Forwarding
     EX_forward_rd_muxBE EX_forward_rd_muxBE1 (
-        .forward_rd_BE(hazard_ctrl.forward_BE),
+        .forward_rd_BE(hazard_forward_ctrl.forward_BE),
         .rs2_val_E(data_E_idex.rs2_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),

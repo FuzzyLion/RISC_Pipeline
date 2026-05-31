@@ -8,18 +8,3 @@
   "verilog.linting.linter": "verilator",
   "verilog.linting.verilator.arguments": "--sv --lint-only --timing -Wall -Wno-fatal -Wno-MULTITOP -Wno-MODDUP -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL -f rtl/core/filelist.f"
 }
-
-  /*
-  Notetaking:
-  1. --sv: Tell Verilator to handle the porject in Systemverilog mode
-  2. --lint-only: Only do grammar/static review, do not create exuatable files
-  3. --timing: Allow the time control sentences appearing in the tb, like delays etc.
-  4. -Wall: Open the complete warnings reminder
-  5. -Wno-fatal: Ignore the unnecessarily warnings
-  6. -Wno-MULTITOP: Ignore multitop options
-  7. -Wno-MODDUP: Close the duplicated module warnings, deminish noises
-  8. -Wno-DECLFILENAME: Close the warnings about the conflict different module-name & file-name
-  9. -Wno-TIMESCALEMOD: Close timescale waring
-  10. -Wno-UNUSEDSIGNAL: Close unused signal warnings
-  11. -f rtl/core/filelist.f: Tell Verilator to read path rtl/core/filelist.f
-  */
