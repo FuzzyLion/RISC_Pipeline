@@ -28,6 +28,12 @@ Relevant planning docs:
 3. `implementation_steps.md`
 4. `docs/plans/`
 
+## Project context
+
+Before starting any task, read `agent_context.md` to understand the repository structure, current architecture, coding conventions, and known limitations.
+
+Use that file as context, but do not treat it as more authoritative than the actual source code. If the document conflicts with the RTL, trust the RTL and suggest updating the document.
+
 ## User Profile
 
 The user is not doing this project just to "have working code".

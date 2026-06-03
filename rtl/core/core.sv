@@ -140,17 +140,6 @@ module core
         pc_plus4: data_M_exmem.pc_plus4
     };
 
-    // ---------------------- TEMPORARY ASSIGNMENTS ----------------------
-    // For Hazard Unit
-    /*
-    assign stall_F_in = 1'b0;
-    assign stall_D_in = 1'b0;
-    assign flush_D_in = 1'b0;
-    assign flush_E_in = 1'b0;
-    assign forward_AE_in = AE_RS1_VAL;
-    assign forward_rd_BE_in = BE_RDATA_RS2_VAL;
-    */
-
     // ---------------------- MODULE INSTANTIATIONS ----------------------
     // Control Unit
     control_unit control_unit1 (
