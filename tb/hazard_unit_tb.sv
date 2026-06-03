@@ -6,6 +6,8 @@ module hazard_unit_tb
 
     logic valid_D;
     logic valid_E;
+    logic valid_M;
+    logic valid_W;
 
     logic [ADDR_WIDTH - 1:0] rs1_idx_D;
     logic [ADDR_WIDTH - 1:0] rs2_idx_D;
@@ -26,6 +28,8 @@ module hazard_unit_tb
     hazard_unit dut (
         .valid_D(valid_D),
         .valid_E(valid_E),
+        .valid_M(valid_M),
+        .valid_W(valid_W),
         .rs1_idx_D(rs1_idx_D),
         .rs2_idx_D(rs2_idx_D),
         .rs1_idx_E(rs1_idx_E),
@@ -62,6 +66,9 @@ module hazard_unit_tb
         test_invalidE_load_use();
         test_non_load_result_no_lwstall();
         test_mem_load_result_no_forward();
+        test_invalidE_no_forward();
+        test_invalidM_no_mem_forward();
+        test_invalidW_no_wb_forward();
 
         $display("HAZARD_UNIT PASS: all tests completed");
         $finish;
@@ -71,6 +78,8 @@ module hazard_unit_tb
     task automatic apply_no_hazard_defaults();
         valid_D = 1'b1;
         valid_E = 1'b1;
+        valid_M = 1'b1;
+        valid_W = 1'b1;
 
         rs1_idx_D = 5'd1;
         rs2_idx_D = 5'd2;
@@ -205,7 +214,7 @@ module hazard_unit_tb
         check_stallflush("hazard redirect", 1'b0, 1'b0, 1'b1, 1'b1);
     endtask  
 
-    // --------------------------- SPECIAL CASES ---------------------------
+    // --------------------------- CORNER CASES ---------------------------
     task automatic test_mem_prior_wb_rs1();
         apply_no_hazard_defaults();
 
@@ -345,6 +354,48 @@ module hazard_unit_tb
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask //automatic
 
+    task automatic test_invalidE_no_forward();
+        apply_no_hazard_defaults();
+
+        valid_E = 1'b0;
+        ctrl_M.rf_write = 1'b1;
+        ctrl_W.rf_write = 1'b1;
+        rd_idx_M = 5'd3;
+        rd_idx_W = 5'd4;
+        rs1_idx_E = 5'd3;
+        rs2_idx_E = 5'd4;
+        #1;
+
+        check_forward("invalid E no forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+    endtask
+
+    task automatic test_invalidM_no_mem_forward();
+        apply_no_hazard_defaults();
+
+        valid_M = 1'b0;
+        ctrl_M.rf_write = 1'b1;
+        rd_idx_M = 5'd3;
+        rs1_idx_E = 5'd3;
+        #1;
+
+        check_forward("invalid M no mem forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+    endtask
+
+    task automatic test_invalidW_no_wb_forward();
+        apply_no_hazard_defaults();
+
+        valid_W = 1'b0;
+        ctrl_W.rf_write = 1'b1;
+        rd_idx_W = 5'd4;
+        rs2_idx_E = 5'd4;
+        #1;
+
+        check_forward("invalid W no wb forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+    endtask
+
     // -------------------------- CHECK TASKS --------------------------
     task automatic check_forward(
         input string name,
@@ -353,6 +404,7 @@ module hazard_unit_tb
     );
         if (hazard_forward_ctrl.forward_AE !== expected_forward_AE) begin
             $error("%s: forward_AE expected %0d, got %0d",
+            // Decimal, no spaces
                    name, expected_forward_AE, hazard_forward_ctrl.forward_AE);
             $finish;
         end

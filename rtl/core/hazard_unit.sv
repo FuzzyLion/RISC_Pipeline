@@ -3,6 +3,8 @@ module hazard_unit
 (
     input logic valid_D,
     input logic valid_E,
+    input logic valid_M,
+    input logic valid_W,
 
     input logic [ADDR_WIDTH - 1:0] rs1_idx_D,
     input logic [ADDR_WIDTH - 1:0] rs2_idx_D,
@@ -46,8 +48,15 @@ module hazard_unit
 
         // Case 1: Forward
         // Gerneral patterns
-        m_can_forward = ctrl_M.rf_write && (ctrl_M.result_src != RSLT_RDATA) && (rd_idx_M != '0);
-        w_can_forward = ctrl_W.rf_write && (rd_idx_W != '0);
+        m_can_forward = valid_E &&
+                        valid_M &&
+                        ctrl_M.rf_write && 
+                        (ctrl_M.result_src != RSLT_RDATA) && 
+                        (rd_idx_M != '0);
+        w_can_forward = valid_E &&
+                        valid_W &&
+                        ctrl_W.rf_write && 
+                        (rd_idx_W != '0);
 
         // RAW from MEM ALU result
         if (m_can_forward && (rs1_idx_E == rd_idx_M)) begin
@@ -66,8 +75,8 @@ module hazard_unit
         end
 
         // Case 2 & 3: Load use & Branch
-        lwstall =   valid_D &&
-                    valid_E &&
+        lwstall =   valid_D && // Prove the dependent instruction is real consumer in Decode stage
+                    valid_E && // Prove the load in Execute stage is the real producer
                     ctrl_E.rf_write &&
                     (rd_idx_E != '0) && // Make sure no architectual effect is existing (x0)
                     (ctrl_E.result_src == RSLT_RDATA) &&

@@ -152,6 +152,8 @@ module core
     hazard_unit hazard_unit1 (
         .valid_D(data_D_idex.valid),
         .valid_E(data_E_idex.valid),
+        .valid_M(data_M_exmem.valid),
+        .valid_W(data_W_memwb.valid),
         .rs1_idx_D(data_D_idex.rs1_idx),
         .rs2_idx_D(data_D_idex.rs2_idx),
         .rs1_idx_E(data_E_idex.rs1_idx),
