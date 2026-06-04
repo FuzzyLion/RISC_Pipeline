@@ -396,7 +396,7 @@ module hazard_unit_tb
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask
 
-    // -------------------------- CHECK TASKS --------------------------
+    // --------------------------- CHECK TASKS ---------------------------
     task automatic check_forward(
         input string name,
         input forward_ae expected_forward_AE,
@@ -423,6 +423,11 @@ module hazard_unit_tb
         input logic expected_flush_D,
         input logic expected_flush_E
     );
+        /*
+        Use !== (and ===) in SystemVerilog testbenches to strictly compare 
+        four-value logic (0, 1, X, Z), ensuring simulator quirks with unknown 
+        (X) or high-impedance (Z) states don't accidentally mask hardware bugs.
+        */
         if (hazard_stallflush_ctrl.stall_F !== expected_stall_F) begin
             $error("%s: stall_F expected %0b, got %0b",
                    name, expected_stall_F, hazard_stallflush_ctrl.stall_F);
