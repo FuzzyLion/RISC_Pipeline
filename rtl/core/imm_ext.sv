@@ -26,7 +26,8 @@ module imm_ext
             end
             IMM_J: begin
                 imm_D = {{12{instr_D[31]}}, instr_D[19:12], instr_D[20], instr_D[30:21], 1'b0};
-                //J-Type Instructions - 21-bits signed immediate
+                // J-Type Instructions - 21-bits effective signed immediate (20-bit encoded in instr)
+                // 21-bits signed immediate = 20-bits encoded + 1-bit sign 
             end
             IMM_U: begin
                 imm_D = {instr_D[31:12], 12'b0};
