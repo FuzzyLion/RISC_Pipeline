@@ -1,6 +1,8 @@
 `timescale 1ns/1ps // Time units / Time accuracy
 
-module core_smoke_branch_tb;
+module core_smoke_branch_tb
+    import core_types_pkg::*;
+;
 
     logic clk;
     logic reset;
@@ -18,14 +20,23 @@ module core_smoke_branch_tb;
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;
-        // Always flip per half period, 5ns
+        // Toggle clock every half period
     end
 
     initial begin
         $dumpfile("sim/build/smoke_branch/core_branch_smoke.vcd"); 
         // Create the VCD (Value Change Dump) files to observe the waveforms
         $dumpvars(0, core_smoke_branch_tb);
-        // Variables oberservations control
+        
+        /* 
+        Variables oberservations control,
+
+        For example: 
+        0 means record signals in all layers; 
+        1 means only record the signals in core module;
+        2 means only record the signals in core & it's lower level modules...
+        etc.
+        */
     end
 
     initial begin
@@ -50,8 +61,8 @@ module core_smoke_branch_tb;
 
     task automatic check_word(
         input string name,
-        input logic [31:0] actual,
-        input logic [31:0] expected
+        input logic [WORD_WIDTH - 1:0] actual,
+        input logic [WORD_WIDTH - 1:0] expected
     );
         if (actual !== expected) begin
             $error("SMOKE FAIL: %s expected 0x%08h, got 0x%08h", name, expected, actual);
