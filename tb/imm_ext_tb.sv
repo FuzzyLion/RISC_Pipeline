@@ -14,7 +14,7 @@ module imm_ext_tb
         .imm_D(imm_D)
     );
 
-    initial begin
+    initial begin : test_sequence
         test_default_zero_ext();
         test_itype_ext();
         test_stype_ext();

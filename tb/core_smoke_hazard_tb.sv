@@ -1,6 +1,8 @@
 `timescale 1ns/1ps // Time units / Time accuracy
 
-module core_smoke_hazard_tb;
+module core_smoke_hazard_tb
+    import core_types_pkg::*;
+;
 
     logic clk;
     logic reset;
@@ -14,6 +16,7 @@ module core_smoke_hazard_tb;
 
     localparam int CLK_PERIOD_NS = 10;
     localparam int TIMEOUT_CYCLES = 80;
+    localparam logic [WORD_WIDTH - 1:0] PASS_VALUE = 32'd1;
 
     initial begin
         clk = 1'b0;
@@ -22,7 +25,7 @@ module core_smoke_hazard_tb;
     end
 
     initial begin
-        $dumpfile("sim/build/smoke/core_hazard_smoke.vcd"); 
+        $dumpfile("sim/build/smoke/hazard_smoke.vcd"); 
         // Create the VCD (Value Change Dump) files to observe the waveforms
         $dumpvars(0, core_smoke_hazard_tb);
         // Variables oberservations control
@@ -31,12 +34,14 @@ module core_smoke_hazard_tb;
     initial begin
         // Let all regs to be reset from state x
         reset = 1'b1;
-        repeat (3) @(posedge clk); // Wait for 3 posedge to make sure all regs have been reseted
+        repeat (3) @(negedge clk); // Wait for 3 posedge to make sure all regs have been reseted
         reset = 1'b0;
     end
 
-    initial begin
-        repeat (TIMEOUT_CYCLES) @(posedge clk);
+    initial begin : test_sequence
+        wait (!reset);
+        wait (dut.core_processor.reg_file1.regs[31] == PASS_VALUE);
+        #1;
 
         check_word("x1", dut.core_processor.reg_file1.regs[1], 32'd36);
         check_word("x2", dut.core_processor.reg_file1.regs[2], 32'd7);
@@ -51,6 +56,12 @@ module core_smoke_hazard_tb;
 
         $display("SMOKE PASS: hazard program completed");
         $finish; // End all tests, like clock generator or etc.
+    end
+
+    initial begin : timeout_guard
+        repeat (TIMEOUT_CYCLES) @(posedge clk);
+
+        $fatal(1, "SMOKE HAZARD TB TIMEOUT");
     end
 
     task automatic check_word(

@@ -46,7 +46,7 @@ module hazard_unit_tb
     );
 
     // -------------------------- FUNCTION TESTS -------------------------
-    initial begin
+    initial begin : test_sequence
         test_no_hazard();
         test_mem_forward_rs1();
         test_wb_forward_rs1();

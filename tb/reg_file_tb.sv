@@ -41,12 +41,19 @@ module reg_file_tb
         $dumpfile("sim/build/reg_file/reg_file_tb.vcd");
         $dumpvars(0, reg_file_tb);
     end
-    
+
     initial begin
         reset = 1'b1;
-        repeat (3) @(posedge clk);
+        repeat (3) @(posedge clk); // Wait for 3 posedge
         @(negedge clk);
+        // Avoid changing reset in the near of the always_ff @(posedge clk),
+        // which may cause confilts.
         reset = 1'b0;
+        #1;
+    end
+
+    initial begin : test_sequence
+        wait (!reset);
         #1;
 
         test_default_zero();
@@ -58,11 +65,10 @@ module reg_file_tb
         $finish;
     end
 
-    initial begin
+    initial begin : timeout_guard
         repeat (TIMEOUT_CYCLES) @(posedge clk);
 
-        $error("REG_FILE TIMEOUT after %0d cycles", TIMEOUT_CYCLES);
-        $finish;
+        $fatal(1, "REG FILE TB TIMEOUT");
     end
 
     task automatic apply_reg_file_defaults();
@@ -81,12 +87,20 @@ module reg_file_tb
         rs2_idx_rf = 5'd10;
         #1
 
+        // Combinational read without clk waiting
         check_value("default value rs1", 32'b0, rs1_val_D);
         check_value("default value rs2", 32'b0, rs2_val_D);
     endtask 
 
+    // Clock Edge Control
     task automatic test_synchronous_write();
         apply_reg_file_defaults();
+
+        /*
+        negedge -> posedge：0.5 period
+        posedge -> negedge：0.5 period
+        Total: 1 period
+        */
 
         @(negedge clk);
         rf_write_W = 1'b1;
@@ -118,6 +132,11 @@ module reg_file_tb
 
     task automatic test_bypass();
         apply_reg_file_defaults();
+
+        /*
+        Before the next posedge, check whether the composite read port bypasses
+        the old value and returns the current WB value directly.
+        */
 
         @(negedge clk);
         rd_idx_W = 5'd7;

@@ -8,3 +8,5 @@ addi x1, x0, 36 // x1 = 36
 
 taken:
 sub x4, x3, x5 // x4 = 7
+
+addi x31, x0, 1 // PASS_VALUE
