@@ -74,8 +74,8 @@ module core_smoke_branch_tb
         input logic [WORD_WIDTH - 1:0] expected
     );
         if (actual !== expected) begin
-            $error("SMOKE FAIL: %s expected 0x%08h, got 0x%08h", name, expected, actual);
-            $finish; // As long as the error occured, TB needs to finish
+            $fatal(1, "SMOKE FAIL: %s expected 0x%08h, got 0x%08h",
+                   name, expected, actual);
         end
     endtask
 

@@ -5,7 +5,13 @@ module data_mem
     parameter string INIT_FILE = ""
 )(
     input logic clk,
-    // input logic reset,
+    /* 
+    DO NOT CREATE THE DECLARATION LIKE THIS:
+    input logic reset,
+
+    CPU reset does not clear data memory!
+    Initialization is handled separately to preserve RAM inference!
+    */
 
     input logic mem_write_M,
 
@@ -34,10 +40,16 @@ module data_mem
     logic [MEM_ADDR_WIDTH - 1:0] word_idx; // 8 bits word index into data memory
 
     initial begin
+        /*
+        Synthesis semantics of initial depend on the target platform: 
+        Used for register/RAM power-up initialization in FPGAs, 
+        but typically unsupported in ASICs.
+        */
         for (int i = 0; i < MEM_WORDS; i++) begin
             mem[i] = '0;
         end
 
+        // Used for LB/LH/LW/LBU/LHU instructions
         if (INIT_FILE != "") begin
             $readmemh(INIT_FILE, mem);
         end

@@ -22,6 +22,7 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
 │       └── extensions/
 ├── programs/
 │   ├── smoke_basic.hex
+│   ├── smoke_basic.s
 │   ├── smoke_branch.s
 │   ├── smoke_branch.hex
 │   ├── smoke_hazard.s
@@ -54,13 +55,25 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
 │       └── WB_result_mux.sv
 ├── sim/
 │   ├── build_hex.sh
-│   ├── run_smoke.sh
+│   ├── run_alu_op.sh
+│   ├── run_basic_smoke.sh
+│   ├── run_control_unit.sh
+│   ├── run_hazard_unit.sh
+│   ├── run_imm_ext.sh
+│   ├── run_reg_file.sh
+│   ├── run_regression.sh
 │   ├── run_smoke_branch.sh
 │   └── run_smoke_hazard.sh
 └── tb/
-    ├── core_smoke_tb.sv
+    ├── alu_op_tb.sv
+    ├── control_unit_tb.sv
+    ├── core_basic_smoke_tb.sv
     ├── core_smoke_branch_tb.sv
-    └── core_smoke_hazard_tb.sv
+    ├── core_smoke_hazard_tb.sv
+    ├── data_mem_tb.sv
+    ├── hazard_unit_tb.sv
+    ├── imm_ext_tb.sv
+    └── reg_file_tb.sv
 ```
 
 Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, and `tools` exist in the working tree but do not contain source files visible to `rg --files` at the time this document was written. Generated simulation output under `sim/build` is intentionally excluded.
@@ -99,15 +112,19 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/EX_muxBE.sv` chooses the ALU B operand between forwarded `rs2` data and the EX-stage immediate.
 
-`rtl/core/data_mem.sv` is a simple word-array data memory with combinational read and synchronous write. It treats ALU results as byte addresses and indexes the internal word array with address bits `[MEM_ADDR_WIDTH+1:2]`; only word-level behavior is modeled.
+`rtl/core/data_mem.sv` is a simple word-array data memory with combinational read and synchronous write. It treats ALU results as byte addresses and indexes the internal word array with address bits `[MEM_ADDR_WIDTH+1:2]`; only word-level behavior is modeled. It intentionally has no CPU reset input. Simulation or FPGA power-up initialization is separate from CPU reset, and clearing the full array in reset logic could prevent RAM inference.
 
 `rtl/core/WB_result_mux.sv` selects the writeback value from ALU result, memory read data, or `PC + 4`.
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
-`tb/core_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`, and `tb/core_smoke_hazard_tb.sv` instantiate `top`, load one hex program each, run for a fixed cycle count, and inspect internal register file/data memory state hierarchically. These are smoke tests, not a complete ISA verification environment.
+`tb/alu_op_tb.sv`, `tb/reg_file_tb.sv`, `tb/control_unit_tb.sv`, `tb/imm_ext_tb.sv`, and `tb/hazard_unit_tb.sv` provide focused module-level tests. The ALU testbench keeps one task per ALU operation for readability and covers arithmetic wraparound, signed versus unsigned comparison, shift behavior, `zero_E`, and invalid control handling.
 
-`sim/run_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh` build and run the corresponding Verilator testbenches with tracing enabled. `sim/build_hex.sh` assembles `.s` files into `.hex` using `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base zero.
+`tb/core_basic_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`, and `tb/core_smoke_hazard_tb.sv` instantiate `top`, load one program each, wait for an `x31 == 1` completion marker, enforce a timeout, and inspect internal architectural state hierarchically. These are smoke tests, not a complete ISA verification environment.
+
+`tb/data_mem_tb.sv` currently exists as an incomplete scaffold. It is not yet a meaningful data-memory test and is not included in the regression.
+
+`sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`, `sim/run_imm_ext.sh`, and `sim/run_hazard_unit.sh` run module-level Verilator tests. `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh` rebuild their assembly programs and run processor-level smoke tests. `sim/run_regression.sh` is the unified entry point and currently runs these eight completed tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base zero.
 
 `docs/data-memory-addressing.md` explains the current byte-addressed ISA view versus word-array Verilog memory model. It is useful background before changing load/store behavior.
 
@@ -135,6 +152,8 @@ Names commonly encode pipeline stage suffixes such as `_F`, `_D`, `_E`, `_M`, an
 
 Reset is synchronous in the visible sequential RTL. Reset generally clears state to zero or a local `CTRL_NOP`. Flush behavior is implemented by writing zeroed data and NOP control into affected pipeline registers.
 
+The data memory is an exception to the general reset pattern: CPU reset does not erase main memory. Future Cache reset should normally invalidate Cache lines by clearing metadata such as valid bits rather than clearing the SRAM data array. A write-back Cache will also require an explicit policy for dirty lines across reset or flush.
+
 The design favors small single-purpose modules and explicit wiring in `core.sv` rather than hiding datapath behavior behind large abstractions. Comments are a mix of English and Chinese, often teaching-oriented and focused on explaining hardware meaning.
 
 ## Current Status and Known Limitations
@@ -150,6 +169,9 @@ Implemented or visibly present:
 7. EX operand forwarding from MEM ALU results and WB results.
 8. Load-use stall insertion.
 9. Verilator smoke tests for basic execution, branch flushing, and hazards.
+10. Module-level Verilator tests for ALU, register file, immediate extension, control decode, and hazard control.
+11. A unified regression script covering five module tests and three processor smoke tests.
+12. Assembly source and generated hex images for all three smoke programs, with explicit completion markers.
 
 Partially implemented or uncertain:
 
@@ -158,7 +180,9 @@ Partially implemented or uncertain:
 3. Branch support appears limited to `beq`; other branch funct3 cases are not active.
 4. Misaligned instruction or data access behavior is unclear from repository.
 5. Memory bounds behavior is unclear from repository.
-6. Formal tests, riscv-tests integration, and broader regression infrastructure are not visible in the current files.
+6. `tb/data_mem_tb.sv` is only a scaffold and has not yet been completed or added to the regression.
+7. `riscv-tests` integration, a failure-tracking record, and a written Cocotb/Icarus/Verilator selection decision are still missing from Phase 3.
+8. The current regression is useful but remains a small hand-written baseline rather than broad ISA verification.
 
 Not implemented as visible RTL:
 
@@ -169,10 +193,11 @@ Not implemented as visible RTL:
 
 ## Suggested Next Steps
 
-1. Run and keep the three smoke tests green before changing pipeline control: `sim/run_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh`.
-2. Expand decode in small, test-backed steps for the remaining RV32I instructions, starting with the commented I-type, branch, load, and store cases.
-3. Add focused tests for each hazard class: MEM-to-EX forwarding, WB-to-EX forwarding, WB-to-ID register-file bypass, load-use stall, taken branch flush, `jal`, and `jalr`.
-4. Document the intended priority order between redirect, load-use stall, memory wait, and future exception flush before adding memory handshakes or CSR traps.
-5. Introduce a clearer memory interface boundary before cache work, since the current memories are internal single-model arrays.
-6. Add riscv-tests or another ISA-level regression flow once the implemented instruction subset is broad enough to make those tests meaningful.
-7. Document module interfaces for `core`, `hazard_unit`, `control_unit`, and the pipeline registers so future changes remain interview-defensible.
+1. Keep `sim/run_regression.sh` green before and after RTL changes.
+2. Complete `tb/data_mem_tb.sv` with tests for initialization, combinational read, synchronous write, write-disable behavior, and byte-address-to-word-index mapping, then add a runner and regression entry.
+3. Add a small compatible subset of `riscv-tests` and record unsupported tests separately from genuine failures.
+4. Create a lightweight verification-status or defect-tracking document that classifies failures by module, pipeline stage, or program-level behavior.
+5. Record the current verification tool decision: Verilator remains the main simulator; Cocotb should be introduced only when Python-driven parameterization, random generation, or reference-model comparison provides clear value.
+6. Expand decode in small, test-backed steps for the remaining RV32I instructions.
+7. Document the intended priority order between redirect, load-use stall, memory wait, and future exception flush before adding memory handshakes or CSR traps.
+8. Introduce a clearer memory interface boundary before Cache work, since the current memories are internal single-model arrays.

@@ -57,8 +57,8 @@ module reg_file_tb
         #1;
 
         test_default_zero();
-        test_synchronous_write();
-        test_combinational_read();
+        test_reg_file_synchronous_write();
+        test_reg_file_combinational_read();
         test_bypass();
 
         $display("REG FILE PASS: tb completed");
@@ -93,7 +93,7 @@ module reg_file_tb
     endtask 
 
     // Clock Edge Control
-    task automatic test_synchronous_write();
+    task automatic test_reg_file_synchronous_write();
         apply_reg_file_defaults();
 
         /*
@@ -119,7 +119,7 @@ module reg_file_tb
         check_value("rd value", 32'd10, rs1_val_D);
     endtask 
 
-    task automatic test_combinational_read();
+    task automatic test_reg_file_combinational_read();
         apply_reg_file_defaults();
 
         rs1_idx_rf = 5'd5;
@@ -163,9 +163,8 @@ module reg_file_tb
         input logic [WORD_WIDTH - 1:0] actual
     );
         if (actual !== expected_value) begin
-            $error("VALUE FAIL: %s expected %0d, got %0d",
-                    name, expected_value, actual);
-            $finish;
+            $fatal(1, "VALUE FAIL: %s expected %0d, got %0d",
+                   name, expected_value, actual);
         end
     endtask 
 

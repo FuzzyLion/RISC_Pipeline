@@ -73,9 +73,8 @@ module imm_ext_tb
         #1;
 
         if (imm_D !== expected_imm) begin
-            $error("%s: imm_D expected %08h, got %08h",
-                    name, expected_imm, imm_D);
-            $finish;
+            $fatal(1, "%s: imm_D expected %08h, got %08h",
+                   name, expected_imm, imm_D);
         end
     endtask
 

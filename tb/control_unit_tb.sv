@@ -342,51 +342,43 @@ module control_unit_tb
         input control_bundle_t expected_ctrl_bundle
     );
         if (ctrl_D.rf_write !== expected_ctrl_bundle.rf_write) begin
-            $error("%s: rf_write expected %0b, got %0b",
-                    name, expected_ctrl_bundle.rf_write, ctrl_D.rf_write);
-            $finish;
+            $fatal(1, "%s: rf_write expected %0b, got %0b",
+                   name, expected_ctrl_bundle.rf_write, ctrl_D.rf_write);
         end
 
         if (ctrl_D.result_src !== expected_ctrl_bundle.result_src) begin
-            $error("%s: result_src expected %0b, got %0b",
-                    name, expected_ctrl_bundle.result_src, ctrl_D.result_src);
-            $finish;
+            $fatal(1, "%s: result_src expected %0b, got %0b",
+                   name, expected_ctrl_bundle.result_src, ctrl_D.result_src);
         end
 
         if (ctrl_D.mem_write !== expected_ctrl_bundle.mem_write) begin
-            $error("%s: mem_write expected %0b, got %0b",
-                    name, expected_ctrl_bundle.mem_write, ctrl_D.mem_write);
-            $finish;
+            $fatal(1, "%s: mem_write expected %0b, got %0b",
+                   name, expected_ctrl_bundle.mem_write, ctrl_D.mem_write);
         end
 
         if (ctrl_D.jump !== expected_ctrl_bundle.jump) begin
-            $error("%s: jump expected %0b, got %0b",
-                    name, expected_ctrl_bundle.jump, ctrl_D.jump);
-            $finish;
+            $fatal(1, "%s: jump expected %0b, got %0b",
+                   name, expected_ctrl_bundle.jump, ctrl_D.jump);
         end
 
         if (ctrl_D.pc_target_src !== expected_ctrl_bundle.pc_target_src) begin
-            $error("%s: pc_target_src expected %0b, got %0b",
-                    name, expected_ctrl_bundle.pc_target_src, ctrl_D.pc_target_src);
-            $finish;
+            $fatal(1, "%s: pc_target_src expected %0b, got %0b",
+                   name, expected_ctrl_bundle.pc_target_src, ctrl_D.pc_target_src);
         end
 
         if (ctrl_D.branch !== expected_ctrl_bundle.branch) begin
-            $error("%s: branch expected %0b, got %0b",
-                    name, expected_ctrl_bundle.branch, ctrl_D.branch);
-            $finish;
+            $fatal(1, "%s: branch expected %0b, got %0b",
+                   name, expected_ctrl_bundle.branch, ctrl_D.branch);
         end
 
         if (ctrl_D.alu_ctrl !== expected_ctrl_bundle.alu_ctrl) begin
-            $error("%s: alu_ctrl expected %0b, got %0b",
-                    name, expected_ctrl_bundle.alu_ctrl, ctrl_D.alu_ctrl);
-            $finish;
+            $fatal(1, "%s: alu_ctrl expected %0b, got %0b",
+                   name, expected_ctrl_bundle.alu_ctrl, ctrl_D.alu_ctrl);
         end
 
         if (ctrl_D.alu_src !== expected_ctrl_bundle.alu_src) begin
-            $error("%s: alu_src expected %0b, got %0b",
-                    name, expected_ctrl_bundle.alu_src, ctrl_D.alu_src);
-            $finish;
+            $fatal(1, "%s: alu_src expected %0b, got %0b",
+                   name, expected_ctrl_bundle.alu_src, ctrl_D.alu_src);
         end
     endtask 
 
@@ -395,9 +387,8 @@ module control_unit_tb
         input imm_src_e expected_imm_src
     );
         if (imm_src_D !== expected_imm_src) begin
-            $error("%s: imm_src expected %0b, got %0b",
-                    name, expected_imm_src, imm_src_D);
-            $finish;
+            $fatal(1, "%s: imm_src expected %0b, got %0b",
+                   name, expected_imm_src, imm_src_D);
         end
     endtask 
 

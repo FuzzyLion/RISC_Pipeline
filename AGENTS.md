@@ -23,10 +23,8 @@ Current project goals include:
 
 Relevant planning docs:
 
-1. `initial.md`
-2. `requirements.md`
-3. `implementation_steps.md`
-4. `docs/plans/`
+1. `requirements.md`
+2. `docs/plans/`
 
 ## Project context
 
@@ -101,6 +99,18 @@ For architecture decisions:
 1. Always explain why one option is chosen over another.
 2. Mention consequences for timing, control complexity, testability, and future integration.
 3. Favor designs the user can later defend in an interview.
+
+## Memory and Reset Semantics
+
+Treat CPU reset, memory initialization, and Cache invalidation as separate concepts.
+
+1. CPU reset should clear processor control and architectural state that is explicitly defined as resettable.
+2. CPU reset should not clear the main data memory merely to simplify a testbench.
+3. Memory initialization belongs to initialization files, FPGA power-up behavior, or the verification environment.
+4. Avoid reset loops over memory data arrays when they would prevent SRAM or block RAM inference.
+5. A future Cache should normally reset its metadata, especially valid bits, rather than clear every bit in the SRAM data array.
+6. Invalid Cache data must never be used, even if stale physical bits remain in the data array.
+7. For a write-back Cache, define dirty-line behavior across reset or flush explicitly before clearing valid or dirty metadata.
 
 ## Code Review Expectations
 

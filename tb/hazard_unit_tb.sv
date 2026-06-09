@@ -403,16 +403,14 @@ module hazard_unit_tb
         input forward_rdata_be expected_forward_BE
     );
         if (hazard_forward_ctrl.forward_AE !== expected_forward_AE) begin
-            $error("%s: forward_AE expected %0d, got %0d",
             // Decimal, no spaces
+            $fatal(1, "%s: forward_AE expected %0d, got %0d",
                    name, expected_forward_AE, hazard_forward_ctrl.forward_AE);
-            $finish;
         end
 
         if (hazard_forward_ctrl.forward_BE !== expected_forward_BE) begin
-            $error("%s: forward_BE expected %0d, got %0d",
+            $fatal(1, "%s: forward_BE expected %0d, got %0d",
                    name, expected_forward_BE, hazard_forward_ctrl.forward_BE);
-            $finish;
         end
     endtask
 
@@ -429,27 +427,23 @@ module hazard_unit_tb
         (X) or high-impedance (Z) states don't accidentally mask hardware bugs.
         */
         if (hazard_stallflush_ctrl.stall_F !== expected_stall_F) begin
-            $error("%s: stall_F expected %0b, got %0b",
+            $fatal(1, "%s: stall_F expected %0b, got %0b",
                    name, expected_stall_F, hazard_stallflush_ctrl.stall_F);
-            $finish;
         end
 
         if (hazard_stallflush_ctrl.stall_D !== expected_stall_D) begin
-            $error("%s: stall_D expected %0b, got %0b",
+            $fatal(1, "%s: stall_D expected %0b, got %0b",
                    name, expected_stall_D, hazard_stallflush_ctrl.stall_D);
-            $finish;
         end
 
         if (hazard_stallflush_ctrl.flush_D !== expected_flush_D) begin
-            $error("%s: flush_D expected %0b, got %0b",
+            $fatal(1, "%s: flush_D expected %0b, got %0b",
                    name, expected_flush_D, hazard_stallflush_ctrl.flush_D);
-            $finish;
         end
 
         if (hazard_stallflush_ctrl.flush_E !== expected_flush_E) begin
-            $error("%s: flush_E expected %0b, got %0b",
+            $fatal(1, "%s: flush_E expected %0b, got %0b",
                    name, expected_flush_E, hazard_stallflush_ctrl.flush_E);
-            $finish;
         end
     endtask
 

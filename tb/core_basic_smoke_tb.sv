@@ -77,9 +77,9 @@ module core_smoke_tb
         input logic [31:0] expected
     );
         if (actual !== expected) begin
-            $error("SMOKE FAIL: %s expected 0x%08h, got 0x%08h", name, expected, actual);
             // Minimum output width is 8 bits, if it doesn't fit, top it up with 0
-            $finish; // As long as the error occured, TB needs to finish
+            $fatal(1, "SMOKE FAIL: %s expected 0x%08h, got 0x%08h",
+                   name, expected, actual);
         end
     endtask
 
