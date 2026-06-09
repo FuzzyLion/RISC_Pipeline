@@ -7,6 +7,7 @@ tests=(
   "run_control_unit.sh"
   "run_imm_ext.sh"
   "run_alu_op.sh"
+  "run_pc_target_gen.sh"
   "run_reg_file.sh"
   "run_data_mem.sh"
   "run_hazard_unit.sh"

@@ -21,6 +21,7 @@ module pc_target_gen
                 pc_target_E = pc_E + imm_E;
             end 
             PC_TARGET_RS1_IMM: begin
+                // JALR clears bit 0, producing at least a 2-byte-aligned target
                 pc_target_E = (alu_src_AE + imm_E) & 32'hFFFFFFFE; 
                 /* 
                 Cannot use "rs1_val_E" because it will cause hazard, for example:
