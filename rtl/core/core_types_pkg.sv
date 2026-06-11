@@ -88,6 +88,7 @@ package core_types_pkg;
         CTRL_OR = 4'b0011,
         CTRL_XOR = 4'b0101,
         CTRL_PASS_B = 4'b0110,
+        CTRL_PASS_B4PC = 4'b1101,
         CTRL_SLT = 4'b0111,
         CTRL_SLTU = 4'b1000,
         CTRL_SLL = 4'b1001,
@@ -123,15 +124,6 @@ package core_types_pkg;
         BE_IMM_E = 1'b1
     } alu_src_e;
 
-    typedef enum logic [2:0] { 
-        BEQ_FUNCT3 = 3'b000,
-        BNE_FUNCT3 = 3'b001,
-        BLT_FUNCT3 = 3'b100,
-        BGE_FUNCT3 = 3'b101,
-        BLTU_FUNCT3 = 3'b110,
-        BGEU_FUNCT3 = 3'b111
-    } funct3_ctrl_e;
-
     typedef enum logic {
         PC_TARGET_PC_IMM = 1'b0,
         PC_TARGET_RS1_IMM = 1'b1
@@ -148,7 +140,7 @@ package core_types_pkg;
         logic branch;
         alu_ctrl_e alu_ctrl;
         alu_src_e alu_src;
-        funct3_ctrl_e funct3_ctrl;
+        btype_e btype;
     } control_bundle_t;
 
     typedef struct packed {

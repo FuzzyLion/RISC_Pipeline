@@ -2,11 +2,12 @@ module alu_op
     import core_types_pkg::*;
 (
     input alu_ctrl_e alu_control_E,
-    input funct3_ctrl_e funct3_ctrl_E,
+    input btype_e btype_E,
     input logic branch_E,
 
     input logic [WORD_WIDTH - 1:0] alu_src_AE,
     input logic [WORD_WIDTH - 1:0] alu_src_BE,
+    input logic [WORD_WIDTH - 1:0] pc_E,
 
     output logic zero_E,
     output logic [WORD_WIDTH - 1:0] alu_result_E
@@ -34,6 +35,9 @@ module alu_op
             CTRL_PASS_B: begin
                 alu_result_E = alu_src_BE; // Instruction lui
             end
+            CTRL_PASS_B4PC: begin
+                alu_result_E = alu_src_BE + pc_E; // Instruction auipc
+            end
             CTRL_SLT: begin // Signed
                 alu_result_E = {{(WORD_WIDTH - 1){1'b0}}, ($signed(alu_src_AE) < $signed(alu_src_BE))};
             end
@@ -57,23 +61,23 @@ module alu_op
         endcase
         
         if (branch_E) begin
-            case (funct3_ctrl_E)
-                BEQ_FUNCT3: begin
+            case (btype_E)
+                BEQ: begin
                     zero_E = (alu_result_E == '0);
                 end 
-                BNE_FUNCT3: begin
+                BNE: begin
                     zero_E = (alu_result_E != '0) ? 1'b1 : 1'b0;
                 end
-                BLT_FUNCT3: begin // Signed comparition with $signed
+                BLT: begin // Signed comparition with $signed
                     zero_E = ($signed(alu_src_AE) < $signed(alu_src_BE)) ? 1'b1 : 1'b0;
                 end
-                BGE_FUNCT3: begin
+                BGE: begin
                     zero_E = ($signed(alu_src_AE) >= $signed(alu_src_BE)) ? 1'b1 : 1'b0;
                 end
-                BLTU_FUNCT3: begin // Unsigned comparition
+                BLTU: begin // Unsigned comparition
                     zero_E = (alu_src_AE < alu_src_BE) ? 1'b1 : 1'b0;
                 end
-                BGEU_FUNCT3: begin
+                BGEU: begin
                     zero_E = (alu_src_AE >= alu_src_BE) ? 1'b1 : 1'b0;
                 end
                 default: begin
@@ -85,6 +89,7 @@ module alu_op
             zero_E = (alu_result_E == '0); 
             // Keep original behavior for debug/future use to test if result = '0
         end
+        
         
     end
     

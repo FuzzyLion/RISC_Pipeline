@@ -26,7 +26,7 @@ module control_unit
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        funct3_ctrl: BEQ_FUNCT3
+        btype: BEQ
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -131,26 +131,56 @@ module control_unit
                         ctrl_D.alu_ctrl = CTRL_ADD;
                         ctrl_D.alu_src = BE_IMM_E;
                     end
-                    /*
-                        SLTI:
-                        SLTIU:
-                        XORI:
-                        ORI:
-                        ANDI:
-                        */
+                    SLTI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SLT;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    SLTIU: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SLTU;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    XORI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_XOR;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    ORI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_OR;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
+                    ANDI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_AND;
+                        ctrl_D.alu_src = BE_IMM_E;
+                    end
                     default: begin
+
                         case (itype_immext_D)
-                            /*
-                            SLLI:
-                            SRLI:
-                            SRAI: 
-                            */ 
+                            SLLI: begin
+                                ctrl_D.rf_write = 1'b1;
+                                ctrl_D.alu_ctrl = CTRL_SLL;
+                                ctrl_D.alu_src = BE_IMM_E;
+                            end
+                            SRLI: begin
+                                ctrl_D.rf_write = 1'b1;
+                                ctrl_D.alu_ctrl = CTRL_SRL;
+                                ctrl_D.alu_src = BE_IMM_E;
+                            end
+                            SRAI: begin
+                                ctrl_D.rf_write = 1'b1;
+                                ctrl_D.alu_ctrl = CTRL_SRA;
+                                ctrl_D.alu_src = BE_IMM_E;
+                            end
                             default: begin
                                 ctrl_D.rf_write = 1'b0;
                                 ctrl_D.alu_ctrl = CTRL_ADD;
                                 ctrl_D.alu_src = BE_RDATA_E;
                             end
                         endcase
+
                     end
                 endcase
             end
@@ -167,7 +197,7 @@ module control_unit
                 //AUIPC
                 ctrl_D.rf_write = 1'b1;
                 ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
-                ctrl_D.alu_ctrl = CTRL_PASS_B;
+                ctrl_D.alu_ctrl = CTRL_PASS_B4PC;
                 ctrl_D.alu_src = BE_IMM_E;
                 imm_src_D = IMM_U;
             end
@@ -199,43 +229,43 @@ module control_unit
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BEQ_FUNCT3;
+                        ctrl_D.btype = BEQ;
                     end
                     BNE: begin
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BNE_FUNCT3;
+                        ctrl_D.btype = BNE;
                     end
                     BLT: begin
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BLT_FUNCT3;
+                        ctrl_D.btype = BLT;
                     end
                     BGE: begin
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BGE_FUNCT3;
+                        ctrl_D.btype = BGE;
                     end
                     BLTU: begin
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BLTU_FUNCT3;
+                        ctrl_D.btype = BLTU;
                     end
                     BGEU: begin
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
-                        ctrl_D.funct3_ctrl = BGEU_FUNCT3; 
+                        ctrl_D.btype = BGEU; 
                     end
                     default: begin
                         ctrl_D.branch = 1'b0;
                         ctrl_D.alu_ctrl = CTRL_ADD;
                         imm_src_D = IMM_I;
-                        ctrl_D.funct3_ctrl = BEQ_FUNCT3;
+                        ctrl_D.btype = BEQ;
                     end
                 endcase
             end

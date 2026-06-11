@@ -21,7 +21,7 @@ module ID_EX
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        funct3_ctrl: BEQ_FUNCT3
+        btype: BEQ
     };
 
     always_ff @(posedge clk) begin

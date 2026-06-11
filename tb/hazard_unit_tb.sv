@@ -97,7 +97,8 @@ module hazard_unit_tb
             pc_target_src: PC_TARGET_PC_IMM,
             branch: 1'b0,
             alu_ctrl: CTRL_ADD,
-            alu_src: BE_RDATA_E
+            alu_src: BE_RDATA_E,
+            btype: BEQ
         };
 
         ctrl_M = '{
@@ -184,7 +185,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("hazard lwstall", 1'b1, 1'b1,1'b0, 1'b1);
+        check_stallflush("hazard lwstall", 1'b1, 1'b1, 1'b0, 1'b1);
     endtask 
 
     task automatic test_load_use_rs2();
@@ -225,7 +226,7 @@ module hazard_unit_tb
         rs1_idx_E = 5'd3;
         #1;
 
-        check_forward("hazard forward from mem", AE_ALU_RESULT_M, BE_RDATA_RS2_VAL);
+        check_forward("MEM prior WB for rs1", AE_ALU_RESULT_M, BE_RDATA_RS2_VAL);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
@@ -240,7 +241,7 @@ module hazard_unit_tb
         rs2_idx_E = 5'd3;
         #1;
 
-        check_forward("hazard forward from mem", AE_RS1_VAL, BE_RDATA_ALU_RESULT_M);
+        check_forward("MEM prior WB for rs2", AE_RS1_VAL, BE_RDATA_ALU_RESULT_M);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
@@ -259,7 +260,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("hazard redirect", 1'b0, 1'b0, 1'b1, 1'b1);
+        check_stallflush("redirect prior lwstall", 1'b0, 1'b0, 1'b1, 1'b1);
     endtask 
 
     task automatic test_mem_x0_forward();
@@ -272,7 +273,7 @@ module hazard_unit_tb
         rs1_idx_E = 5'd0;
         #1;
 
-        check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_forward("x0 no forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
@@ -289,7 +290,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+        check_stallflush("x0 no lwstall", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
     task automatic test_invalidD_load_use();
@@ -305,7 +306,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+        check_stallflush("invalid D no lwstall", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
     task automatic test_invalidE_load_use();
@@ -321,7 +322,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+        check_stallflush("invalid E no lwstall", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
     task automatic test_non_load_result_no_lwstall();
@@ -337,7 +338,7 @@ module hazard_unit_tb
         #1;
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
-        check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
+        check_stallflush("non-load no lwstall", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
 
     task automatic test_mem_load_result_no_forward();
@@ -350,7 +351,7 @@ module hazard_unit_tb
         rs1_idx_E = 5'd11;
         #1;
 
-        check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_forward("MEM load result no forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask //automatic
 
@@ -379,7 +380,7 @@ module hazard_unit_tb
         rs1_idx_E = 5'd3;
         #1;
 
-        check_forward("invalid M no mem forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_forward("invalid M no forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask
 
@@ -392,7 +393,7 @@ module hazard_unit_tb
         rs2_idx_E = 5'd4;
         #1;
 
-        check_forward("invalid W no wb forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
+        check_forward("invalid W no forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask
 
@@ -403,7 +404,6 @@ module hazard_unit_tb
         input forward_rdata_be expected_forward_BE
     );
         if (hazard_forward_ctrl.forward_AE !== expected_forward_AE) begin
-            // Decimal, no spaces
             $fatal(1, "%s: forward_AE expected %0d, got %0d",
                    name, expected_forward_AE, hazard_forward_ctrl.forward_AE);
         end
@@ -421,11 +421,6 @@ module hazard_unit_tb
         input logic expected_flush_D,
         input logic expected_flush_E
     );
-        /*
-        Use !== (and ===) in SystemVerilog testbenches to strictly compare 
-        four-value logic (0, 1, X, Z), ensuring simulator quirks with unknown 
-        (X) or high-impedance (Z) states don't accidentally mask hardware bugs.
-        */
         if (hazard_stallflush_ctrl.stall_F !== expected_stall_F) begin
             $fatal(1, "%s: stall_F expected %0b, got %0b",
                    name, expected_stall_F, hazard_stallflush_ctrl.stall_F);

@@ -57,9 +57,7 @@ module core_smoke_tb
         check_word("x3", dut.core_processor.reg_file1.regs[3], 32'd12);
         check_word("data_mem[0]", dut.core_processor.data_mem1.mem[0], 32'd12);
         check_word("x4", dut.core_processor.reg_file1.regs[4], 32'd12);
-
-        // auipc:
-        // check_word("x16", dut.core_processor.reg_file1.regs[16], 32'h0000006c);
+        check_word("x16", dut.core_processor.reg_file1.regs[16], 32'h0000006c); // auipc
 
         $display("SMOKE PASS: basic no-hazard program completed");
         $finish; // End all tests, like clock generator or etc.

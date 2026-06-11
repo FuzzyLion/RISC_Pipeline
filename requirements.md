@@ -24,6 +24,17 @@
 
 ## 3. 范围定义
 
+### 3.0 当前实现快照
+
+本节描述当前仓库状态，不替代后续完整 `RV32I`、特权级和 SoC 目标。
+
+1. 五级流水线、EX 阶段 forwarding、load-use stall 和 branch/jump flush 已具备。
+2. 当前已实现 R-Type 整数 ALU 指令、完整 ALU-immediate 指令组、六种基础 branch、`lui`、`auipc`、`lw`、`sw`、`jal` 和 `jalr`。
+3. `auipc` 在 EX 阶段使用该指令自身的流水化 PC 与 U 型立即数相加。
+4. 当前默认验证基线为 Verilator、SystemVerilog directed testbench 和汇编 smoke program。
+5. 统一回归当前包含 7 个模块级测试和 4 个处理器级 smoke test。
+6. `riscv-tests`、CSR、异常、中断、外部握手存储接口、SoC、Cache、FPU 和 RTOS 尚未完成。
+
 ### 3.1 主线范围
 
 主线范围包含以下内容：
@@ -147,6 +158,7 @@
 5. 应记录失败用例与定位结果。
 6. `riscv-tests` 中适合 `RV32I` 的基础测试应在流水线主线稳定后尽早纳入回归，而不是放到项目末期才接入。
 7. Cache 与 FPU 都应拥有独立专项测试和系统级回归测试。
+8. 当前 directed SystemVerilog 单元测试应优先保持直观：每条指令或每种独立行为使用一个 task，并在 task 内明确写出默认输入、直接激励、组合逻辑延迟和检查步骤。
 
 ## 6. 非功能需求
 

@@ -2,7 +2,11 @@
 
 This repository is a learning-first SystemVerilog RISC-V CPU project. The current RTL implements a small RV32I-oriented five-stage pipeline core with internal instruction and data memories, Verilator smoke tests, and planning documents for later CSR, exception, interrupt, SoC, FPGA, cache, FPU, and RTOS work. The design goal visible in the repository is to make the basic pipelined core and hazard behavior understandable and verifiable before adding larger system features.
 
-The code is not a complete RV32I processor yet. The package lists many RV32I encodings, but the active decode currently covers a smaller subset used by the smoke programs.
+The code is not a complete RV32I processor yet. The active decode now covers
+the full R-type integer ALU group, the RV32I ALU-immediate group, all six base
+branch conditions, `lui`, `auipc`, `lw`, `sw`, `jal`, and `jalr`. Byte and
+halfword memory operations, system instructions, CSR behavior, exceptions, and
+interrupts are still outside the implemented subset.
 
 ## Compact Directory Tree
 
@@ -23,6 +27,8 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
 ├── programs/
 │   ├── smoke_basic.hex
 │   ├── smoke_basic.s
+│   ├── smoke_alu.hex
+│   ├── smoke_alu.s
 │   ├── smoke_branch.s
 │   ├── smoke_branch.hex
 │   ├── smoke_hazard.s
@@ -64,12 +70,14 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
 │   ├── run_pc_target_gen.sh
 │   ├── run_reg_file.sh
 │   ├── run_regression.sh
+│   ├── run_smoke_alu.sh
 │   ├── run_smoke_branch.sh
 │   └── run_smoke_hazard.sh
 └── tb/
     ├── alu_op_tb.sv
     ├── control_unit_tb.sv
     ├── core_basic_smoke_tb.sv
+    ├── core_smoke_alu_tb.sv
     ├── core_smoke_branch_tb.sv
     ├── core_smoke_hazard_tb.sv
     ├── data_mem_tb.sv
@@ -89,7 +97,12 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/core.sv` is the main pipeline integration module. It wires control, PC logic, instruction memory, register file, immediate generation, forwarding muxes, ALU, branch target generation, pipeline registers, data memory, writeback mux, and the hazard unit.
 
-`rtl/core/control_unit.sv` decodes the instruction in the Decode stage into `control_bundle_t` and `imm_src_e`. Implemented active cases include R-type ALU operations, `lw`, `addi`, `lui`, `sw`, `beq`, `jal`, and `jalr`; several other RV32I forms are present as enums or comments but are not active decode paths.
+`rtl/core/control_unit.sv` decodes the instruction in the Decode stage into
+`control_bundle_t` and `imm_src_e`. Implemented active cases include the R-type
+ALU instructions, `addi`, `slti`, `sltiu`, `xori`, `ori`, `andi`, `slli`,
+`srli`, `srai`, `lw`, `sw`, `lui`, `auipc`, `beq`, `bne`, `blt`, `bge`,
+`bltu`, `bgeu`, `jal`, and `jalr`. Unsupported funct combinations fall back to
+the NOP control bundle.
 
 `rtl/core/hazard_unit.sv` generates forwarding selects plus stall/flush controls. It forwards MEM non-load ALU results and WB results into EX operands, stalls on load-use hazards where an EX-stage load feeds a Decode-stage source, and flushes Decode/Execute on taken branch or jump redirects from EX.
 
@@ -97,7 +110,16 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/pc_reg.sv`, `rtl/core/pc_plus4_adder.sv`, and `rtl/core/pc_mux.sv` implement the Fetch-stage PC path. The PC register can stall, reset goes to zero, the adder computes `PC + 4`, and the mux chooses either the sequential PC or an EX-stage redirect target.
 
-`rtl/core/pc_target_gen.sv` computes branch/jump targets and `pc_src_E`. PC-relative targets use `pc_E + imm_E`; `jalr` uses `alu_src_AE + imm_E` and clears target bit 0. The module cannot determine whether `alu_src_AE` came from the original operand or a forwarding path; that behavior belongs to the upstream forwarding mux and integration tests. Branch decision currently uses `branch_E && zero_E`, so implemented branch behavior is centered on `beq`. Because the core does not implement the compressed-instruction extension, a JALR target with bit 1 set will later need an instruction-address-misaligned exception rather than further silent alignment.
+`rtl/core/pc_target_gen.sv` computes branch/jump targets and `pc_src_E`.
+PC-relative targets use `pc_E + imm_E`; `jalr` uses `alu_src_AE + imm_E` and
+clears target bit 0. The module cannot determine whether `alu_src_AE` came from
+the original operand or a forwarding path; that behavior belongs to the
+upstream forwarding mux and integration tests. `alu_op.sv` evaluates all six
+RV32I branch conditions and presents the taken/not-taken result through
+`zero_E`, which `pc_target_gen` combines with `branch_E`. Because the core does
+not implement the compressed-instruction extension, a JALR target with bit 1
+set will later need an instruction-address-misaligned exception rather than
+further silent alignment.
 
 `rtl/core/instr_mem.sv` is a simple word-array instruction memory initialized with `$readmemh`. It indexes memory using `pc_F[MEM_ADDR_WIDTH+1:2]`, so the core presents byte addresses while the model stores 32-bit instruction words.
 
@@ -107,7 +129,10 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/reg_file.sv` implements 32 RV32 architectural registers with synchronous writeback, combinational reads, x0 hardwired to zero on reads/writes, reset clearing all registers, and same-cycle WB-to-ID read bypassing.
 
-`rtl/core/alu_op.sv` implements the ALU operations currently represented by `alu_ctrl_e`: add, sub, and, or, xor, pass-B, signed/unsigned set-less-than, logical shifts, and arithmetic right shift. It also produces `zero_E` from the final ALU result.
+`rtl/core/alu_op.sv` implements add, sub, and, or, xor, pass-B, signed/unsigned
+set-less-than, logical shifts, arithmetic right shift, and the AUIPC
+`pc_E + U-immediate` operation. It also evaluates BEQ, BNE, BLT, BGE, BLTU, and
+BGEU when branch control is active.
 
 `rtl/core/EX_forward_muxAE.sv` selects the EX-stage ALU A operand from the ID/EX `rs1` value, WB result, or MEM ALU result.
 
@@ -121,15 +146,36 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
-`tb/alu_op_tb.sv`, `tb/reg_file_tb.sv`, `tb/control_unit_tb.sv`, `tb/imm_ext_tb.sv`, `tb/data_mem_tb.sv`, `tb/pc_target_gen_tb.sv`, and `tb/hazard_unit_tb.sv` provide focused module-level tests. The ALU testbench keeps one task per ALU operation for readability and covers arithmetic wraparound, signed versus unsigned comparison, shift behavior, `zero_E`, and invalid control handling.
+`tb/alu_op_tb.sv`, `tb/reg_file_tb.sv`, `tb/control_unit_tb.sv`,
+`tb/imm_ext_tb.sv`, `tb/data_mem_tb.sv`, `tb/pc_target_gen_tb.sv`, and
+`tb/hazard_unit_tb.sv` provide focused module-level tests. The ALU and control
+testbenches keep one instruction or behavior per task. Test tasks explicitly
+apply defaults, assign direct inputs, wait `#1`, and call reusable check tasks.
+Coverage includes arithmetic wraparound, signed versus unsigned comparison,
+shift behavior, all branch conditions, AUIPC calculation and decode, `zero_E`,
+and invalid control handling.
 
 `tb/data_mem_tb.sv` covers initial zero contents, combinational reads, synchronous writes, write-disable behavior, ignored low address bits in the current word-array model, and independence of adjacent words.
 
 `tb/pc_target_gen_tb.sv` covers positive and negative PC-relative offsets, 32-bit address wraparound, JALR target calculation, JALR bit-0 clearing, use of `alu_src_AE` rather than `pc_E`, and jump/branch redirect decisions. It intentionally does not claim to verify where `alu_src_AE` originated.
 
-`tb/core_basic_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`, and `tb/core_smoke_hazard_tb.sv` instantiate `top`, load one program each, wait for an `x31 == 1` completion marker, enforce a timeout, and inspect internal architectural state hierarchically. These are smoke tests, not a complete ISA verification environment.
+`tb/core_basic_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`,
+`tb/core_smoke_hazard_tb.sv`, and `tb/core_smoke_alu_tb.sv` instantiate `top`,
+load one program each, enforce a timeout, and inspect architectural state
+hierarchically. The ALU smoke covers ALU-immediate results plus taken and
+not-taken cases for the six branch conditions. These are directed smoke tests,
+not a complete ISA verification environment.
 
-`sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`, `sim/run_imm_ext.sh`, `sim/run_data_mem.sh`, `sim/run_pc_target_gen.sh`, and `sim/run_hazard_unit.sh` run module-level Verilator tests. `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh` rebuild their assembly programs and run processor-level smoke tests. `sim/run_regression.sh` is the unified entry point and currently runs ten completed tests: seven module tests and three processor smoke tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base zero.
+`sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`,
+`sim/run_imm_ext.sh`, `sim/run_data_mem.sh`, `sim/run_pc_target_gen.sh`, and
+`sim/run_hazard_unit.sh` run module-level Verilator tests.
+`sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`,
+`sim/run_smoke_hazard.sh`, and `sim/run_smoke_alu.sh` rebuild their assembly
+programs and run processor-level smoke tests. `sim/run_regression.sh` is the
+unified entry point and runs eleven tests: seven module tests and four processor
+smoke tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using
+`riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base
+zero.
 
 `docs/data-memory-addressing.md` explains the current byte-addressed ISA view versus word-array Verilog memory model. It is useful background before changing load/store behavior.
 
@@ -142,6 +188,10 @@ The implemented datapath is organized as a classic five-stage pipeline: IF, ID, 
 Control is generated in Decode as a packed `control_bundle_t`, then carried through later stages with narrower packed control bundles where possible. Pipeline registers carry explicit `valid` bits, and side-effecting controls are gated by validity as they enter later stages.
 
 Branches and jumps are resolved in EX. `pc_target_gen` chooses between PC-relative targets and `jalr` register-relative targets. When `pc_src_E` selects the target path, the hazard unit flushes Decode and Execute so wrong-path instructions are converted into bubbles.
+
+AUIPC is also completed in EX. Decode selects `CTRL_PASS_B4PC` and the U-type
+immediate; the ALU receives the instruction's pipelined `pc_E` and computes
+`pc_E + imm_E`. This uses the AUIPC instruction address, not `PC + 4`.
 
 Forwarding is handled for EX-stage operands. The A operand can come from the original `rs1`, WB result, or MEM ALU result. The B-side register data can come from original `rs2`, WB result, or MEM ALU result, and then a separate mux chooses between that register data and the immediate for the actual ALU B input. MEM-stage forwarding excludes load results because load data is not available early enough for the next EX-stage consumer.
 
@@ -173,25 +223,34 @@ Implemented or visibly present:
 2. Internal instruction memory and data memory models.
 3. Register file with x0 behavior and same-cycle WB read bypass.
 4. ALU support for common arithmetic, logical, compare, and shift operations.
-5. Decode support for the smoke-test subset: R-type ALU operations, `addi`, `lw`, `sw`, `lui`, `beq`, `jal`, and `jalr`.
+5. Decode support for R-type ALU instructions; `addi`, `slti`, `sltiu`,
+   `xori`, `ori`, `andi`, `slli`, `srli`, and `srai`; `lw`, `sw`, `lui`,
+   `auipc`; all six base branch conditions; `jal`; and `jalr`.
 6. EX-stage branch/jump redirect handling.
 7. EX operand forwarding from MEM ALU results and WB results.
 8. Load-use stall insertion.
-9. Verilator smoke tests for basic execution, branch flushing, and hazards.
+9. Verilator smoke tests for basic execution, branch flushing, hazards, and
+   ALU-immediate plus branch-condition behavior.
 10. Module-level Verilator tests for ALU, register file, immediate extension, control decode, data memory, PC target generation, and hazard control.
-11. A unified regression script covering seven module tests and three processor smoke tests.
-12. Assembly source and generated hex images for all three smoke programs, with explicit completion markers.
+11. A unified regression script covering seven module tests and four processor
+    smoke tests.
+12. Assembly source and generated hex images for all four smoke programs, with
+    explicit completion markers.
 13. A documented verification-tool decision to retain Verilator/SystemVerilog now and defer Cocotb until randomized, parameterized, latency-driven, Cache reference-model, or differential testing justifies it.
 
 Partially implemented or uncertain:
 
 1. Full RV32I support is incomplete. Many opcodes/funct values are declared, but several decode paths are commented out or default to NOP-like behavior.
 2. Only `lw` and `sw` are visibly active for memory operations. Byte and halfword loads/stores are not implemented in the current control/data memory path.
-3. Branch support appears limited to `beq`; other branch funct3 cases are not active.
-4. Misaligned instruction and data accesses are not architecturally handled yet. The current data-memory model ignores address bits `[1:0]`, while JALR clears only target bit 0. Phase 4 must detect unsupported alignment and raise the appropriate exception instead of silently correcting the address.
-5. Memory bounds behavior is unclear from repository.
-6. `riscv-tests` integration and a failure-tracking record are still missing from Phase 3.
-7. The current regression is useful but remains a small hand-written baseline rather than broad ISA verification.
+3. Misaligned instruction and data accesses are not architecturally handled
+   yet. The current data-memory model ignores address bits `[1:0]`, while JALR
+   clears only target bit 0. Phase 4 must detect unsupported alignment and
+   raise the appropriate exception instead of silently correcting the address.
+4. Memory bounds behavior is unclear from the repository.
+5. `riscv-tests` integration and a failure-tracking record are still missing
+   from Phase 3.
+6. The current regression is useful but remains a small hand-written baseline
+   rather than broad ISA verification.
 
 Not implemented as visible RTL:
 

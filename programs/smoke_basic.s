@@ -28,6 +28,7 @@ nop
 nop
 nop
 nop
+nop
 
 auipc x16, 0
 nop

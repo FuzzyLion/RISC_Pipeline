@@ -5,33 +5,57 @@ module alu_op_tb
 ;
 
     alu_ctrl_e alu_control_E;
+    btype_e btype_E;
+    logic branch_E;
 
     logic [WORD_WIDTH - 1:0] alu_src_AE;
     logic [WORD_WIDTH - 1:0] alu_src_BE;
+    logic [WORD_WIDTH - 1:0] pc_E;
 
     logic zero_E;
     logic [WORD_WIDTH - 1:0] alu_result_E;
 
     alu_op dut (
         .alu_control_E(alu_control_E),
+        .btype_E(btype_E),
+        .branch_E(branch_E),
         .alu_src_AE(alu_src_AE),
         .alu_src_BE(alu_src_BE),
+        .pc_E(pc_E),
         .zero_E(zero_E),
         .alu_result_E(alu_result_E)
     );
 
     initial begin : test_sequence
         test_add_instr();
-        test_sub_instr();
+        test_add_overflow_instr();
+        test_sub_negative_instr();
+        test_sub_equal_instr();
         test_and_instr();
         test_or_instr();
         test_xor_instr();
         test_pass_b_instr();
-        test_slt_instr();
-        test_sltu_instr();
+        test_pass_b4pc_instr();
+        test_slt_true_instr();
+        test_slt_false_instr();
+        test_sltu_false_instr();
+        test_sltu_true_instr();
         test_sll_instr();
+        test_sll_low_five_bits_instr();
         test_srl_instr();
         test_sra_instr();
+        test_beq_taken_instr();
+        test_beq_not_taken_instr();
+        test_bne_taken_instr();
+        test_bne_not_taken_instr();
+        test_blt_taken_instr();
+        test_blt_not_taken_instr();
+        test_bge_taken_instr();
+        test_bge_not_taken_instr();
+        test_bltu_taken_instr();
+        test_bltu_not_taken_instr();
+        test_bgeu_taken_instr();
+        test_bgeu_not_taken_instr();
         test_invalid_control();
 
         $display("ALU_OP PASS: all tests completed");
@@ -40,8 +64,167 @@ module alu_op_tb
 
     task automatic apply_alu_defaults();
         alu_control_E = CTRL_ADD;
+        btype_E = BEQ;
+        branch_E = 1'b0;
         alu_src_AE = 32'b0;
         alu_src_BE = 32'b0;
+        pc_E = 32'b0;
+    endtask
+
+    task automatic test_beq_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BEQ;
+        branch_E = 1'b1;
+        alu_src_AE = 32'hffff_ffff;
+        alu_src_BE = 32'hffff_ffff;
+        #1;
+
+        check_zero_E("BEQ taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_beq_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BEQ;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'd2;
+        #1;
+
+        check_zero_E("BEQ not taken", 1'b0, zero_E);
+    endtask
+
+    task automatic test_bne_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BNE;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'd2;
+        #1;
+
+        check_zero_E("BNE taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_bne_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BNE;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd2;
+        alu_src_BE = 32'd2;
+        #1;
+
+        check_zero_E("BNE not taken", 1'b0, zero_E);
+    endtask
+
+    task automatic test_blt_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BLT;
+        branch_E = 1'b1;
+        alu_src_AE = 32'hffff_ffff;
+        alu_src_BE = 32'd1;
+        #1;
+
+        check_zero_E("BLT signed taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_blt_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BLT;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'hffff_ffff;
+        #1;
+
+        check_zero_E("BLT signed not taken", 1'b0, zero_E);
+    endtask
+
+    task automatic test_bge_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BGE;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'hffff_ffff;
+        #1;
+
+        check_zero_E("BGE signed taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_bge_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BGE;
+        branch_E = 1'b1;
+        alu_src_AE = 32'hffff_ffff;
+        alu_src_BE = 32'd1;
+        #1;
+
+        check_zero_E("BGE signed not taken", 1'b0, zero_E);
+    endtask
+
+    task automatic test_bltu_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BLTU;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'hffff_ffff;
+        #1;
+
+        check_zero_E("BLTU unsigned taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_bltu_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BLTU;
+        branch_E = 1'b1;
+        alu_src_AE = 32'hffff_ffff;
+        alu_src_BE = 32'd1;
+        #1;
+
+        check_zero_E("BLTU unsigned not taken", 1'b0, zero_E);
+    endtask
+
+    task automatic test_bgeu_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BGEU;
+        branch_E = 1'b1;
+        alu_src_AE = 32'hffff_ffff;
+        alu_src_BE = 32'd1;
+        #1;
+
+        check_zero_E("BGEU unsigned taken", 1'b1, zero_E);
+    endtask
+
+    task automatic test_bgeu_not_taken_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
+        btype_E = BGEU;
+        branch_E = 1'b1;
+        alu_src_AE = 32'd1;
+        alu_src_BE = 32'hffff_ffff;
+        #1;
+
+        check_zero_E("BGEU unsigned not taken", 1'b0, zero_E);
     endtask
 
     task automatic test_add_instr();
@@ -55,6 +238,12 @@ module alu_op_tb
         check_alu_result("ADD instruction", 32'd2, alu_result_E);
         check_zero_E("ADD zero_E", 1'b0, zero_E);
 
+    endtask
+
+    task automatic test_add_overflow_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_ADD;
         alu_src_AE = 32'hffff_ffff;
         alu_src_BE = 32'd1;
         #1;
@@ -63,7 +252,7 @@ module alu_op_tb
         check_zero_E("ADD overflow zero_E", 1'b1, zero_E);
     endtask
 
-    task automatic test_sub_instr();
+    task automatic test_sub_negative_instr();
         apply_alu_defaults();
 
         alu_control_E = CTRL_SUB;
@@ -73,7 +262,12 @@ module alu_op_tb
 
         check_alu_result("SUB negative result", 32'hffff_fffe, alu_result_E);
         check_zero_E("SUB negative zero_E", 1'b0, zero_E);
+    endtask
 
+    task automatic test_sub_equal_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SUB;
         alu_src_AE = 32'd7;
         alu_src_BE = 32'd7;
         #1;
@@ -130,7 +324,20 @@ module alu_op_tb
         check_zero_E("PASS_B zero_E", 1'b0, zero_E);
     endtask
 
-    task automatic test_slt_instr();
+    task automatic test_pass_b4pc_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_PASS_B4PC;
+        alu_src_AE = 32'hdead_beef;
+        alu_src_BE = 32'h1234_5000;
+        pc_E = 32'h0000_1234;
+        #1;
+
+        check_alu_result("PASS_B4PC instruction", 32'h12346234, alu_result_E);
+        check_zero_E("PASS_B4PC zero_E", 1'b0, zero_E);
+    endtask 
+
+    task automatic test_slt_true_instr();
         apply_alu_defaults();
 
         /*
@@ -149,6 +356,12 @@ module alu_op_tb
         check_alu_result("SLT signed comparison true", 32'd1, alu_result_E);
         check_zero_E("SLT true zero_E", 1'b0, zero_E);
 
+    endtask
+
+    task automatic test_slt_false_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SLT;
         alu_src_AE = 32'd1;
         alu_src_BE = 32'hffff_ffff;
         #1;
@@ -157,13 +370,9 @@ module alu_op_tb
         check_zero_E("SLT false zero_E", 1'b1, zero_E);
     endtask
 
-    task automatic test_sltu_instr();
+    task automatic test_sltu_false_instr();
         apply_alu_defaults();
 
-        /*
-        32'hffff_ffff is 4294967295 when interpreted as unsigned.
-        Therefore unsigned comparison 4294967295 < 1 is false.
-        */
         alu_control_E = CTRL_SLTU;
         alu_src_AE = 32'hffff_ffff;
         alu_src_BE = 32'd1;
@@ -171,7 +380,12 @@ module alu_op_tb
 
         check_alu_result("SLTU unsigned comparison false", 32'd0, alu_result_E);
         check_zero_E("SLTU false zero_E", 1'b1, zero_E);
+    endtask
 
+    task automatic test_sltu_true_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SLTU;
         alu_src_AE = 32'd1;
         alu_src_BE = 32'hffff_ffff;
         #1;
@@ -191,6 +405,13 @@ module alu_op_tb
         check_alu_result("SLL instruction", 32'h0000_0010, alu_result_E);
         check_zero_E("SLL zero_E", 1'b0, zero_E);
 
+    endtask
+
+    task automatic test_sll_low_five_bits_instr();
+        apply_alu_defaults();
+
+        alu_control_E = CTRL_SLL;
+        alu_src_AE = 32'h0000_0001;
         alu_src_BE = 32'd32;
         #1;
 

@@ -291,10 +291,11 @@ module core
     // ALU
     alu_op alu_op1 (
         .alu_control_E(ctrl_E.alu_ctrl),
-        .funct3_ctrl_E(ctrl_E.funct3_ctrl),
+        .btype_E(ctrl_E.btype),
         .branch_E(ctrl_E.branch),
         .alu_src_AE(alu_src_AE_out),
         .alu_src_BE(alu_src_BE_in),
+        .pc_E(data_E_idex.pc),
         .zero_E(zero_E_out),
         .alu_result_E(alu_result_E_out)
     );

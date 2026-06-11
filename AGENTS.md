@@ -21,6 +21,11 @@ Current project goals include:
 7. Implement FPU as a required milestone.
 8. Eventually run broader tests and a lightweight RTOS.
 
+The project is currently working through Phase 3 verification. The five-stage
+pipeline and basic hazard handling exist, and the current effort is expanding
+the implemented RV32I instruction subset together with directed module and
+program-level tests. `riscv-tests` has not yet been integrated.
+
 Relevant planning docs:
 
 1. `requirements.md`
@@ -130,6 +135,27 @@ Cache verification is the current likely first Cocotb use case. The existing Sys
 Testbench claims must respect module boundaries. A module-level test may only claim to verify behavior observable through that module's inputs and outputs. For example, `pc_target_gen_tb` can verify that JALR uses `alu_src_AE`, but it cannot prove whether that value came from a forwarding mux; forwarding requires a mux-level or program-level test.
 
 Use `$fatal(1, ...)` for test failures so scripts receive a nonzero exit status. Reserve `$finish` for successful test completion.
+
+Directed SystemVerilog unit tests should favor readability over compact
+parameterization. Keep one instruction or one behavior per task. The preferred
+task shape is:
+
+```systemverilog
+task automatic test_example_instr();
+    apply_instr_defaults();
+
+    instr_D = 32'hXXXXXXXX; // assembly instruction
+    #1;
+
+    check_ctrl_bundle("example control bundle", EXPECTED_CTRL);
+    check_imm_src("example immediate source", EXPECTED_IMM);
+endtask
+```
+
+Keep reusable assertion/check tasks at the bottom of the testbench, but avoid
+hiding instruction stimulus inside generic parameterized execution helpers.
+The test body should show the reset/default step, direct inputs, propagation
+delay, and checks explicitly.
 
 ## Code Review Expectations
 
