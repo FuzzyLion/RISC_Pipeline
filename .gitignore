@@ -16,3 +16,6 @@ scripts/build/
 
 # Hook
 .codex/
+
+# Pic
+*.svg

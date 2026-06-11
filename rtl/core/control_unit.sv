@@ -25,7 +25,8 @@ module control_unit
         pc_target_src: PC_TARGET_PC_IMM,
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
-        alu_src: BE_RDATA_E
+        alu_src: BE_RDATA_E,
+        funct3_ctrl: BEQ_FUNCT3
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -162,12 +163,14 @@ module control_unit
                 imm_src_D = IMM_U;
             end
 
-            /*
             OP_UTYPE_AUIPC: begin // (23)
                 //AUIPC
-                
+                ctrl_D.rf_write = 1'b1;
+                ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
+                ctrl_D.alu_ctrl = CTRL_PASS_B;
+                ctrl_D.alu_src = BE_IMM_E;
+                imm_src_D = IMM_U;
             end
-            */
 
             OP_STYPE: begin // (35)
 
@@ -196,22 +199,43 @@ module control_unit
                         ctrl_D.branch = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BEQ_FUNCT3;
                     end
-                    /*
                     BNE: begin
                         ctrl_D.branch = 1'b1;
-                        ctrl_D.alu_src = CTRL_SUB;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
                         imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BNE_FUNCT3;
                     end
-                    BLT:
-                    BGE:
-                    BLTU:
-                    BGEU:
-                    */
+                    BLT: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BLT_FUNCT3;
+                    end
+                    BGE: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BGE_FUNCT3;
+                    end
+                    BLTU: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BLTU_FUNCT3;
+                    end
+                    BGEU: begin
+                        ctrl_D.branch = 1'b1;
+                        ctrl_D.alu_ctrl = CTRL_SUB;
+                        imm_src_D = IMM_B;
+                        ctrl_D.funct3_ctrl = BGEU_FUNCT3; 
+                    end
                     default: begin
                         ctrl_D.branch = 1'b0;
                         ctrl_D.alu_ctrl = CTRL_ADD;
                         imm_src_D = IMM_I;
+                        ctrl_D.funct3_ctrl = BEQ_FUNCT3;
                     end
                 endcase
             end

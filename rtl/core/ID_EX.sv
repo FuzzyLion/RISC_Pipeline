@@ -20,7 +20,8 @@ module ID_EX
         pc_target_src: PC_TARGET_PC_IMM,
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
-        alu_src: BE_RDATA_E
+        alu_src: BE_RDATA_E,
+        funct3_ctrl: BEQ_FUNCT3
     };
 
     always_ff @(posedge clk) begin

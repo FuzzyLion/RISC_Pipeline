@@ -58,8 +58,10 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
 │   ├── run_alu_op.sh
 │   ├── run_basic_smoke.sh
 │   ├── run_control_unit.sh
+│   ├── run_data_mem.sh
 │   ├── run_hazard_unit.sh
 │   ├── run_imm_ext.sh
+│   ├── run_pc_target_gen.sh
 │   ├── run_reg_file.sh
 │   ├── run_regression.sh
 │   ├── run_smoke_branch.sh
@@ -73,6 +75,7 @@ The code is not a complete RV32I processor yet. The package lists many RV32I enc
     ├── data_mem_tb.sv
     ├── hazard_unit_tb.sv
     ├── imm_ext_tb.sv
+    ├── pc_target_gen_tb.sv
     └── reg_file_tb.sv
 ```
 
@@ -94,7 +97,7 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/pc_reg.sv`, `rtl/core/pc_plus4_adder.sv`, and `rtl/core/pc_mux.sv` implement the Fetch-stage PC path. The PC register can stall, reset goes to zero, the adder computes `PC + 4`, and the mux chooses either the sequential PC or an EX-stage redirect target.
 
-`rtl/core/pc_target_gen.sv` computes branch/jump targets and `pc_src_E`. PC-relative targets use `pc_E + imm_E`; `jalr` uses forwarded `rs1` data plus immediate and clears bit 0. Branch decision currently uses `branch_E && zero_E`, so implemented branch behavior is centered on `beq`.
+`rtl/core/pc_target_gen.sv` computes branch/jump targets and `pc_src_E`. PC-relative targets use `pc_E + imm_E`; `jalr` uses `alu_src_AE + imm_E` and clears target bit 0. The module cannot determine whether `alu_src_AE` came from the original operand or a forwarding path; that behavior belongs to the upstream forwarding mux and integration tests. Branch decision currently uses `branch_E && zero_E`, so implemented branch behavior is centered on `beq`. Because the core does not implement the compressed-instruction extension, a JALR target with bit 1 set will later need an instruction-address-misaligned exception rather than further silent alignment.
 
 `rtl/core/instr_mem.sv` is a simple word-array instruction memory initialized with `$readmemh`. It indexes memory using `pc_F[MEM_ADDR_WIDTH+1:2]`, so the core presents byte addresses while the model stores 32-bit instruction words.
 
@@ -118,13 +121,15 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
-`tb/alu_op_tb.sv`, `tb/reg_file_tb.sv`, `tb/control_unit_tb.sv`, `tb/imm_ext_tb.sv`, and `tb/hazard_unit_tb.sv` provide focused module-level tests. The ALU testbench keeps one task per ALU operation for readability and covers arithmetic wraparound, signed versus unsigned comparison, shift behavior, `zero_E`, and invalid control handling.
+`tb/alu_op_tb.sv`, `tb/reg_file_tb.sv`, `tb/control_unit_tb.sv`, `tb/imm_ext_tb.sv`, `tb/data_mem_tb.sv`, `tb/pc_target_gen_tb.sv`, and `tb/hazard_unit_tb.sv` provide focused module-level tests. The ALU testbench keeps one task per ALU operation for readability and covers arithmetic wraparound, signed versus unsigned comparison, shift behavior, `zero_E`, and invalid control handling.
+
+`tb/data_mem_tb.sv` covers initial zero contents, combinational reads, synchronous writes, write-disable behavior, ignored low address bits in the current word-array model, and independence of adjacent words.
+
+`tb/pc_target_gen_tb.sv` covers positive and negative PC-relative offsets, 32-bit address wraparound, JALR target calculation, JALR bit-0 clearing, use of `alu_src_AE` rather than `pc_E`, and jump/branch redirect decisions. It intentionally does not claim to verify where `alu_src_AE` originated.
 
 `tb/core_basic_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`, and `tb/core_smoke_hazard_tb.sv` instantiate `top`, load one program each, wait for an `x31 == 1` completion marker, enforce a timeout, and inspect internal architectural state hierarchically. These are smoke tests, not a complete ISA verification environment.
 
-`tb/data_mem_tb.sv` currently exists as an incomplete scaffold. It is not yet a meaningful data-memory test and is not included in the regression.
-
-`sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`, `sim/run_imm_ext.sh`, and `sim/run_hazard_unit.sh` run module-level Verilator tests. `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh` rebuild their assembly programs and run processor-level smoke tests. `sim/run_regression.sh` is the unified entry point and currently runs these eight completed tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base zero.
+`sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`, `sim/run_imm_ext.sh`, `sim/run_data_mem.sh`, `sim/run_pc_target_gen.sh`, and `sim/run_hazard_unit.sh` run module-level Verilator tests. `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`, and `sim/run_smoke_hazard.sh` rebuild their assembly programs and run processor-level smoke tests. `sim/run_regression.sh` is the unified entry point and currently runs ten completed tests: seven module tests and three processor smoke tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base zero.
 
 `docs/data-memory-addressing.md` explains the current byte-addressed ISA view versus word-array Verilog memory model. It is useful background before changing load/store behavior.
 
@@ -156,6 +161,10 @@ The data memory is an exception to the general reset pattern: CPU reset does not
 
 The design favors small single-purpose modules and explicit wiring in `core.sv` rather than hiding datapath behavior behind large abstractions. Comments are a mix of English and Chinese, often teaching-oriented and focused on explaining hardware meaning.
 
+Testbench failure paths use `$fatal(1, ...)` so failed checks return a nonzero process status. Successful completion uses `$finish`.
+
+The current verification tool decision is to keep Verilator plus SystemVerilog directed tests as the default flow. Cocotb is intentionally deferred until Python-driven generation or modeling provides concrete value. Likely triggers include Cache verification with a golden-memory model, randomized memory latency, large parameter combinations, randomized instruction streams, or differential comparison against an ISA reference model. Existing directed SystemVerilog tests should remain as the fast baseline after Cocotb is introduced.
+
 ## Current Status and Known Limitations
 
 Implemented or visibly present:
@@ -169,20 +178,20 @@ Implemented or visibly present:
 7. EX operand forwarding from MEM ALU results and WB results.
 8. Load-use stall insertion.
 9. Verilator smoke tests for basic execution, branch flushing, and hazards.
-10. Module-level Verilator tests for ALU, register file, immediate extension, control decode, and hazard control.
-11. A unified regression script covering five module tests and three processor smoke tests.
+10. Module-level Verilator tests for ALU, register file, immediate extension, control decode, data memory, PC target generation, and hazard control.
+11. A unified regression script covering seven module tests and three processor smoke tests.
 12. Assembly source and generated hex images for all three smoke programs, with explicit completion markers.
+13. A documented verification-tool decision to retain Verilator/SystemVerilog now and defer Cocotb until randomized, parameterized, latency-driven, Cache reference-model, or differential testing justifies it.
 
 Partially implemented or uncertain:
 
 1. Full RV32I support is incomplete. Many opcodes/funct values are declared, but several decode paths are commented out or default to NOP-like behavior.
 2. Only `lw` and `sw` are visibly active for memory operations. Byte and halfword loads/stores are not implemented in the current control/data memory path.
 3. Branch support appears limited to `beq`; other branch funct3 cases are not active.
-4. Misaligned instruction or data access behavior is unclear from repository.
+4. Misaligned instruction and data accesses are not architecturally handled yet. The current data-memory model ignores address bits `[1:0]`, while JALR clears only target bit 0. Phase 4 must detect unsupported alignment and raise the appropriate exception instead of silently correcting the address.
 5. Memory bounds behavior is unclear from repository.
-6. `tb/data_mem_tb.sv` is only a scaffold and has not yet been completed or added to the regression.
-7. `riscv-tests` integration, a failure-tracking record, and a written Cocotb/Icarus/Verilator selection decision are still missing from Phase 3.
-8. The current regression is useful but remains a small hand-written baseline rather than broad ISA verification.
+6. `riscv-tests` integration and a failure-tracking record are still missing from Phase 3.
+7. The current regression is useful but remains a small hand-written baseline rather than broad ISA verification.
 
 Not implemented as visible RTL:
 
@@ -194,10 +203,8 @@ Not implemented as visible RTL:
 ## Suggested Next Steps
 
 1. Keep `sim/run_regression.sh` green before and after RTL changes.
-2. Complete `tb/data_mem_tb.sv` with tests for initialization, combinational read, synchronous write, write-disable behavior, and byte-address-to-word-index mapping, then add a runner and regression entry.
-3. Add a small compatible subset of `riscv-tests` and record unsupported tests separately from genuine failures.
-4. Create a lightweight verification-status or defect-tracking document that classifies failures by module, pipeline stage, or program-level behavior.
-5. Record the current verification tool decision: Verilator remains the main simulator; Cocotb should be introduced only when Python-driven parameterization, random generation, or reference-model comparison provides clear value.
-6. Expand decode in small, test-backed steps for the remaining RV32I instructions.
-7. Document the intended priority order between redirect, load-use stall, memory wait, and future exception flush before adding memory handshakes or CSR traps.
-8. Introduce a clearer memory interface boundary before Cache work, since the current memories are internal single-model arrays.
+2. Add a small compatible subset of `riscv-tests` and record unsupported tests separately from genuine failures.
+3. Create a lightweight verification-status or defect-tracking document that classifies failures by module, pipeline stage, or program-level behavior.
+4. Expand decode in small, test-backed steps for the remaining RV32I instructions.
+5. Document the intended priority order between redirect, load-use stall, memory wait, and future exception flush before adding memory handshakes or CSR traps.
+6. Introduce a clearer memory interface boundary before Cache work, since the current memories are internal single-model arrays.

@@ -112,6 +112,25 @@ Treat CPU reset, memory initialization, and Cache invalidation as separate conce
 6. Invalid Cache data must never be used, even if stale physical bits remain in the data array.
 7. For a write-back Cache, define dirty-line behavior across reset or flush explicitly before clearing valid or dirty metadata.
 
+## Verification Tool Policy
+
+Use Verilator with SystemVerilog directed testbenches as the default verification flow for the current core.
+
+Do not introduce Cocotb merely because the project reaches a new phase. Introduce it when Python provides a clear advantage, especially for:
+
+1. Large randomized or repetitive test sets.
+2. Parameterized test matrices.
+3. Random memory-response latency.
+4. Reference-model or differential testing.
+5. Reproducible random seeds and failure minimization.
+6. Cache testing with a Python golden-memory model.
+
+Cache verification is the current likely first Cocotb use case. The existing SystemVerilog tests should remain available as fast directed regression tests after Cocotb is introduced.
+
+Testbench claims must respect module boundaries. A module-level test may only claim to verify behavior observable through that module's inputs and outputs. For example, `pc_target_gen_tb` can verify that JALR uses `alu_src_AE`, but it cannot prove whether that value came from a forwarding mux; forwarding requires a mux-level or program-level test.
+
+Use `$fatal(1, ...)` for test failures so scripts receive a nonzero exit status. Reserve `$finish` for successful test completion.
+
 ## Code Review Expectations
 
 Reviews in this repo should feel like a teacher grading a serious student project.
