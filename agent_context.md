@@ -4,9 +4,9 @@ This repository is a learning-first SystemVerilog RISC-V CPU project. The curren
 
 The code is not a complete RV32I processor yet. The active decode now covers
 the full R-type integer ALU group, the RV32I ALU-immediate group, all six base
-branch conditions, `lui`, `auipc`, `lw`, `sw`, `jal`, and `jalr`. Byte and
-halfword memory operations, system instructions, CSR behavior, exceptions, and
-interrupts are still outside the implemented subset.
+branch conditions, `lui`, `auipc`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`,
+`sh`, `sw`, `jal`, and `jalr`. System instructions, CSR behavior, exceptions,
+and interrupts are still outside the implemented subset.
 
 ## Compact Directory Tree
 
@@ -57,7 +57,9 @@ interrupts are still outside the implemented subset.
 │       ├── EX_forward_muxAE.sv
 │       ├── EX_forward_rd_muxBE.sv
 │       ├── EX_muxBE.sv
+│       ├── store_data.sv
 │       ├── data_mem.sv
+│       ├── load_data.sv
 │       └── WB_result_mux.sv
 ├── sim/
 │   ├── build_hex.sh
@@ -95,14 +97,14 @@ Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, a
 
 `rtl/core/top.sv` is a thin wrapper around `core`. Its comment marks it as a future board/SoC wrapper point for clock, reset, memory, and peripherals.
 
-`rtl/core/core.sv` is the main pipeline integration module. It wires control, PC logic, instruction memory, register file, immediate generation, forwarding muxes, ALU, branch target generation, pipeline registers, data memory, writeback mux, and the hazard unit.
+`rtl/core/core.sv` is the main pipeline integration module. It wires control, PC logic, instruction memory, register file, immediate generation, forwarding muxes, ALU, branch target generation, pipeline registers, store/load data alignment, data memory, writeback mux, and the hazard unit.
 
 `rtl/core/control_unit.sv` decodes the instruction in the Decode stage into
 `control_bundle_t` and `imm_src_e`. Implemented active cases include the R-type
 ALU instructions, `addi`, `slti`, `sltiu`, `xori`, `ori`, `andi`, `slli`,
-`srli`, `srai`, `lw`, `sw`, `lui`, `auipc`, `beq`, `bne`, `blt`, `bge`,
-`bltu`, `bgeu`, `jal`, and `jalr`. Unsupported funct combinations fall back to
-the NOP control bundle.
+`srli`, `srai`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`, `sh`, `sw`, `lui`,
+`auipc`, `beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`, `jal`, and `jalr`.
+Unsupported funct combinations fall back to the NOP control bundle.
 
 `rtl/core/hazard_unit.sv` generates forwarding selects plus stall/flush controls. It forwards MEM non-load ALU results and WB results into EX operands, stalls on load-use hazards where an EX-stage load feeds a Decode-stage source, and flushes Decode/Execute on taken branch or jump redirects from EX.
 
@@ -140,9 +142,28 @@ BGEU when branch control is active.
 
 `rtl/core/EX_muxBE.sv` chooses the ALU B operand between forwarded `rs2` data and the EX-stage immediate.
 
-`rtl/core/data_mem.sv` is a simple word-array data memory with combinational read and synchronous write. It treats ALU results as byte addresses and indexes the internal word array with address bits `[MEM_ADDR_WIDTH+1:2]`; only word-level behavior is modeled. It intentionally has no CPU reset input. Simulation or FPGA power-up initialization is separate from CPU reset, and clearing the full array in reset logic could prevent RAM inference.
+`rtl/core/store_data.sv` prepares store data before the data memory. It uses
+the MEM-stage store type and address low bits to shift `rs2` data into the
+correct byte lanes and generate a 4-bit write strobe for `sb`, `sh`, and `sw`.
+Misaligned `sh` and `sw` currently produce no write strobe; a later exception
+path should turn those cases into architectural traps.
 
-`rtl/core/WB_result_mux.sv` selects the writeback value from ALU result, memory read data, or `PC + 4`.
+`rtl/core/data_mem.sv` is a simple word-array data memory with combinational
+read and synchronous byte-lane writes. It treats ALU results as byte addresses
+and indexes the internal word array with address bits `[MEM_ADDR_WIDTH+1:2]`.
+Subword stores are applied through `store_wstrb_M`, while the selected 32-bit
+word is still read as a whole and narrowed by `load_data`. It intentionally has
+no CPU reset input. Simulation or FPGA power-up initialization is separate from
+CPU reset, and clearing the full array in reset logic could prevent RAM
+inference.
+
+`rtl/core/load_data.sv` post-processes the 32-bit data-memory read word for
+`lb`, `lh`, `lw`, `lbu`, and `lhu`. It selects the addressed byte or halfword
+using `alu_result_M[1:0]`, then sign-extends or zero-extends the value for
+writeback. Misaligned `lh`, `lhu`, and `lw` currently produce zero rather than
+raising an architectural exception.
+
+`rtl/core/WB_result_mux.sv` selects the writeback value from ALU result, post-processed load result, or `PC + 4`.
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
@@ -152,10 +173,12 @@ BGEU when branch control is active.
 testbenches keep one instruction or behavior per task. Test tasks explicitly
 apply defaults, assign direct inputs, wait `#1`, and call reusable check tasks.
 Coverage includes arithmetic wraparound, signed versus unsigned comparison,
-shift behavior, all branch conditions, AUIPC calculation and decode, `zero_E`,
-and invalid control handling.
+shift behavior, all branch conditions, AUIPC calculation and decode, load/store
+decode variants, `zero_E`, and invalid control handling.
 
-`tb/data_mem_tb.sv` covers initial zero contents, combinational reads, synchronous writes, write-disable behavior, ignored low address bits in the current word-array model, and independence of adjacent words.
+`tb/data_mem_tb.sv` covers initial zero contents, combinational reads,
+synchronous writes, write-disable behavior, byte-lane write strobes, ignored low
+address bits for word indexing, and independence of adjacent words.
 
 `tb/pc_target_gen_tb.sv` covers positive and negative PC-relative offsets, 32-bit address wraparound, JALR target calculation, JALR bit-0 clearing, use of `alu_src_AE` rather than `pc_E`, and jump/branch redirect decisions. It intentionally does not claim to verify where `alu_src_AE` originated.
 
@@ -183,7 +206,7 @@ zero.
 
 ## Architecture Summary
 
-The implemented datapath is organized as a classic five-stage pipeline: IF, ID, EX, MEM, and WB. IF holds and updates the PC, fetches a 32-bit instruction from `instr_mem`, and computes `PC + 4`. ID decodes the instruction, reads the register file, extracts register fields, and generates immediates. EX applies forwarding, selects ALU operands, computes ALU results, computes branch/jump targets, and decides redirects. MEM accesses the simple internal data memory. WB selects the final result and writes the register file.
+The implemented datapath is organized as a classic five-stage pipeline: IF, ID, EX, MEM, and WB. IF holds and updates the PC, fetches a 32-bit instruction from `instr_mem`, and computes `PC + 4`. ID decodes the instruction, reads the register file, extracts register fields, and generates immediates. EX applies forwarding, selects ALU operands, computes ALU results, computes branch/jump targets, and decides redirects. MEM prepares subword stores, accesses the simple internal data memory, and post-processes load data. WB selects the final result and writes the register file.
 
 Control is generated in Decode as a packed `control_bundle_t`, then carried through later stages with narrower packed control bundles where possible. Pipeline registers carry explicit `valid` bits, and side-effecting controls are gated by validity as they enter later stages.
 
@@ -224,8 +247,9 @@ Implemented or visibly present:
 3. Register file with x0 behavior and same-cycle WB read bypass.
 4. ALU support for common arithmetic, logical, compare, and shift operations.
 5. Decode support for R-type ALU instructions; `addi`, `slti`, `sltiu`,
-   `xori`, `ori`, `andi`, `slli`, `srli`, and `srai`; `lw`, `sw`, `lui`,
-   `auipc`; all six base branch conditions; `jal`; and `jalr`.
+   `xori`, `ori`, `andi`, `slli`, `srli`, and `srai`; `lb`, `lh`, `lw`, `lbu`,
+   `lhu`, `sb`, `sh`, and `sw`; `lui`, `auipc`; all six base branch
+   conditions; `jal`; and `jalr`.
 6. EX-stage branch/jump redirect handling.
 7. EX operand forwarding from MEM ALU results and WB results.
 8. Load-use stall insertion.
@@ -241,11 +265,16 @@ Implemented or visibly present:
 Partially implemented or uncertain:
 
 1. Full RV32I support is incomplete. Many opcodes/funct values are declared, but several decode paths are commented out or default to NOP-like behavior.
-2. Only `lw` and `sw` are visibly active for memory operations. Byte and halfword loads/stores are not implemented in the current control/data memory path.
+2. Byte and halfword loads/stores are implemented in the current internal memory
+   path, but they are still covered only by directed unit tests rather than
+   broad program-level ISA tests.
 3. Misaligned instruction and data accesses are not architecturally handled
-   yet. The current data-memory model ignores address bits `[1:0]`, while JALR
-   clears only target bit 0. Phase 4 must detect unsupported alignment and
-   raise the appropriate exception instead of silently correcting the address.
+   yet. The data-memory word index uses address bits `[MEM_ADDR_WIDTH+1:2]`,
+   while `load_data` and `store_data` use `[1:0]` for subword lane selection.
+   Misaligned halfword and word data accesses currently produce zero/no-write
+   behavior rather than traps, and JALR clears only target bit 0. Phase 4 must
+   detect unsupported alignment and raise the appropriate exception instead of
+   silently correcting or masking the access.
 4. Memory bounds behavior is unclear from the repository.
 5. `riscv-tests` integration and a failure-tracking record are still missing
    from Phase 3.

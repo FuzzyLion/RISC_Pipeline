@@ -467,7 +467,6 @@ module control_unit_tb
     initial begin
         test_no_instr();
         test_addi_instr();
-        test_lw_instr();
         test_jalr_instr();
         test_add_instr();
         test_sub_instr();
@@ -498,6 +497,10 @@ module control_unit_tb
         test_bltu_instr();
         test_bgeu_instr();
         test_lb_instr();
+        test_lh_instr();
+        test_lw_instr();
+        test_lbu_instr();
+        test_lhu_instr();
         test_sb_instr();
         test_sh_instr();
         test_unsupported_rtype_funct7();
@@ -552,16 +555,6 @@ module control_unit_tb
         check_ctrl_bundle("U-Type AUIPC control bundle", CTRL_UTYPE_AUIPC);
         check_imm_src("U mode imm", IMM_U);
     endtask
-
-    task automatic test_sw_instr();
-        apply_instr_defaults();
-
-        instr_D = 32'h00312423; // sw x3, 8(x2)
-        #1;
-
-        check_ctrl_bundle("S-Type control bundle", CTRL_STYPE);
-        check_imm_src("S mode imm", IMM_S);
-    endtask 
 
     task automatic test_add_instr();
         apply_instr_defaults();
@@ -673,7 +666,7 @@ module control_unit_tb
         check_imm_src("B mode imm", IMM_B);
     endtask 
 
-        task automatic test_bne_instr();
+    task automatic test_bne_instr();
         apply_instr_defaults();
 
         instr_D = 32'h00209863; // bne x1, x2, 16
@@ -734,12 +727,16 @@ module control_unit_tb
     endtask 
 
     task automatic test_lw_instr();
+        control_bundle_t expected_ctrl;
+
         apply_instr_defaults();
 
         instr_D = 32'h00412083; // lw x1, 4(x2)
+        expected_ctrl = CTRL_ITYPE_LOAD;
+        expected_ctrl.load_type = LW;
         #1;
 
-        check_ctrl_bundle("I-Type-Load LW control bundle", CTRL_ITYPE_LOAD);
+        check_ctrl_bundle("I-Type-Load LW control bundle", expected_ctrl);
         check_imm_src("I mode imm", IMM_I);
     endtask 
 
@@ -756,6 +753,89 @@ module control_unit_tb
         check_ctrl_bundle("I-Type-Load LB control bundle", expected_ctrl);
         check_imm_src("I mode imm", IMM_I);
     endtask
+
+    task automatic test_lh_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00811083; // lh x1, 8(x2)
+        expected_ctrl = CTRL_ITYPE_LOAD;
+        expected_ctrl.load_type = LH;
+        #1;
+
+        check_ctrl_bundle("I-Type-Load LH control bundle", expected_ctrl);
+        check_imm_src("I mode imm", IMM_I);
+    endtask
+
+    task automatic test_lbu_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00814083; // lbu x1, 8(x2)
+        expected_ctrl = CTRL_ITYPE_LOAD;
+        expected_ctrl.load_type = LBU;
+        #1;
+
+        check_ctrl_bundle("I-Type-Load LBU control bundle", expected_ctrl);
+        check_imm_src("I mode imm", IMM_I);
+    endtask
+
+    task automatic test_lhu_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00815083; // lhu x1, 8(x2)
+        expected_ctrl = CTRL_ITYPE_LOAD;
+        expected_ctrl.load_type = LHU;
+        #1;
+
+        check_ctrl_bundle("I-Type-Load LHU control bundle", expected_ctrl);
+        check_imm_src("I mode imm", IMM_I);
+    endtask
+
+    task automatic test_sb_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00310423; // sb x3, 8(x2)
+        expected_ctrl = CTRL_STYPE;
+        expected_ctrl.store_type = SB;
+        #1;
+
+        check_ctrl_bundle("S-Type SB control bundle", expected_ctrl);
+        check_imm_src("S mode imm", IMM_S);
+    endtask
+
+    task automatic test_sh_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00311423; // sh x3, 8(x2)
+        expected_ctrl = CTRL_STYPE;
+        expected_ctrl.store_type = SH;
+        #1;
+
+        check_ctrl_bundle("S-Type SH control bundle", expected_ctrl);
+        check_imm_src("S mode imm", IMM_S);
+    endtask
+
+    task automatic test_sw_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00312423; // sw x3, 8(x2)
+        expected_ctrl = CTRL_STYPE;
+        #1;
+
+        check_ctrl_bundle("S-Type control bundle", CTRL_STYPE);
+        check_imm_src("S mode imm", IMM_S);
+    endtask 
 
     task automatic test_jalr_instr();
         apply_instr_defaults();
@@ -848,34 +928,6 @@ module control_unit_tb
     endtask
 
     // --------------------------- CORNER CASES ---------------------------
-    task automatic test_sb_instr();
-        control_bundle_t expected_ctrl;
-
-        apply_instr_defaults();
-
-        instr_D = 32'h00310423; // sb x3, 8(x2)
-        expected_ctrl = CTRL_STYPE;
-        expected_ctrl.store_type = SB;
-        #1;
-
-        check_ctrl_bundle("S-Type SB control bundle", expected_ctrl);
-        check_imm_src("S mode imm", IMM_S);
-    endtask
-
-    task automatic test_sh_instr();
-        control_bundle_t expected_ctrl;
-
-        apply_instr_defaults();
-
-        instr_D = 32'h00311423; // sh x3, 8(x2)
-        expected_ctrl = CTRL_STYPE;
-        expected_ctrl.store_type = SH;
-        #1;
-
-        check_ctrl_bundle("S-Type SH control bundle", expected_ctrl);
-        check_imm_src("S mode imm", IMM_S);
-    endtask
-
     task automatic test_unsupported_rtype_funct7();
         apply_instr_defaults();
 
@@ -887,6 +939,7 @@ module control_unit_tb
     endtask
 
     task automatic test_unsupported_shift_imm_funct7();
+        // Besides slli, srli, srai
         apply_instr_defaults();
 
         instr_D = 32'h20111093; // OP-IMM shift shape with reserved funct7=0010000
