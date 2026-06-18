@@ -16,7 +16,9 @@ module data_mem
     input logic mem_write_M,
 
     input logic [WORD_WIDTH - 1:0] alu_result_M,
-    input logic [WORD_WIDTH - 1:0] write_data_M,
+    input logic [WORD_WIDTH - 1:0] store_wdata_M,
+
+    input logic [3:0] store_wstrb_M,
 
     output logic [WORD_WIDTH - 1:0] mem_rdata_M
 );
@@ -73,7 +75,21 @@ module data_mem
 
     always_ff @(posedge clk) begin // Synchronous write
         if (mem_write_M) begin
-            mem[word_idx] <= write_data_M; // Store writes rs2 data into the selected memory word
+            
+            // When the specific byte lanes are enable, update the pointed bytes
+            if (store_wstrb_M[0]) begin
+                mem[word_idx][7:0]   <= store_wdata_M[7:0];
+            end
+            if (store_wstrb_M[1]) begin
+                mem[word_idx][15:8]  <= store_wdata_M[15:8];
+            end
+            if (store_wstrb_M[2]) begin
+                mem[word_idx][23:16] <= store_wdata_M[23:16];
+            end
+            if (store_wstrb_M[3]) begin
+                mem[word_idx][31:24] <= store_wdata_M[31:24];
+            end
+
         end
     end
     

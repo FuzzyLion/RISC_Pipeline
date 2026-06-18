@@ -16,7 +16,9 @@ module EX_MEM
     localparam ex_mem_control_t CTRL_NOP = '{
         rf_write: 1'b0,
         result_src: RSLT_ALU,
-        mem_write: 1'b0
+        mem_write: 1'b0,
+        load_type: LB,
+        store_type: SB
     };
 
     always_ff @(posedge clk) begin

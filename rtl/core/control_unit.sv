@@ -26,7 +26,9 @@ module control_unit
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -104,21 +106,17 @@ module control_unit
             OP_ITYPE_LOAD: begin // (3)
 
                 case (itype_load_D)
-                    LW: begin
+                    LB, LH, LW, LBU, LHU: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.result_src = RSLT_RDATA;
                         ctrl_D.alu_src = BE_IMM_E;
+                        ctrl_D.load_type = itype_load_D;
                     end
-                    /*
-                    LH:
-                    LW:
-                    LBU:
-                    LHU:
-                    */
                     default: begin
                         ctrl_D.rf_write = 1'b0;
                         ctrl_D.result_src = RSLT_ALU;
                         ctrl_D.alu_src = BE_RDATA_E;
+                        ctrl_D.load_type = LB;
                     end
                 endcase
             end
@@ -205,19 +203,17 @@ module control_unit
             OP_STYPE: begin // (35)
 
                 case (stype_D)
-                    SW: begin
+                    SW, SB, SH: begin
                         ctrl_D.mem_write = 1'b1;
                         ctrl_D.alu_src = BE_IMM_E;
                         imm_src_D = IMM_S;
+                        ctrl_D.store_type = stype_D;
                     end 
-                    /*
-                    SB:
-                    SH:
-                    */
                     default: begin
                         ctrl_D.mem_write = 1'b0;
                         ctrl_D.alu_src = BE_RDATA_E;
                         imm_src_D = IMM_I;
+                        ctrl_D.store_type = SB;
                     end
                 endcase
             end

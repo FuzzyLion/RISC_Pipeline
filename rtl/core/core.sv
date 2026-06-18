@@ -79,8 +79,15 @@ module core
     ex_mem_data_t data_E_exmem;
     ex_mem_data_t data_M_exmem;
 
+    // store_data
+    logic [3:0] store_wstrb_M_en;
+    logic [WORD_WIDTH - 1:0] store_wdata_M_out;
+
     // data_mem
     logic [WORD_WIDTH - 1:0] mem_rdata_M_out;
+
+    // load_data
+    logic [WORD_WIDTH - 1:0] load_result_M_out;
 
     // MEM_WB
     mem_wb_data_t data_M_memwb;
@@ -93,7 +100,9 @@ module core
     assign ctrl_next_E = '{
         rf_write: ctrl_E.rf_write,
         result_src: ctrl_E.result_src,
-        mem_write: ctrl_E.mem_write
+        mem_write: ctrl_E.mem_write,
+        load_type: ctrl_E.load_type,
+        store_type: ctrl_E.store_type
     };
 
     assign ctrl_next_M = '{
@@ -135,7 +144,7 @@ module core
     assign data_M_memwb = '{
         valid: data_M_exmem.valid,
         alu_result: data_M_exmem.alu_result,
-        mem_rdata: mem_rdata_M_out,
+        load_result: load_result_M_out,
         rd_idx: data_M_exmem.rd_idx,
         pc_plus4: data_M_exmem.pc_plus4
     };
@@ -310,13 +319,31 @@ module core
         .data_M(data_M_exmem)
     );
 
+    // Store Data Instructions Alignment
+    store_data store_data1 (
+        .store_type(ctrl_M.store_type),
+        .alu_result_M(data_M_exmem.alu_result),
+        .write_data_M(data_M_exmem.write_data),
+        .store_wdata_M(store_wdata_M_out),
+        .store_wstrb_M(store_wstrb_M_en)
+    );
+
     // Data Memory
     data_mem data_mem1 (
         .clk(clk),
         .mem_write_M(ctrl_M.mem_write),
         .alu_result_M(data_M_exmem.alu_result),
-        .write_data_M(data_M_exmem.write_data),
+        .store_wdata_M(store_wdata_M_out),
+        .store_wstrb_M(store_wstrb_M_en),
         .mem_rdata_M(mem_rdata_M_out)
+    );
+
+    // Load Data Instructions Alignment
+    load_data load_data1 (
+        .load_type_M(ctrl_M.load_type),
+        .alu_result_M(data_M_exmem.alu_result),
+        .mem_rdata_M(mem_rdata_M_out),
+        .load_result_M(load_result_M_out)
     );
 
     // MEM_WB Pipeline Register
@@ -332,7 +359,7 @@ module core
     // WB Result MUX
     WB_result_mux WB_result_mux1 (
         .alu_result_W(data_W_memwb.alu_result),
-        .mem_rdata_W(data_W_memwb.mem_rdata),
+        .load_result_W(data_W_memwb.load_result),
         .pc_plus4_W(data_W_memwb.pc_plus4),
         .result_src_W(ctrl_W.result_src),
         .result_W(result_W_out)

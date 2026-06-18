@@ -141,12 +141,16 @@ package core_types_pkg;
         alu_ctrl_e alu_ctrl;
         alu_src_e alu_src;
         btype_e btype;
+        itype_load_e load_type;
+        stype_e store_type;
     } control_bundle_t;
 
     typedef struct packed {
         logic rf_write;
         result_src_e result_src;
         logic mem_write;
+        itype_load_e load_type;
+        stype_e store_type;
     } ex_mem_control_t;
 
     typedef struct packed {
@@ -185,7 +189,7 @@ package core_types_pkg;
     typedef struct packed {
         logic valid;
         logic [WORD_WIDTH - 1:0] alu_result;
-        logic [WORD_WIDTH - 1:0] mem_rdata;
+        logic [WORD_WIDTH - 1:0] load_result;
         logic [ADDR_WIDTH - 1:0] rd_idx;
         logic [WORD_WIDTH - 1:0] pc_plus4;
     } mem_wb_data_t;

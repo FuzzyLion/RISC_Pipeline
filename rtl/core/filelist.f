@@ -18,6 +18,8 @@ rtl/core/pc_reg.sv
 rtl/core/IF_ID.sv
 rtl/core/ID_EX.sv
 rtl/core/EX_MEM.sv
+rtl/core/store_data.sv
 rtl/core/data_mem.sv
+rtl/core/load_data.sv
 rtl/core/MEM_WB.sv
 rtl/core/instr_field.sv
