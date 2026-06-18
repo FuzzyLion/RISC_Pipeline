@@ -18,7 +18,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_IMM = '{
@@ -30,7 +32,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_UTYPE = '{
@@ -42,7 +46,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_PASS_B,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_STYPE = '{
@@ -54,7 +60,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SW
     };
 
     localparam control_bundle_t CTRL_RTYPE = '{
@@ -66,7 +74,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE = '{
@@ -78,7 +88,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_JTYPE = '{
@@ -90,7 +102,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_LOAD = '{
@@ -102,7 +116,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LW,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_JALR = '{
@@ -114,7 +130,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_ADD,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_UTYPE_AUIPC = '{
@@ -126,7 +144,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_PASS_B4PC,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SUB = '{
@@ -138,7 +158,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLL = '{
@@ -150,7 +172,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLL,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLT = '{
@@ -162,7 +186,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLT,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLTU = '{
@@ -174,7 +200,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLTU,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_XOR = '{
@@ -186,7 +214,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_XOR,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SRL = '{
@@ -198,7 +228,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SRL,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_SRA = '{
@@ -210,7 +242,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SRA,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_OR = '{
@@ -222,7 +256,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_OR,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_RTYPE_AND = '{
@@ -234,7 +270,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_AND,
         alu_src: BE_RDATA_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLTI = '{
@@ -246,7 +284,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLT,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLTIU = '{
@@ -258,7 +298,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLTU,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_XORI = '{
@@ -270,7 +312,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_XOR,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_ORI = '{
@@ -282,7 +326,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_OR,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_ANDI = '{
@@ -294,7 +340,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_AND,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLLI = '{
@@ -306,7 +354,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SLL,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_SRLI = '{
@@ -318,7 +368,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SRL,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_ITYPE_SRAI = '{
@@ -330,7 +382,9 @@ module control_unit_tb
         branch: 1'b0,
         alu_ctrl: CTRL_SRA,
         alu_src: BE_IMM_E,
-        btype: BEQ
+        btype: BEQ,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE_BNE = '{
@@ -342,7 +396,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BNE
+        btype: BNE,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE_BLT = '{
@@ -354,7 +410,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BLT
+        btype: BLT,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE_BGE = '{
@@ -366,7 +424,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BGE
+        btype: BGE,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE_BLTU = '{
@@ -378,7 +438,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BLTU
+        btype: BLTU,
+        load_type: LB,
+        store_type: SB
     };
 
     localparam control_bundle_t CTRL_BTYPE_BGEU = '{
@@ -390,7 +452,9 @@ module control_unit_tb
         branch: 1'b1,
         alu_ctrl: CTRL_SUB,
         alu_src: BE_RDATA_E,
-        btype: BGEU
+        btype: BGEU,
+        load_type: LB,
+        store_type: SB
     };
 
     control_unit dut(
@@ -433,8 +497,9 @@ module control_unit_tb
         test_bge_instr();
         test_bltu_instr();
         test_bgeu_instr();
-        test_unsupported_lb();
-        test_unsupported_sb();
+        test_lb_instr();
+        test_sb_instr();
+        test_sh_instr();
         test_unsupported_rtype_funct7();
         test_unsupported_shift_imm_funct7();
         test_unsupported_jalr_funct3();
@@ -678,6 +743,20 @@ module control_unit_tb
         check_imm_src("I mode imm", IMM_I);
     endtask 
 
+    task automatic test_lb_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00810083; // lb x1, 8(x2)
+        expected_ctrl = CTRL_ITYPE_LOAD;
+        expected_ctrl.load_type = LB;
+        #1;
+
+        check_ctrl_bundle("I-Type-Load LB control bundle", expected_ctrl);
+        check_imm_src("I mode imm", IMM_I);
+    endtask
+
     task automatic test_jalr_instr();
         apply_instr_defaults();
 
@@ -769,24 +848,32 @@ module control_unit_tb
     endtask
 
     // --------------------------- CORNER CASES ---------------------------
-    task automatic test_unsupported_lb();
-        apply_instr_defaults();
+    task automatic test_sb_instr();
+        control_bundle_t expected_ctrl;
 
-        instr_D = 32'h00810083; // lb x1, 8(x2)
-        #1;
-
-        check_ctrl_bundle("unsupported instruction LB", CTRL_NOP);
-        check_imm_src("no imm source for LB", IMM_I);
-    endtask 
-
-    task automatic test_unsupported_sb();
         apply_instr_defaults();
 
         instr_D = 32'h00310423; // sb x3, 8(x2)
+        expected_ctrl = CTRL_STYPE;
+        expected_ctrl.store_type = SB;
         #1;
 
-        check_ctrl_bundle("unsupported instruction SB", CTRL_NOP);
-        check_imm_src("no imm source for SB", IMM_I);
+        check_ctrl_bundle("S-Type SB control bundle", expected_ctrl);
+        check_imm_src("S mode imm", IMM_S);
+    endtask
+
+    task automatic test_sh_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h00311423; // sh x3, 8(x2)
+        expected_ctrl = CTRL_STYPE;
+        expected_ctrl.store_type = SH;
+        #1;
+
+        check_ctrl_bundle("S-Type SH control bundle", expected_ctrl);
+        check_imm_src("S mode imm", IMM_S);
     endtask
 
     task automatic test_unsupported_rtype_funct7();
@@ -877,6 +964,16 @@ module control_unit_tb
         if (ctrl_D.btype !== expected_ctrl_bundle.btype) begin
             $fatal(1, "%s: btype expected %0b, got %0b",
                    name, expected_ctrl_bundle.btype, ctrl_D.btype);
+        end
+
+        if (ctrl_D.load_type !== expected_ctrl_bundle.load_type) begin
+            $fatal(1, "%s: load_type expected %0b, got %0b",
+                   name, expected_ctrl_bundle.load_type, ctrl_D.load_type);
+        end
+
+        if (ctrl_D.store_type !== expected_ctrl_bundle.store_type) begin
+            $fatal(1, "%s: store_type expected %0b, got %0b",
+                   name, expected_ctrl_bundle.store_type, ctrl_D.store_type);
         end
     endtask 
 

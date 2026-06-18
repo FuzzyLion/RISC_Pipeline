@@ -9,7 +9,8 @@ module data_mem_tb
     logic mem_write_M;
 
     logic [WORD_WIDTH - 1:0] alu_result_M;
-    logic [WORD_WIDTH - 1:0] write_data_M;
+    logic [WORD_WIDTH - 1:0] store_wdata_M;
+    logic [3:0] store_wstrb_M;
 
     logic [WORD_WIDTH - 1:0] mem_rdata_M;
 
@@ -17,7 +18,8 @@ module data_mem_tb
         .clk(clk),
         .mem_write_M(mem_write_M),
         .alu_result_M(alu_result_M),
-        .write_data_M(write_data_M),
+        .store_wdata_M(store_wdata_M),
+        .store_wstrb_M(store_wstrb_M),
         .mem_rdata_M(mem_rdata_M)
     );
 
@@ -40,6 +42,7 @@ module data_mem_tb
         test_mem_combinational_read();
         test_mem_write_disabled();
         test_low_address_bits_ignored();
+        test_byte_lane_write();
         test_word_idx();
 
         $display("DATA MEM PASS: tb completed");
@@ -55,7 +58,8 @@ module data_mem_tb
     task automatic apply_data_mem_default();
         mem_write_M = 1'b0;
         alu_result_M = 32'h0000_0000;
-        write_data_M = 32'b0;       
+        store_wdata_M = 32'b0;
+        store_wstrb_M = 4'b0000;
     endtask
 
     task automatic test_mem_default();
@@ -81,7 +85,8 @@ module data_mem_tb
         @(negedge clk);
         mem_write_M = 1'b1;
         alu_result_M = 32'h0000_0010;
-        write_data_M = 32'd5;
+        store_wdata_M = 32'd5;
+        store_wstrb_M = 4'b1111;
         #1;
 
         check_mem_data("synchronous write previous state", 32'd0, mem_rdata_M);
@@ -111,14 +116,15 @@ module data_mem_tb
         @(negedge clk);
         mem_write_M = 1'b1;
         alu_result_M = 32'h0000_0020;
-        write_data_M = 32'd55;
+        store_wdata_M = 32'd55;
+        store_wstrb_M = 4'b1111;
 
         @(posedge clk);
         #1;
 
         @(negedge clk);
         mem_write_M = 1'b0;
-        write_data_M = 32'd100;
+        store_wdata_M = 32'd100;
         #1;
 
         check_mem_data("write disabled before clock edge", 32'd55, mem_rdata_M);
@@ -135,7 +141,8 @@ module data_mem_tb
         @(negedge clk);
         mem_write_M = 1'b1;
         alu_result_M = 32'h0000_0030;
-        write_data_M = 32'd10;
+        store_wdata_M = 32'd10;
+        store_wstrb_M = 4'b1111;
         #1;
 
         check_mem_data("low address bits ignored write previous state", 
@@ -163,13 +170,40 @@ module data_mem_tb
         check_mem_data("byte offset 3 aliases same word", 32'd10, mem_rdata_M);
     endtask 
 
+    task automatic test_byte_lane_write();
+        apply_data_mem_default();
+
+        @(negedge clk);
+        mem_write_M = 1'b1;
+        alu_result_M = 32'h0000_0038;
+        store_wdata_M = 32'h1122_3344;
+        store_wstrb_M = 4'b1111;
+
+        @(posedge clk);
+        #1;
+
+        @(negedge clk);
+        store_wdata_M = 32'h0000_AA00;
+        store_wstrb_M = 4'b0010;
+
+        @(posedge clk);
+        #1;
+
+        @(negedge clk);
+        mem_write_M = 1'b0;
+        #1;
+
+        check_mem_data("byte lane write preserves other lanes", 32'h1122_AA44, mem_rdata_M);
+    endtask
+
     task automatic test_word_idx();
         apply_data_mem_default();
 
         @(negedge clk);
         mem_write_M = 1'b1;
         alu_result_M = 32'h0000_0040;
-        write_data_M = 32'd20;
+        store_wdata_M = 32'd20;
+        store_wstrb_M = 4'b1111;
 
         @(posedge clk);
         #1;
@@ -177,7 +211,8 @@ module data_mem_tb
         @(negedge clk);
         mem_write_M = 1'b1;
         alu_result_M = 32'h0000_0044;
-        write_data_M = 32'd30;
+        store_wdata_M = 32'd30;
+        store_wstrb_M = 4'b1111;
 
         @(posedge clk);
         #1;

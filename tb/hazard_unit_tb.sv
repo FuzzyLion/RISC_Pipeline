@@ -98,13 +98,17 @@ module hazard_unit_tb
             branch: 1'b0,
             alu_ctrl: CTRL_ADD,
             alu_src: BE_RDATA_E,
-            btype: BEQ
+            btype: BEQ,
+            load_type: LB,
+            store_type: SB
         };
 
         ctrl_M = '{
             rf_write: 1'b0,
             result_src: RSLT_ALU,
-            mem_write: 1'b0
+            mem_write: 1'b0,
+            load_type: LB,
+            store_type: SB
         };
 
         ctrl_W = '{
