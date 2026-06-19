@@ -43,7 +43,8 @@ module core_smoke_branch_tb
     initial begin
         // Let all regs to be reset from state x
         reset = 1'b1;
-        repeat (3) @(negedge clk); // Wait for 3 posedge to make sure all regs have been reseted
+        repeat (3) @(negedge clk);
+        // Deassert reset on negedge to avoid setup time violations and race conditions
         reset = 1'b0;
     end
 

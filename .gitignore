@@ -19,3 +19,6 @@ scripts/build/
 
 # Pic
 *.svg
+
+# Third-party riscv-tests
+tools/riscv-tests/

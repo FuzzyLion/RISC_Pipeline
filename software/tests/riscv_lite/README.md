@@ -1,0 +1,107 @@
+# riscv_lite Test Environment
+
+This directory contains the local test environment used to adapt selected
+`riscv-tests` user-level RV32I programs to the current Phase 3 core.
+
+The official `riscv-tests` environment assumes privileged features that this
+core does not implement yet: CSR setup, trap vectors, `ecall`, and `tohost`.
+The lightweight environment keeps the same macro names expected by the test
+sources, but expands them into plain RV32I code that the current pipeline can
+execute.
+
+## Directory Roles
+
+- `tools/riscv-tests/` is the upstream reference repository. Keep it unchanged.
+- `software/tests/riscv_lite/env/riscv_test.h` is this project's lightweight
+  replacement for the official physical test environment.
+- `software/scripts/build_riscv_lite_test.sh` compiles a selected official
+  `.S` file into the `.hex` instruction-memory format used by the current
+  Verilator tests.
+- `programs/isa/` stores generated ISA-level program images that can be loaded
+  by the core testbenches.
+
+## Macro Contract
+
+The official test body includes `riscv_test.h` and expects these names:
+
+- `RVTEST_RV32U` selects a user-level RV32 test environment.
+- `RVTEST_CODE_BEGIN` emits the `_start` entry point and startup code.
+- `RVTEST_CODE_END` marks the end of the test code.
+- `TESTNUM` names the register that holds the current test case number.
+- `RVTEST_PASS` reports success.
+- `RVTEST_FAIL` reports failure.
+- `RVTEST_DATA_BEGIN` and `RVTEST_DATA_END` delimit test data.
+
+For this core, pass/fail is reported through `x31`:
+
+- `x31 = 1` means pass.
+- `x31 = 2` means failure before a test number was available.
+- Odd values greater than 1 encode a failing test number as `(x31 - 1) / 2`.
+
+## Why The Directives Exist
+
+The assembler directives are layout instructions for the assembler and linker.
+They are not CPU instructions.
+
+- `.section .text` puts following instructions in the code section.
+- `.section .data` puts following values in the data section.
+- `.align 2` aligns the next label to a 4-byte boundary.
+- `.globl _start` makes `_start` visible to the linker as the program entry.
+- Labels such as `_start:` and `begin_signature:` name addresses.
+
+The current instruction-memory flow extracts executable instructions from the
+ELF dump into a `.hex` file. Because data memory is not initialized from ELF
+sections yet, start with RV32I tests that do not require initialized `.data`.
+
+## Current Runner
+
+Run:
+
+```bash
+bash sim/run_isa_lite.sh
+```
+
+This builds and runs a small default set:
+
+- `addi` covers immediate arithmetic, immediate sign extension, x0 behavior,
+  and immediate-result bypass cases.
+- `slti` covers signed comparison against immediates.
+- `lui` covers U-type immediate placement and x0 destination behavior.
+- `beq` covers branch taken/not-taken behavior and redirect flushing at the
+  program level.
+- `jal` covers jump redirection and link-address writeback through `PC + 4`.
+
+You can also run a subset by name:
+
+```bash
+bash sim/run_isa_lite.sh addi beq
+```
+
+The legacy single-test wrapper still works:
+
+```bash
+bash sim/run_isa_lite_addi.sh
+```
+
+## Why Some rv32ui Tests Are Skipped For Now
+
+Start with tests whose behavior is fully inside the current Phase 3 boundary:
+integer ALU, compares, branches, jumps, x0, and bypassing. These tests mainly
+exercise instruction decode, ALU behavior, forwarding, branch redirects, and
+writeback.
+
+Defer the load/store-oriented official cases such as `lb`, `lh`, `lw`, `sb`,
+`sh`, `sw`, `st_ld`, `ld_st`, and `ma_data` until the test flow can initialize
+data memory from ELF sections or a separate data-memory image. The current
+`.hex` flow extracts only executable instruction words for instruction memory.
+
+Defer `fence_i` because it has architectural meaning for instruction-cache
+coherence, which is outside the current core. Defer any case that relies on
+misaligned traps or privileged behavior until the CSR/exception phase.
+
+Some otherwise relevant ALU tests are also temporarily too large for the
+current instruction memory. For example, the official `rv32ui/add.S` expands to
+more than the current 256 instruction words. That is a testbench capacity
+limit, not an ISA reason to avoid R-type tests. Add those cases after either
+increasing instruction memory capacity intentionally or creating smaller local
+programs for the same behavior.
