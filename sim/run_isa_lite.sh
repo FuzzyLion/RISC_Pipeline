@@ -10,6 +10,20 @@ default_tests=(
   lui
   beq
   jal
+  ori
+  andi
+  xori
+  slli
+  srli
+  srai
+  bne
+  blt
+  bge
+  bltu
+  bgeu
+  jalr
+  auipc
+  sltiu
 )
 
 if [[ $# -gt 0 ]]; then
@@ -24,8 +38,8 @@ echo "Running riscv_lite ISA tests..."
 
 for test_name in "${tests[@]}"; do
   asm_file="tools/riscv-tests/isa/rv32ui/${test_name}.S"
-  hex_file="programs/isa/rv32ui_${test_name}.hex"
-  sim_build_dir="$SCRIPT_DIR/build/isa_lite_${test_name}"
+  hex_file="sim/build/riscv_lite/hex/rv32ui_${test_name}.hex"
+  sim_build_dir="$SCRIPT_DIR/build/riscv_lite/verilator/${test_name}"
   isa_test_name="rv32ui_${test_name}"
 
   if [[ ! -f "$asm_file" ]]; then

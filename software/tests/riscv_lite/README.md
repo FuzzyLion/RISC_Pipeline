@@ -17,8 +17,16 @@ execute.
 - `software/scripts/build_riscv_lite_test.sh` compiles a selected official
   `.S` file into the `.hex` instruction-memory format used by the current
   Verilator tests.
-- `programs/isa/` stores generated ISA-level program images that can be loaded
-  by the core testbenches.
+- `sim/build/riscv_lite/` stores generated `.elf`, `.dump`, and `.hex` files.
+  These are build artifacts and are intentionally not committed.
+- `programs/` is reserved for local hand-written smoke programs that are part
+  of this project.
+
+To prepare the ignored upstream dependency, run this from the repository root:
+
+```bash
+git clone --recurse-submodules https://github.com/riscv-software-src/riscv-tests.git tools/riscv-tests
+```
 
 ## Macro Contract
 
@@ -61,15 +69,10 @@ Run:
 bash sim/run_isa_lite.sh
 ```
 
-This builds and runs a small default set:
-
-- `addi` covers immediate arithmetic, immediate sign extension, x0 behavior,
-  and immediate-result bypass cases.
-- `slti` covers signed comparison against immediates.
-- `lui` covers U-type immediate placement and x0 destination behavior.
-- `beq` covers branch taken/not-taken behavior and redirect flushing at the
-  program level.
-- `jal` covers jump redirection and link-address writeback through `PC + 4`.
+This builds each selected upstream source, writes generated files under
+`sim/build/riscv_lite/`, and runs the program on the current core. The default
+set is limited to tests that have been observed passing and do not require
+initialized data memory, CSR behavior, traps, or privileged execution.
 
 You can also run a subset by name:
 

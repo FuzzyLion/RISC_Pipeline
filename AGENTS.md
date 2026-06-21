@@ -21,10 +21,12 @@ Current project goals include:
 7. Implement FPU as a required milestone.
 8. Eventually run broader tests and a lightweight RTOS.
 
-The project is currently working through Phase 3 verification. The five-stage
-pipeline and basic hazard handling exist, and the current effort is expanding
-the implemented RV32I instruction subset together with directed module and
-program-level tests. `riscv-tests` has not yet been integrated.
+The project has completed the Phase 3 baseline verification milestone and is
+entering Phase 4: CSR, exceptions, and interrupts. The five-stage pipeline,
+basic hazard handling, directed module tests, processor smoke tests, and a
+lightweight selected `riscv-tests`/`rv32ui` flow are in place. The current
+effort should preserve that regression baseline while adding architectural
+trap support in small, explainable steps.
 
 Relevant planning docs:
 

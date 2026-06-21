@@ -1,6 +1,6 @@
 # Agent Context
 
-This repository is a learning-first SystemVerilog RISC-V CPU project. The current RTL implements a small RV32I-oriented five-stage pipeline core with internal instruction and data memories, Verilator smoke tests, and planning documents for later CSR, exception, interrupt, SoC, FPGA, cache, FPU, and RTOS work. The design goal visible in the repository is to make the basic pipelined core and hazard behavior understandable and verifiable before adding larger system features.
+This repository is a learning-first SystemVerilog RISC-V CPU project. The current RTL implements a small RV32I-oriented five-stage pipeline core with internal instruction and data memories, Verilator smoke tests, a selected `riscv-tests`/`rv32ui` ISA-lite flow, and planning documents for CSR, exception, interrupt, SoC, FPGA, cache, FPU, and RTOS work. The Phase 3 baseline verification milestone is complete enough to move into Phase 4, but the design is still intentionally short of full ISA compliance.
 
 The code is not a complete RV32I processor yet. The active decode now covers
 the full R-type integer ALU group, the RV32I ALU-immediate group, all six base
@@ -17,6 +17,7 @@ and interrupts are still outside the implemented subset.
 ├── requirements.md
 ├── docs/
 │   ├── data-memory-addressing.md
+│   ├── verification.md
 │   ├── Pipeline_Datapath.heic
 │   └── plans/
 │       ├── README.md
@@ -63,6 +64,8 @@ and interrupts are still outside the implemented subset.
 │       └── WB_result_mux.sv
 ├── sim/
 │   ├── build_hex.sh
+│   ├── run_isa_lite.sh
+│   ├── run_isa_lite_addi.sh
 │   ├── run_alu_op.sh
 │   ├── run_basic_smoke.sh
 │   ├── run_control_unit.sh
@@ -79,6 +82,7 @@ and interrupts are still outside the implemented subset.
     ├── alu_op_tb.sv
     ├── control_unit_tb.sv
     ├── core_basic_smoke_tb.sv
+    ├── core_isa_lite_tb.sv
     ├── core_smoke_alu_tb.sv
     ├── core_smoke_branch_tb.sv
     ├── core_smoke_hazard_tb.sv
@@ -89,7 +93,9 @@ and interrupts are still outside the implemented subset.
     └── reg_file_tb.sv
 ```
 
-Empty or currently fileless directories such as `rtl/soc`, `fpga`, `software`, and `tools` exist in the working tree but do not contain source files visible to `rg --files` at the time this document was written. Generated simulation output under `sim/build` is intentionally excluded.
+Generated simulation output under `sim/build` is intentionally excluded. The
+upstream `tools/riscv-tests/` checkout is also excluded from version control;
+keep it as an external reference tree rather than editing it directly.
 
 ## Important Files and Modules
 
@@ -200,7 +206,21 @@ smoke tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using
 `riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base
 zero.
 
+`software/tests/riscv_lite/env/riscv_test.h`,
+`software/scripts/build_riscv_lite_test.sh`, `tb/core_isa_lite_tb.sv`, and
+`sim/run_isa_lite.sh` form the lightweight selected `riscv-tests` integration.
+The local environment replaces the official privileged pass/fail mechanism with
+an `x31` completion code. `x31 = 1` means pass; odd values greater than 1 encode
+the failing upstream test number as `(x31 - 1) / 2`. This depends on
+`TESTNUM = gp = x3` remaining intact until failure handling runs, so a
+suspicious or impossible decoded test number may indicate that `x3` was
+clobbered by a test or by a writeback destination bug.
+
 `docs/data-memory-addressing.md` explains the current byte-addressed ISA view versus word-array Verilog memory model. It is useful background before changing load/store behavior.
+
+`docs/verification.md` records the Phase 3 verification baseline, including the
+ISA-lite build flow, skipped upstream test categories, debugging workflow, and
+current limitations.
 
 `docs/plans/` contains roadmap documents for phases beyond the current core, including hazard control, verification, CSR/exceptions/interrupts, SoC/FPGA, cache, FPU, and RTOS integration.
 
@@ -260,11 +280,14 @@ Implemented or visibly present:
     smoke tests.
 12. Assembly source and generated hex images for all four smoke programs, with
     explicit completion markers.
-13. A documented verification-tool decision to retain Verilator/SystemVerilog now and defer Cocotb until randomized, parameterized, latency-driven, Cache reference-model, or differential testing justifies it.
+13. A lightweight selected `riscv-tests`/`rv32ui` flow for current Phase 3-safe
+    integer ALU, branch, jump, `lui`, and `auipc` cases.
+14. A documented verification-tool decision to retain Verilator/SystemVerilog now and defer Cocotb until randomized, parameterized, latency-driven, Cache reference-model, or differential testing justifies it.
 
 Partially implemented or uncertain:
 
-1. Full RV32I support is incomplete. Many opcodes/funct values are declared, but several decode paths are commented out or default to NOP-like behavior.
+1. Full architectural RV32I compliance is incomplete because CSR, exceptions,
+   interrupts, traps, and privileged/system behavior are not implemented yet.
 2. Byte and halfword loads/stores are implemented in the current internal memory
    path, but they are still covered only by directed unit tests rather than
    broad program-level ISA tests.
@@ -276,10 +299,12 @@ Partially implemented or uncertain:
    detect unsupported alignment and raise the appropriate exception instead of
    silently correcting or masking the access.
 4. Memory bounds behavior is unclear from the repository.
-5. `riscv-tests` integration and a failure-tracking record are still missing
-   from Phase 3.
-6. The current regression is useful but remains a small hand-written baseline
-   rather than broad ISA verification.
+5. The selected `riscv-tests` integration is intentionally lightweight. It does
+   not initialize data memory from ELF sections and does not support upstream
+   tests that require CSR, traps, `ecall`, privileged behavior, misaligned
+   exception handling, or instruction-cache coherence.
+6. The current regression is useful but remains a focused Phase 3 baseline
+   rather than broad ISA compliance proof.
 
 Not implemented as visible RTL:
 
@@ -291,8 +316,12 @@ Not implemented as visible RTL:
 ## Suggested Next Steps
 
 1. Keep `sim/run_regression.sh` green before and after RTL changes.
-2. Add a small compatible subset of `riscv-tests` and record unsupported tests separately from genuine failures.
-3. Create a lightweight verification-status or defect-tracking document that classifies failures by module, pipeline stage, or program-level behavior.
-4. Expand decode in small, test-backed steps for the remaining RV32I instructions.
-5. Document the intended priority order between redirect, load-use stall, memory wait, and future exception flush before adding memory handshakes or CSR traps.
+2. Treat Phase 4 as the active milestone: design the minimum CSR, exception,
+   and interrupt path before changing RTL.
+3. Define exception priority and pipeline flush behavior before adding trap
+   entry logic.
+4. Decide how instruction-address, load-address, and store-address misalignment
+   should be detected and reported.
+5. Preserve the Phase 3 regression and selected ISA-lite tests as the baseline
+   while Phase 4 changes are added.
 6. Introduce a clearer memory interface boundary before Cache work, since the current memories are internal single-model arrays.
