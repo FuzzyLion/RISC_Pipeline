@@ -68,20 +68,22 @@ module data_mem
 
     For MEM_WORDS = 256, MEM_ADDR_WIDTH = 8, so word_idx uses alu_result_M[9:2].
     */
-    
+
     assign word_idx = alu_result_M[MEM_ADDR_WIDTH + 1:2]; 
     assign mem_rdata_M = mem[word_idx];
     // Combinational read from the selected memory word
 
-    always_ff @(posedge clk) begin // Synchronous write
+    always @(posedge clk) begin // Synchronous write
+    // always_ff stipulate the inner variables can only be write in this section
+    
         if (mem_write_M) begin
             
             // When the specific byte lanes are enable, update the pointed bytes
             if (store_wstrb_M[0]) begin
-                mem[word_idx][7:0]   <= store_wdata_M[7:0];
+                mem[word_idx][7:0] <= store_wdata_M[7:0];
             end
             if (store_wstrb_M[1]) begin
-                mem[word_idx][15:8]  <= store_wdata_M[15:8];
+                mem[word_idx][15:8] <= store_wdata_M[15:8];
             end
             if (store_wstrb_M[2]) begin
                 mem[word_idx][23:16] <= store_wdata_M[23:16];

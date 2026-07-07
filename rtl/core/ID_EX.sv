@@ -7,9 +7,11 @@ module ID_EX
 
     input control_bundle_t ctrl_D,
     input id_ex_data_t data_D,
+    input trap_event_e trap_event_illegal_instr_D,
 
     output control_bundle_t ctrl_E,
-    output id_ex_data_t data_E
+    output id_ex_data_t data_E,
+    output trap_event_e trap_event_illegal_instr_E
 );
 
     localparam control_bundle_t CTRL_NOP = '{
@@ -40,6 +42,8 @@ module ID_EX
             ctrl_E.mem_write <= data_D.valid && ctrl_D.mem_write;
             ctrl_E.jump <= data_D.valid && ctrl_D.jump;
             ctrl_E.branch <= data_D.valid && ctrl_D.branch;
+
+            trap_event_illegal_instr_E <= data_D.valid ? trap_event_illegal_instr_D : TRAP_EVENT_NONE;
 
             data_E <= data_D;
         end

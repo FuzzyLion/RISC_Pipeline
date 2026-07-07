@@ -13,10 +13,13 @@ module core
     // Hazard Unit
     hazard_forward_t hazard_forward_ctrl;
     hazard_stallflush_t hazard_stallflush_ctrl;
+    logic trap_flush_D;
+    logic trap_flush_E;
 
     // Control Unit
     control_bundle_t ctrl_D;
     imm_src_e imm_src_D;
+    trap_event_e trap_event_illegal_instr_D;
 
     // Uniform Control Signal - inner signal
     control_bundle_t ctrl_E;
@@ -58,6 +61,7 @@ module core
     // ID_EX
     id_ex_data_t data_D_idex;
     id_ex_data_t data_E_idex;
+    trap_event_e trap_event_illegal_instr_E;
 
     // EX_forward_muxAE
     logic [WORD_WIDTH - 1:0] result_W_out;
@@ -70,10 +74,12 @@ module core
     logic [WORD_WIDTH - 1:0] alu_src_BE_in;
 
     // pc_target_gen
+    trap_event_e trap_event_branch_jump_E;
 
     // alu_op
     logic zero_E_out;
     logic [WORD_WIDTH - 1:0] alu_result_E_out;
+    trap_event_e trap_event_load_store_E;
 
     // EX_MEM
     ex_mem_data_t data_E_exmem;
@@ -122,6 +128,7 @@ module core
     assign data_D_idex = '{
         valid: data_D_ifid.valid,
         pc: data_D_ifid.pc,
+        instr: data_D_ifid.instr,
         pc_plus4: data_D_ifid.pc_plus4,
         rs1_idx: rs1_idx_D_out,
         rs2_idx: rs2_idx_D_out,
@@ -154,6 +161,7 @@ module core
     control_unit control_unit1 (
         .instr_D(data_D_ifid.instr),
         .imm_src_D(imm_src_D),
+        .trap_event_illegal_instr_D(trap_event_illegal_instr_D),
         .ctrl_D(ctrl_D)
     );
 
@@ -174,6 +182,8 @@ module core
         .ctrl_M(ctrl_M),
         .ctrl_W(ctrl_W),
         .pc_src_E(pc_src_E),
+        .trap_flush_D(trap_flush_D),
+        .trap_flush_E(trap_flush_E),
         .hazard_forward_ctrl(hazard_forward_ctrl),
         .hazard_stallflush_ctrl(hazard_stallflush_ctrl)
     );
@@ -255,7 +265,9 @@ module core
         .ctrl_D(ctrl_D),
         .ctrl_E(ctrl_E),
         .data_D(data_D_idex),
-        .data_E(data_E_idex)
+        .trap_event_illegal_instr_D(trap_event_illegal_instr_D),
+        .data_E(data_E_idex),
+        .trap_event_illegal_instr_E(trap_event_illegal_instr_E)
     );
 
     // EX Source AE MUX for Forwarding & ALU
@@ -293,6 +305,7 @@ module core
         .pc_E(data_E_idex.pc),
         .alu_src_AE(alu_src_AE_out),
         .imm_E(data_E_idex.imm),
+        .trap_event_branch_jump_E(trap_event_branch_jump_E),
         .pc_target_E(pc_target_in),
         .pc_src_E(pc_src_E)
     );
@@ -300,11 +313,16 @@ module core
     // ALU
     alu_op alu_op1 (
         .alu_control_E(ctrl_E.alu_ctrl),
+        .mem_write_E(ctrl_E.mem_write),
         .btype_E(ctrl_E.btype),
+        .load_type_E(ctrl_E.load_type),
+        .store_type_E(ctrl_E.store_type),
+        .result_src_E(ctrl_E.result_src),
         .branch_E(ctrl_E.branch),
         .alu_src_AE(alu_src_AE_out),
         .alu_src_BE(alu_src_BE_in),
         .pc_E(data_E_idex.pc),
+        .trap_event_load_store_E(trap_event_load_store_E),
         .zero_E(zero_E_out),
         .alu_result_E(alu_result_E_out)
     );
@@ -321,7 +339,7 @@ module core
 
     // Store Data Instructions Alignment
     store_data store_data1 (
-        .store_type(ctrl_M.store_type),
+        .store_type_M(ctrl_M.store_type),
         .alu_result_M(data_M_exmem.alu_result),
         .write_data_M(data_M_exmem.write_data),
         .store_wdata_M(store_wdata_M_out),

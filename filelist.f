@@ -1,0 +1,2 @@
+-f rtl/core/filelist.f
+-f tb/filelist.f

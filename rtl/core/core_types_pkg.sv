@@ -19,7 +19,8 @@ package core_types_pkg;
         OP_UTYPE_LUI = 7'b0110111,
         OP_BTYPE = 7'b1100011,
         OP_ITYPE_JALR = 7'b1100111,
-        OP_JTYPE_JAL = 7'b1101111
+        OP_JTYPE_JAL = 7'b1101111,
+        OP_CSR = 7'b1110011
     } opcode_e;
 
     typedef enum logic [9:0] { 
@@ -72,6 +73,16 @@ package core_types_pkg;
         BLTU = 3'b110,
         BGEU = 3'b111
     } btype_e;
+
+    typedef enum logic [2:0] { 
+        TRAP = 3'b000,
+        CSRRW = 3'b001,
+        CSRRS = 3'b010,
+        CSRRC = 3'b011,
+        CSRRWI = 3'b101,
+        CSRRSI = 3'b110,
+        CSRRCI = 3'b111
+    } csrtype_e;
 
     typedef enum logic [2:0] {
         IMM_I = 3'b000,
@@ -129,6 +140,26 @@ package core_types_pkg;
         PC_TARGET_RS1_IMM = 1'b1
     } pc_target_src_e;
 
+    typedef enum logic [3:0] { 
+        TRAP_EVENT_M_SOFTWARE_INTERRUPT = 4'b0000,
+        TRAP_EVENT_M_TIMER_INTERRUPT = 4'b0001,
+        TRAP_EVENT_M_EXTER_INTERRUPT = 4'b0010,
+        TRAP_EVENT_INSTR_ADDR_MISALIGNED = 4'b0011,
+        TRAP_EVENT_ILLEGAL_INSTR = 4'b0100,
+        TRAP_EVENT_BREAKPOINT = 4'b0101,
+        TRAP_EVENT_LOAD_ADDR_MISALIGNED = 4'b0110,
+        TRAP_EVENT_LOAD_ACCESS_FAULT = 4'b0111,
+        TRAP_EVENT_STORE_ADDR_MISALIGNED = 4'b1000,
+        TRAP_EVENT_STORE_ACCESS_FAULT = 4'b1001,
+        TRAP_EVENT_ENV_CALL_M_MODE = 4'b1010,
+        TRAP_EVENT_NONE = 4'b1111
+    } trap_event_e;
+
+    typedef enum logic [11:0] { 
+        TRAP_ECALL = 12'b0000_0000_0000,
+        TRAP_EBREAK = 12'b0000_0000_0001
+    } trap_ecall_ebreak_e;
+
     //--------------------------------------------------------------------------------------
 
     typedef struct packed {
@@ -168,6 +199,7 @@ package core_types_pkg;
     typedef struct packed {
         logic valid;
         logic [WORD_WIDTH - 1:0] pc;
+        logic [WORD_WIDTH - 1:0] instr;
         logic [WORD_WIDTH - 1:0] pc_plus4;
         logic [ADDR_WIDTH - 1:0] rs1_idx;
         logic [ADDR_WIDTH - 1:0] rs2_idx;

@@ -1,0 +1,12 @@
+tb/alu_op_tb.sv
+tb/control_unit_tb.sv
+tb/core_basic_smoke_tb.sv
+tb/core_isa_lite_tb.sv
+tb/core_smoke_alu_tb.sv
+tb/core_smoke_branch_tb.sv
+tb/core_smoke_hazard_tb.sv
+tb/data_mem_tb.sv
+tb/hazard_unit_tb.sv
+tb/imm_ext_tb.sv
+tb/pc_target_gen_tb.sv
+tb/reg_file_tb.sv

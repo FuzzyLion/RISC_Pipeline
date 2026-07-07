@@ -1,20 +1,20 @@
-module store_data 
+module store_data
     import core_types_pkg::*;
 (
-    input stype_e store_type,
+    input stype_e store_type_M,
 
-    input [WORD_WIDTH - 1:0] alu_result_M,
-    input [WORD_WIDTH - 1:0] write_data_M,
+    input logic [WORD_WIDTH - 1:0] alu_result_M,
+    input logic [WORD_WIDTH - 1:0] write_data_M,
 
-    output [WORD_WIDTH - 1:0] store_wdata_M,
-    output [3:0] store_wstrb_M
+    output logic [WORD_WIDTH - 1:0] store_wdata_M,
+    output logic [3:0] store_wstrb_M
 );
 
     always_comb begin
         store_wdata_M = '0;
         store_wstrb_M = '0;
 
-        case (store_type)
+        case (store_type_M)
             SB: begin
                 
                 if (alu_result_M[1:0] == 2'b00) begin

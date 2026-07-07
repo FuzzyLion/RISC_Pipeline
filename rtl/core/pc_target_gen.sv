@@ -11,11 +11,17 @@ module pc_target_gen
     // Make sure there's no forward to disturb the behaviour
     input logic [WORD_WIDTH - 1:0] imm_E,
 
+    output trap_event_e trap_event_branch_jump_E,
+
     output logic [WORD_WIDTH - 1:0] pc_target_E,
     output pc_src_e pc_src_E
 );
+
+    logic redirect_E;
     
     always_comb begin
+        trap_event_branch_jump_E = TRAP_EVENT_NONE;
+
         case (pc_target_src_E)
             PC_TARGET_PC_IMM: begin
                 pc_target_E = pc_E + imm_E;
@@ -37,7 +43,14 @@ module pc_target_gen
             end
         endcase
 
-        pc_src_E = pc_src_e'(jump_E || (branch_E && zero_E));
+        redirect_E = jump_E || (branch_E && zero_E);
+
+        if (pc_target_E[1] && pc_target_E[0] && redirect_E !== 1'b0) begin
+            // Exception event will be activated when the reirect is really enabled
+            trap_event_branch_jump_E = TRAP_EVENT_INSTR_ADDR_MISALIGNED;
+        end                     
+
+        pc_src_E = pc_src_e'(redirect_E);
     end
 
 endmodule

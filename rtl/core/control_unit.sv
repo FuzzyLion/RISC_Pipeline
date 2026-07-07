@@ -4,6 +4,7 @@ module control_unit
     input logic [WORD_WIDTH - 1:0] instr_D,
     
     output imm_src_e imm_src_D,
+    output trap_event_e trap_event_illegal_instr_D,
     output control_bundle_t ctrl_D
 );
 
@@ -14,8 +15,11 @@ module control_unit
     itype_immext_e itype_immext_D;
     stype_e stype_D;
     btype_e btype_D;
+    csrtype_e csrtype_D;
+    trap_ecall_ebreak_e trap_ecall_ebreak_D;
     logic [2:0] funct3;
     logic [6:0] funct7;
+    logic [11:0] csr_source;
 
     localparam control_bundle_t CTRL_NOP = '{
         rf_write: 1'b0,
@@ -37,6 +41,7 @@ module control_unit
     
     assign funct3 = instr_D[14:12];
     assign funct7 = instr_D[31:25];
+    assign csr_source = instr_D[31:20];
 
     assign rtype_D = rtype_e'({funct3, funct7});
     assign itype_load_D = itype_load_e'(funct3);
@@ -44,12 +49,15 @@ module control_unit
     assign itype_immext_D = itype_immext_e'({funct3, funct7});
     assign stype_D = stype_e'(funct3);
     assign btype_D = btype_e'(funct3);
+    assign csrtype_D = csrtype_e'(funct3);
+    assign trap_ecall_ebreak_D = trap_ecall_ebreak_e'(csr_source);
 
 
     always_comb begin
 
         ctrl_D = CTRL_NOP;
         imm_src_D = IMM_I;
+        trap_event_illegal_instr_D = TRAP_EVENT_NONE;
 
         
         case (opcode_D)
@@ -99,6 +107,7 @@ module control_unit
                     default: begin
                         ctrl_D.rf_write = 1'b0;
                         ctrl_D.alu_ctrl = CTRL_ADD;
+                        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase
             end  
@@ -176,6 +185,7 @@ module control_unit
                                 ctrl_D.rf_write = 1'b0;
                                 ctrl_D.alu_ctrl = CTRL_ADD;
                                 ctrl_D.alu_src = BE_RDATA_E;
+                                trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                             end
                         endcase
 
@@ -214,6 +224,7 @@ module control_unit
                         ctrl_D.alu_src = BE_RDATA_E;
                         imm_src_D = IMM_I;
                         ctrl_D.store_type = SB;
+                        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase
             end
@@ -262,6 +273,7 @@ module control_unit
                         ctrl_D.alu_ctrl = CTRL_ADD;
                         imm_src_D = IMM_I;
                         ctrl_D.btype = BEQ;
+                        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase
             end
@@ -281,6 +293,7 @@ module control_unit
                     ctrl_D.jump = 1'b0;
                     ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
                     ctrl_D.alu_src = BE_RDATA_E;
+                    trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                 end
             end
 
@@ -291,9 +304,40 @@ module control_unit
                 ctrl_D.jump = 1'b1;
                 imm_src_D = IMM_J;
             end
+
+            OP_CSR: begin
+
+                case (csrtype_D)
+                    TRAP:
+
+                        case (trap_ecall_ebreak_D)
+                            TRAP_ECALL: begin
+                                trap_event_illegal_instr_D = TRAP_EVENT_ENV_CALL_M_MODE;
+                            end
+                            TRAP_EBREAK: begin
+                                trap_event_illegal_instr_D = TRAP_EVENT_BREAKPOINT;
+                            end
+                            default: begin
+                                trap_event_illegal_instr_D = TRAP_EVENT_NONE;
+                            end
+                        endcase
+                    /*
+                    CSRRW:
+                    CSRRS:
+                    CSRRC:
+                    CSRRWI:
+                    CSRRSI:
+                    CSRRCI:
+                    */
+                    default: begin
+                        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
+                    end
+                endcase
+            end
                 
             default: begin
                 ctrl_D = CTRL_NOP;
+                trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
             end
         endcase
 

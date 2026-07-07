@@ -1,0 +1,17 @@
+{
+  "index": [
+    {
+      "dirs": [
+        "rtl/core",
+        "rtl",
+        "tb"
+      ],
+      "excludeDirs": [
+        "build",
+        "sim",
+        "node_modules"
+      ]
+    }
+  ],
+  "build": "rtl/core/filelist.f"
+}

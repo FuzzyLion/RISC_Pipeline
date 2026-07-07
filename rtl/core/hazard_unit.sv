@@ -22,6 +22,9 @@ module hazard_unit
     
     input pc_src_e pc_src_E,
 
+    input logic trap_flush_D,
+    input logic trap_flush_E,
+
     output hazard_forward_t hazard_forward_ctrl,
     output hazard_stallflush_t hazard_stallflush_ctrl
 ); 
@@ -84,8 +87,14 @@ module hazard_unit
 
         redirect = (pc_src_E == PC_TARGET);
 
+        if (trap_flush_D) begin
+            hazard_stallflush_ctrl.flush_D = 1'b1;
+        end
+        else if (trap_flush_E) begin
+            hazard_stallflush_ctrl.flush_E = 1'b1;
+        end
         // Taken branch or jump in EX
-        if (redirect) begin
+        else if (redirect) begin
             // Jump & Branch have the higher priority than lwstall!!
             hazard_stallflush_ctrl.flush_D = 1'b1;
             hazard_stallflush_ctrl.flush_E = 1'b1; 

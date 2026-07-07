@@ -2,19 +2,32 @@ module alu_op
     import core_types_pkg::*;
 (
     input alu_ctrl_e alu_control_E,
+    input logic mem_write_E,
     input btype_e btype_E,
+    input itype_load_e load_type_E,
+    input stype_e store_type_E,
+    input result_src_e result_src_E,
     input logic branch_E,
 
     input logic [WORD_WIDTH - 1:0] alu_src_AE,
     input logic [WORD_WIDTH - 1:0] alu_src_BE,
     input logic [WORD_WIDTH - 1:0] pc_E,
 
+    output trap_event_e trap_event_load_store_E,
+
     output logic zero_E,
     output logic [WORD_WIDTH - 1:0] alu_result_E
 );
 
+    logic is_load_E;
+    logic is_store_E;
+
+    assign is_load_E = (result_src_E == RSLT_RDATA);
+    assign is_store_E = (mem_write_E == 1'b1);
+
     always_comb begin
         alu_result_E = '0;
+        trap_event_load_store_E = TRAP_EVENT_NONE;
 
         case (alu_control_E)
             CTRL_ADD: begin
@@ -52,11 +65,57 @@ module alu_op
                 alu_result_E = alu_src_AE >> alu_src_BE[4:0];
             end
             CTRL_SRA: begin
-                alu_result_E = $signed(alu_src_AE) >>> alu_src_BE[4:0];
+                alu_result_E = $unsigned($signed(alu_src_AE) >>> alu_src_BE[4:0]);
                 // Keep the MSB when it's shifting
             end
             default: begin
                 alu_result_E = '0;
+            end
+        endcase
+
+        case (load_type_E)
+            LB, LBU: begin
+                // 1-byte load is always aligned, no check needed
+            end
+            LH, LHU: begin
+                if ((alu_result_E[1:0] == 2'b01) || 
+                    (alu_result_E[1:0] == 2'b11)) begin
+                    trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+                end
+            end 
+            LW: begin
+                if (alu_result_E[1:0] !== 2'b00) begin
+                    trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+                end
+            end
+            default: begin
+                trap_event_load_store_E = is_load_E ? 
+                                          TRAP_EVENT_NONE : 
+                                          trap_event_load_store_E; 
+                                          // Make sure it will not overwrite by sotre instrucations
+            end
+        endcase
+
+        case (store_type_E)
+            SB: begin
+                // 1-byte store is always aligned, no check needed
+            end
+            SH: begin
+                if ((alu_result_E[1:0] == 2'b01) || 
+                    (alu_result_E[1:0] == 2'b11)) begin
+                    trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                end
+            end
+            SW: begin
+                if (alu_result_E[1:0] !== 2'b00) begin
+                    trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                end
+            end
+            default: begin
+                    trap_event_load_store_E = is_store_E ? 
+                                              TRAP_EVENT_NONE : 
+                                              trap_event_load_store_E;
+                                              // Make sure it will not overwrite by load instrucations
             end
         endcase
         
