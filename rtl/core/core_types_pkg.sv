@@ -113,9 +113,10 @@ package core_types_pkg;
         RSLT_PCPLUS4 = 2'b10
     } result_src_e;
 
-    typedef enum logic {
-        PC_PLUS4 = 1'b0,
-        PC_TARGET = 1'b1
+    typedef enum logic [1:0] {
+        PC_PLUS4 = 2'b00,
+        PC_TARGET = 2'b01,
+        PC_TRAP_HANDLER = 2'b10
     } pc_src_e;
 
     typedef enum logic [1:0] {

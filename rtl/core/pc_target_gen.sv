@@ -45,7 +45,7 @@ module pc_target_gen
 
         redirect_E = jump_E || (branch_E && zero_E);
 
-        if (pc_target_E[1] && pc_target_E[0] && redirect_E !== 1'b0) begin
+        if ((pc_target_E[1:0] !== 2'b00) && redirect_E) begin
             // Exception event will be activated when the reirect is really enabled
             trap_event_branch_jump_E = TRAP_EVENT_INSTR_ADDR_MISALIGNED;
         end                     

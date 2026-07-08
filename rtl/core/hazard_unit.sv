@@ -87,10 +87,8 @@ module hazard_unit
 
         redirect = (pc_src_E == PC_TARGET);
 
-        if (trap_flush_D) begin
+        if (trap_flush_D && trap_flush_E) begin
             hazard_stallflush_ctrl.flush_D = 1'b1;
-        end
-        else if (trap_flush_E) begin
             hazard_stallflush_ctrl.flush_E = 1'b1;
         end
         // Taken branch or jump in EX

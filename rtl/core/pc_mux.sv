@@ -5,6 +5,7 @@ module pc_mux
 
     input logic [WORD_WIDTH - 1:0] pc_target_E,
     input logic [WORD_WIDTH - 1:0] pc_plus4_F,
+    input logic [WORD_WIDTH - 1:0] mtvec,
 
     output logic [WORD_WIDTH - 1:0] pc_pre_F
 );
@@ -16,6 +17,9 @@ module pc_mux
             end 
             PC_TARGET: begin
                 pc_pre_F = pc_target_E;
+            end
+            PC_TRAP_HANDLER:begin
+                pc_pre_F = mtvec;
             end
             default: begin
                 pc_pre_F = '0;

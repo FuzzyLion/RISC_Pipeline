@@ -4,61 +4,52 @@ module csr_file
     input logic clk,
     input logic reset,
 
-    input logic [WORD_WIDTH - 1:0] instr,
-    input logic [WORD_WIDTH - 1:0] pc_E,
-    input logic [WORD_WIDTH - 1:0] rs1_val_E,
-    input logic [WORD_WIDTH - 1:0] rs2_val_E,
     input csrtype_e csrtype,
+    input logic trap_entry_E,
+    input logic csr_we,
+    input logic csr_wdata,
 
-    input trap_event_e trap_event_illegal_instr_E,
-    input trap_event_e trap_event_branch_jump_E,
-    input trap_event_e trap_event_load_store_E,
+    input logic [WORD_WIDTH - 1:0] trap_mcause_E,
+    input logic [WORD_WIDTH - 1:0] trap_mtval_E,
+    input logic [WORD_WIDTH - 1:0] trap_mepc_E,
 
-    input logic [WORD_WIDTH - 1:0] mcause_val,
-    input logic [WORD_WIDTH - 1:0] mtval_val,
-    input logic [WORD_WIDTH - 1:0] mepc_pc,
-    input logic [WORD_WIDTH - 1:0] mtvec_pc,
-    input logic trap_flush_D,
-    input logic trap_flush_E
+    output logic [WORD_WIDTH - 1:0] mtvec,
+    output logic [WORD_WIDTH - 1:0] mepc,
+    output logic [WORD_WIDTH - 1:0] csr_rdata
 );
 
-    logic [WORD_WIDTH - 1:0] mtvec;
-    logic [WORD_WIDTH - 1:0] mepc;
-    logic [WORD_WIDTH - 1:0] mcause;
-    logic [WORD_WIDTH - 1:0] mtval;
-    logic [WORD_WIDTH - 1:0] mscratch;
-    logic [WORD_WIDTH - 1:0] mstatus;
-    logic [WORD_WIDTH - 1:0] mie;
-    logic [WORD_WIDTH - 1:0] mip;
+    logic [WORD_WIDTH - 1:0] mtvec_reg;
+    logic [WORD_WIDTH - 1:0] mepc_reg;
+    logic [WORD_WIDTH - 1:0] mcause_reg;
+    logic [WORD_WIDTH - 1:0] mtval_reg;
+    logic [WORD_WIDTH - 1:0] mscratch_reg;
+    logic [WORD_WIDTH - 1:0] mstatus_reg;
+    logic [WORD_WIDTH - 1:0] mie_reg;
+    logic [WORD_WIDTH - 1:0] mip_reg;
 
-    logic trap_entry;
-    logic csr_we;
 
-    assign trap_entry = (trap_event_illegal_instr_E !== TRAP_EVENT_NONE) ||
-                        (trap_event_branch_jump_E !== TRAP_EVENT_NONE) ||
-                        (trap_event_load_store_E !== TRAP_EVENT_NONE);
     assign csr_we = (csrtype !== TRAP);
 
     always_ff @(posedge clk) begin
         
         if (reset) begin
-            mtvec <= 32'b0;
-            mepc <= 32'b0;
-            mcause <= 32'b0;
-            mtval <= 32'b0;
-            mscratch <= 32'b0;
-            mstatus <= 32'h0000_1800;
-            mie <= 32'b0;
-            mip <= 32'b0;
+            mtvec_reg <= 32'b0;
+            mepc_reg <= 32'b0;
+            mcause_reg <= 32'b0;
+            mtval_reg <= 32'b0;
+            mscratch_reg <= 32'b0;
+            mstatus_reg <= 32'h0000_1800;
+            mie_reg <= 32'b0;
+            mip_reg <= 32'b0;
         end
-        else if (trap_entry) begin
-            mtvec <= mtvec_pc;
-            mepc <= mepc_pc;
-            mcause <= mcause_val;
-            mtval <= mtval_val;
-            mstatus[7] <= mstatus[3];
-            mstatus[3] <= 1'b0;
-            mstatus[12:11] <= 2'b11;
+        else if (trap_entry_E) begin
+            mtvec_reg <= mtvec_pc;
+            mepc_reg <= trap_mepc_E;
+            mcause_reg <= trap_mcause_E;
+            mtval_reg <= trap_mtval_E;
+            mstatus_reg[7] <= mstatus_reg[3];
+            mstatus_reg[3] <= 1'b0;
+            mstatus_reg[12:11] <= 2'b11; // Machine Mode
         end
         else if (csr_we) begin
             
