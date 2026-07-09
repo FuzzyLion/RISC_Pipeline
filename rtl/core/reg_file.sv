@@ -25,7 +25,7 @@ module reg_file
 
     logic [WORD_WIDTH - 1:0] regs [31:0]; // Declaration all of the inner registers in RV32
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin : initial_and_WB
         if (reset) begin
             for (int i = 0; i < 32; i++) begin //Set i as a local variable
                 regs[i] <= '0;

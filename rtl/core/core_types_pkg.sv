@@ -89,7 +89,8 @@ package core_types_pkg;
         IMM_S = 3'b001,
         IMM_B = 3'b010,
         IMM_J = 3'b011,
-        IMM_U = 3'b100
+        IMM_U = 3'b100,
+        IMM_CSR = 3'b101
     } imm_src_e;
 
     typedef enum logic [3:0] {

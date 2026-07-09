@@ -5,7 +5,8 @@ module control_unit
     
     output imm_src_e imm_src_D,
     output trap_event_e trap_event_illegal_instr_D,
-    output control_bundle_t ctrl_D
+    output control_bundle_t ctrl_D,
+    output logic csr_we
 );
 
     opcode_e opcode_D;

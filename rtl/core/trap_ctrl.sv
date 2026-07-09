@@ -17,6 +17,7 @@ module trap_ctrl
     output logic [WORD_WIDTH - 1:0] trap_mepc_E,
     output logic trap_flush_D,
     output logic trap_flush_E,
+    output logic trap_flush_M,
     output logic trap_entry_E
 );
 
@@ -53,6 +54,7 @@ module trap_ctrl
         trap_mepc_E = 32'b0;
         trap_flush_D = 1'b0;
         trap_flush_E = 1'b0;
+        trap_flush_M = 1'b0;
 
         /* 
         The reason why we set this kind of priority:
@@ -71,6 +73,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
         else if (env_call) begin
             trap_mcause_E = {1'b0, 31'd11};
@@ -78,6 +81,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
         else if (env_break) begin
             trap_mcause_E = {1'b0, 31'd3};
@@ -85,6 +89,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
         else if (instr_addr_misaligned) begin
             trap_mcause_E = {1'b0, 31'd0};
@@ -92,6 +97,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
         else if (load_misaligned) begin
             trap_mcause_E = {1'b0, 31'd4};
@@ -99,6 +105,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
         else if (store_misaligned) begin
             trap_mcause_E = {1'b0, 31'd6};
@@ -106,6 +113,7 @@ module trap_ctrl
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
         end
     end
 

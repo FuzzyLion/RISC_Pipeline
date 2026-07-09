@@ -8,6 +8,8 @@ module EX_MEM
     
     input ex_mem_data_t data_E,
 
+    input logic trap_flush_M,
+
     output ex_mem_control_t ctrl_M,
 
     output ex_mem_data_t data_M
@@ -22,7 +24,7 @@ module EX_MEM
     };
 
     always_ff @(posedge clk) begin
-        if (reset) begin
+        if (reset || trap_flush_M) begin
             ctrl_M <= CTRL_NOP;
 
             data_M <= '0;
