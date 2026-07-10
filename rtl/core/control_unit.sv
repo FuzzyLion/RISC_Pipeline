@@ -5,8 +5,7 @@ module control_unit
     
     output imm_src_e imm_src_D,
     output trap_event_e trap_event_illegal_instr_D,
-    output control_bundle_t ctrl_D,
-    output logic csr_we
+    output control_bundle_t ctrl_D
 );
 
     opcode_e opcode_D;
@@ -33,7 +32,9 @@ module control_unit
         alu_src: BE_RDATA_E,
         btype: BEQ,
         load_type: LB,
-        store_type: SB
+        store_type: SB,
+        csrtype: TRAP,
+        csr_en: 1'b0
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -207,12 +208,11 @@ module control_unit
                 ctrl_D.rf_write = 1'b1;
                 ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
                 ctrl_D.alu_ctrl = CTRL_PASS_B4PC;
+                imm_src_D = IMM_U;  
                 ctrl_D.alu_src = BE_IMM_E;
-                imm_src_D = IMM_U;
             end
 
             OP_STYPE: begin // (35)
-
                 case (stype_D)
                     SW, SB, SH: begin
                         ctrl_D.mem_write = 1'b1;
@@ -306,10 +306,11 @@ module control_unit
                 imm_src_D = IMM_J;
             end
 
-            OP_CSR: begin
+            OP_CSR: begin // (115)
+                ctrl_D.csr_en = 1'b1;
 
                 case (csrtype_D)
-                    TRAP:
+                    TRAP: begin
 
                         case (trap_ecall_ebreak_D)
                             TRAP_ECALL: begin
@@ -322,14 +323,29 @@ module control_unit
                                 trap_event_illegal_instr_D = TRAP_EVENT_NONE;
                             end
                         endcase
-                    /*
-                    CSRRW:
-                    CSRRS:
-                    CSRRC:
-                    CSRRWI:
-                    CSRRSI:
-                    CSRRCI:
-                    */
+
+                    end
+                    CSRRW: begin
+                        ctrl_D.rf_write = 1'b1;  
+                    end
+                    CSRRS: begin
+                        ctrl_D.rf_write = 1'b1;
+                    end
+                    CSRRC: begin
+                        ctrl_D.rf_write = 1'b1;
+                    end
+                    CSRRWI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        imm_src_D = IMM_CSR;
+                    end
+                    CSRRSI: begin
+                        ctrl_D.rf_write = 1'b1;
+                        imm_src_D = IMM_CSR;
+                    end
+                    CSRRCI:begin
+                        ctrl_D.rf_write = 1'b1;
+                        imm_src_D = IMM_CSR;
+                    end
                     default: begin
                         trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end

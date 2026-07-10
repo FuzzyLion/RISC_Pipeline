@@ -4,7 +4,8 @@ module csr_file
     input logic clk,
     input logic reset,
 
-    input logic vaild_E,
+    input logic valid_E,
+    input logic csr_en_E,
 
     input logic [WORD_WIDTH - 1:0] instr_E,
     input logic [WORD_WIDTH - 1:0] rs1_val_E,
@@ -18,11 +19,19 @@ module csr_file
     input logic [WORD_WIDTH - 1:0] trap_mtval_E,
     input logic [WORD_WIDTH - 1:0] trap_mepc_E,
 
+    output logic [WORD_WIDTH - 1:0] csr_rdata_E,
     output logic [WORD_WIDTH - 1:0] mtvec,
     output logic [WORD_WIDTH - 1:0] mepc
 );
 
-    logic [WORD_WIDTH - 1:0] csr_regs [4096:0];
+    localparam logic [11:0] CSR_MSTATUS = 12'h300;
+    localparam logic [11:0] CSR_MIE = 12'h304;
+    localparam logic [11:0] CSR_MTVEC = 12'h305;
+    localparam logic [11:0] CSR_MSCRATCH = 12'h340;
+    localparam logic [11:0] CSR_MEPC = 12'h341;
+    localparam logic [11:0] CSR_MCAUSE = 12'h342;
+    localparam logic [11:0] CSR_MTVAL = 12'h343;
+    localparam logic [11:0] CSR_MIP = 12'h344;
 
     logic [WORD_WIDTH - 1:0] mtvec_reg;
     logic [WORD_WIDTH - 1:0] mepc_reg;
@@ -36,21 +45,20 @@ module csr_file
     logic csr_instr_E;
     logic csr_we;
     logic [11:0] csr_addr;
-    logic [WORD_WIDTH - 1:0] csr_rdata;
-    logic [WORD_WIDTH - 1:0] csr_wdata;
+    logic [WORD_WIDTH - 1:0] csr_wdata_E;
 
     assign csr_addr = instr_E[31:20];
 
     always_comb begin : csr_we_assignment
         // Judge if it's a pure read-instruction or not
-        csr_instr_E = vaild_E && (csrtype_D !== TRAP) && (opcode_D == OP_CSR);
+        csr_instr_E = valid_E && (csrtype_E !== TRAP) && (csr_en_E == 1'b1);
 
         case (csrtype_E)
             CSRRW, CSRRWI: begin
                 csr_we = csr_instr_E;
             end 
             CSRRS, CSRRC: begin
-                csr_we = csr_instr_E && (rs1_val !== 5'b0);
+                csr_we = csr_instr_E && (rs1_idx_E !== 5'b0);
                 // Spec says: If rs1 = x0, then the instruction shall not write the CSR
             end
             CSRRSI, CSRRCI: begin
@@ -64,42 +72,67 @@ module csr_file
         endcase
     end
 
-    always_comb begin : csr_wdata_assignment
-        csr_rdata =  (instr_E == 5'b0) ? '0 : csr_regs[csr_addr];
+    always_comb begin : csr_wdata_E_assignment
+        csr_rdata_E = '0;
+
+        case (csr_addr)
+            CSR_MSTATUS: begin
+                csr_rdata_E = mstatus_reg;
+            end
+            CSR_MIE: begin
+                csr_rdata_E = mie_reg;
+            end
+            CSR_MTVEC: begin
+                csr_rdata_E = mtvec_reg;
+            end
+            CSR_MSCRATCH: begin
+                csr_rdata_E = mscratch_reg;
+            end
+            CSR_MEPC: begin
+                csr_rdata_E = mepc_reg;
+            end
+            CSR_MCAUSE: begin
+                csr_rdata_E = mcause_reg;
+            end
+            CSR_MTVAL: begin
+                csr_rdata_E = mtval_reg;
+            end
+            CSR_MIP: begin
+                csr_rdata_E = mip_reg;
+            end
+            default: begin
+                csr_rdata_E = '0;
+            end
+        endcase
 
         case (csrtype_E)
             CSRRW: begin
-                csr_wdata = csr_rdata;
+                csr_wdata_E = rs1_val_E;
             end
             CSRRS: begin
-                csr_wdata = csr_rdata | rs1_val_E;
+                csr_wdata_E = csr_rdata_E | rs1_val_E;
             end
             CSRRC: begin
-                csr_wdata = csr_rdata & ~rs1_val_E;
+                csr_wdata_E = csr_rdata_E & ~rs1_val_E;
             end
             CSRRWI: begin
-                csr_wdata = imm_E;
+                csr_wdata_E = imm_E;
             end
             CSRRSI: begin
-                csr_wdata = csr_rdata | imm_E;
+                csr_wdata_E = csr_rdata_E | imm_E;
             end
             CSRRCI: begin
-                csr_wdata = csr_rdata & ~imm_E;
+                csr_wdata_E = csr_rdata_E & ~imm_E;
             end
             default: begin
-                csr_wdata = '0;
+                csr_wdata_E = '0;
             end
         endcase
     end
 
     always_ff @(posedge clk) begin
         
-        if (reset) begin
-            // Init csr_regs
-            for (int i = 0; i < 4096; i++) begin
-                csr_regs[i] <= '0;
-            end
-
+        if (reset) begin : Init_CSRs
             mtvec_reg <= 32'b0;
             mepc_reg <= 32'b0;
             mcause_reg <= 32'b0;
@@ -109,8 +142,7 @@ module csr_file
             mie_reg <= 32'b0;
             mip_reg <= 32'b0;
         end
-        else if (trap_entry_E) begin
-            mtvec_reg <= mtvec_pc;
+        else if (trap_entry_E) begin : trap_occurs
             mepc_reg <= trap_mepc_E;
             mcause_reg <= trap_mcause_E;
             mtval_reg <= trap_mtval_E;
@@ -118,26 +150,26 @@ module csr_file
             mstatus_reg[3] <= 1'b0;
             mstatus_reg[12:11] <= 2'b11; // Machine Mode
         end
-        else if (csr_we) begin
+        else if (csr_we) begin : CSR_Instructions
             
             case (csr_addr)
-                12'h300: begin
-                    mstatus_reg <= csr_wdata;
+                CSR_MSTATUS: begin
+                    mstatus_reg <= csr_wdata_E;
                 end
-                12'h305: begin
-                    mtvec_reg <= csr_wdata;
+                CSR_MTVEC: begin
+                    mtvec_reg <= csr_wdata_E;
                 end
-                12'h340: begin
-                    mscratch_reg <= csr_wdata;
+                CSR_MSCRATCH: begin
+                    mscratch_reg <= csr_wdata_E;
                 end
-                12'h341: begin
-                    mepc_reg <= csr_wdata;
+                CSR_MEPC: begin
+                    mepc_reg <= csr_wdata_E;
                 end
-                12'h342: begin
-                   mcause_reg <= csr_wdata; 
+                CSR_MCAUSE: begin
+                   mcause_reg <= csr_wdata_E; 
                 end
-                12'h343: begin
-                    mtval_reg <= csr_wdata;
+                CSR_MTVAL: begin
+                    mtval_reg <= csr_wdata_E;
                 end
                 default: begin
                     mtvec_reg <= 32'b0;

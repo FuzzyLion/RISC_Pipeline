@@ -25,7 +25,9 @@ module ID_EX
         alu_src: BE_RDATA_E,
         btype: BEQ,
         load_type: LB,
-        store_type: SB
+        store_type: SB,
+        csrtype: TRAP,
+        csr_en: 1'b0
     };
 
     always_ff @(posedge clk) begin

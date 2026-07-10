@@ -1,7 +1,7 @@
 module trap_ctrl 
     import core_types_pkg::*;
 (
-    input logic vaild_E,
+    input logic valid_E,
 
     input logic [WORD_WIDTH - 1:0] instr_E,
     input logic [WORD_WIDTH - 1:0] pc_E,
@@ -11,6 +11,8 @@ module trap_ctrl
     input trap_event_e trap_event_illegal_instr_E,
     input trap_event_e trap_event_branch_jump_E,
     input trap_event_e trap_event_load_store_E,
+
+    output pc_src_with_trap_e pc_src_with_trap_E,
     
     output logic [WORD_WIDTH - 1:0] trap_mcause_E,
     output logic [WORD_WIDTH - 1:0] trap_mtval_E,
@@ -28,25 +30,31 @@ module trap_ctrl
     logic env_call;
     logic env_break;
 
-    assign illegal_instr = vaild_E &&
+    always_comb begin : trap_define
+        illegal_instr = valid_E &&
                         (trap_event_illegal_instr_E == TRAP_EVENT_ILLEGAL_INSTR);
-    assign instr_addr_misaligned = vaild_E &&
+        instr_addr_misaligned = valid_E &&
                         (trap_event_branch_jump_E == TRAP_EVENT_INSTR_ADDR_MISALIGNED);
-    assign load_misaligned = vaild_E &&
+        load_misaligned = valid_E &&
                         (trap_event_load_store_E == TRAP_EVENT_LOAD_ADDR_MISALIGNED);
-    assign store_misaligned = vaild_E &&
+        store_misaligned = valid_E &&
                         (trap_event_load_store_E == TRAP_EVENT_STORE_ADDR_MISALIGNED);
-    assign env_call = vaild_E &&
+        env_call = valid_E &&
                         (trap_event_illegal_instr_E == TRAP_EVENT_ENV_CALL_M_MODE);
-    assign env_break = vaild_E &&
+        env_break = valid_E &&
                         (trap_event_illegal_instr_E == TRAP_EVENT_BREAKPOINT);
+    end
 
-    assign trap_entry_E = illegal_instr ||
-                          env_call ||
-                          env_break ||
-                          instr_addr_misaligned ||
-                          load_misaligned ||
-                          store_misaligned;
+    always_comb begin : trap_entry
+        trap_entry_E = illegal_instr ||
+                    env_call ||
+                    env_break ||
+                    instr_addr_misaligned ||
+                    load_misaligned ||
+                    store_misaligned;
+
+        pc_src_with_trap_E = pc_src_with_trap_e'(trap_entry_E);
+    end
 
     always_comb begin
         trap_mcause_E = 32'b0;

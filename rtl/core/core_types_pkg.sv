@@ -114,11 +114,15 @@ package core_types_pkg;
         RSLT_PCPLUS4 = 2'b10
     } result_src_e;
 
-    typedef enum logic [1:0] {
-        PC_PLUS4 = 2'b00,
-        PC_TARGET = 2'b01,
-        PC_TRAP_HANDLER = 2'b10
+    typedef enum logic {
+        PC_PLUS4 = 1'b0,
+        PC_TARGET = 1'b1
     } pc_src_e;
+
+    typedef enum logic {
+        PC_TRAP_NONE = 1'b0,
+        PC_TRAP_HANDLER = 1'b1
+    } pc_src_with_trap_e;
 
     typedef enum logic [1:0] {
         AE_RS1_VAL = 2'b00,
@@ -176,6 +180,8 @@ package core_types_pkg;
         btype_e btype;
         itype_load_e load_type;
         stype_e store_type;
+        csrtype_e csrtype;
+        logic csr_en;
     } control_bundle_t;
 
     typedef struct packed {
@@ -218,6 +224,7 @@ package core_types_pkg;
         logic [WORD_WIDTH - 1:0] write_data;
         logic [ADDR_WIDTH - 1:0] rd_idx;
         logic [WORD_WIDTH - 1:0] pc_plus4;
+        logic [WORD_WIDTH - 1:0] csr_rdata;
     } ex_mem_data_t;
 
     typedef struct packed {
@@ -226,6 +233,7 @@ package core_types_pkg;
         logic [WORD_WIDTH - 1:0] load_result;
         logic [ADDR_WIDTH - 1:0] rd_idx;
         logic [WORD_WIDTH - 1:0] pc_plus4;
+        logic [WORD_WIDTH - 1:0] csr_rdata;
     } mem_wb_data_t;
 
     typedef struct packed {

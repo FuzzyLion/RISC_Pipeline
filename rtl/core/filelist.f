@@ -23,3 +23,5 @@ rtl/core/data_mem.sv
 rtl/core/load_data.sv
 rtl/core/MEM_WB.sv
 rtl/core/instr_field.sv
+rtl/core/csr_file.sv
+rtl/core/trap_ctrl.sv

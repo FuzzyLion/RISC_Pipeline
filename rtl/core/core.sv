@@ -15,6 +15,7 @@ module core
     hazard_stallflush_t hazard_stallflush_ctrl;
     logic trap_flush_D;
     logic trap_flush_E;
+    logic trap_flush_M;
 
     // Control Unit
     control_bundle_t ctrl_D;
@@ -30,6 +31,7 @@ module core
 
     // pc_mux
     pc_src_e pc_src_E;
+    pc_src_with_trap_e pc_src_with_trap_E;
     logic [WORD_WIDTH - 1:0] pc_target_in;
     logic [WORD_WIDTH - 1:0] pc_pre_out;
 
@@ -81,6 +83,18 @@ module core
     logic [WORD_WIDTH - 1:0] alu_result_E_out;
     trap_event_e trap_event_load_store_E;
 
+    // trap_ctrl
+    logic trap_entry_E;
+
+    // csr_file
+    logic csr_en_E;
+    logic [WORD_WIDTH - 1:0] trap_mcause_E;
+    logic [WORD_WIDTH - 1:0] trap_mtval_E;
+    logic [WORD_WIDTH - 1:0] trap_mepc_E;
+    logic [WORD_WIDTH - 1:0] csr_rdata_E;
+    logic [WORD_WIDTH - 1:0] mtvec;
+    logic [WORD_WIDTH - 1:0] mepc;
+
     // EX_MEM
     ex_mem_data_t data_E_exmem;
     ex_mem_data_t data_M_exmem;
@@ -116,6 +130,8 @@ module core
         result_src: ctrl_M.result_src
     };
 
+    assign csr_en_E = ctrl_E.csr_en;
+
     // IF_ID
     assign data_F_ifid = '{
         valid: 1'b1,
@@ -144,7 +160,8 @@ module core
         alu_result: alu_result_E_out,
         write_data: write_data_E_out,
         rd_idx: data_E_idex.rd_idx,
-        pc_plus4: data_E_idex.pc_plus4
+        pc_plus4: data_E_idex.pc_plus4,
+        csr_rdata: csr_rdata_E
     };
 
     // MEM_WB
@@ -153,7 +170,8 @@ module core
         alu_result: data_M_exmem.alu_result,
         load_result: load_result_M_out,
         rd_idx: data_M_exmem.rd_idx,
-        pc_plus4: data_M_exmem.pc_plus4
+        pc_plus4: data_M_exmem.pc_plus4,
+        csr_rdata: data_M_exmem.csr_rdata
     };
 
     // ---------------------- MODULE INSTANTIATIONS ----------------------
@@ -191,8 +209,10 @@ module core
     // PC MUX
     pc_mux pc_mux1 (
         .pc_src_E(pc_src_E),
+        .pc_src_with_trap_E(pc_src_with_trap_E),
         .pc_target_E(pc_target_in),
         .pc_plus4_F(pc_plus4_F_out),
+        .mtvec_reg(mtvec),
         .pc_pre_F(pc_pre_out)
     );
 
@@ -327,12 +347,53 @@ module core
         .alu_result_E(alu_result_E_out)
     );
 
+    // Trap Control
+    trap_ctrl trap_ctrl1 (
+        .valid_E(data_E_idex.valid),
+        .instr_E(data_E_idex.instr),
+        .pc_E(data_E_idex.pc),
+        .pc_target_E(pc_target_in),
+        .alu_result_E(alu_result_E_out),
+        .trap_event_illegal_instr_E(trap_event_illegal_instr_E),
+        .trap_event_branch_jump_E(trap_event_branch_jump_E),
+        .trap_event_load_store_E(trap_event_load_store_E),
+        .pc_src_with_trap_E(pc_src_with_trap_E),
+        .trap_mcause_E(trap_mcause_E),
+        .trap_mtval_E(trap_mtval_E),
+        .trap_mepc_E(trap_mepc_E),
+        .trap_flush_D(trap_flush_D),
+        .trap_flush_E(trap_flush_E),
+        .trap_flush_M(trap_flush_M),
+        .trap_entry_E(trap_entry_E)
+    );
+
+    // CSR File
+    csr_file csr_file1 (
+        .clk(clk),
+        .reset(reset),
+        .valid_E(data_E_idex.valid),
+        .csr_en_E(csr_en_E),
+        .instr_E(data_E_idex.instr),
+        .rs1_val_E(alu_src_AE_out),
+        .rs1_idx_E(data_E_idex.rs1_idx),
+        .imm_E(data_E_idex.imm),
+        .csrtype_E(ctrl_E.csrtype),
+        .trap_entry_E(trap_entry_E),
+        .trap_mcause_E(trap_mcause_E),
+        .trap_mtval_E(trap_mtval_E),
+        .trap_mepc_E(trap_mepc_E),
+        .csr_rdata_E(csr_rdata_E),
+        .mtvec(mtvec),
+        .mepc(mepc)
+    );
+
     // EX_MEM Pipeline Register
     EX_MEM EX_MEM1 (
         .clk(clk),
         .reset(reset),
         .ctrl_next_E(ctrl_next_E),
         .data_E(data_E_exmem),
+        .trap_flush_M(trap_flush_M),
         .ctrl_M(ctrl_M),
         .data_M(data_M_exmem)
     );
