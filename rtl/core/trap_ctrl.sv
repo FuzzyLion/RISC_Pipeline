@@ -47,16 +47,16 @@ module trap_ctrl
 
     always_comb begin : trap_entry
         trap_entry_E = illegal_instr ||
-                    env_call ||
-                    env_break ||
-                    instr_addr_misaligned ||
-                    load_misaligned ||
-                    store_misaligned;
+                       env_call ||
+                       env_break ||
+                       instr_addr_misaligned ||
+                       load_misaligned ||
+                       store_misaligned;
 
         pc_src_with_trap_E = pc_src_with_trap_e'(trap_entry_E);
     end
 
-    always_comb begin
+    always_comb begin : trap_ctrl
         trap_mcause_E = 32'b0;
         trap_mtval_E = 32'b0;
         trap_mepc_E = 32'b0;

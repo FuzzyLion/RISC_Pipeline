@@ -92,8 +92,8 @@ module core
     logic [WORD_WIDTH - 1:0] trap_mtval_E;
     logic [WORD_WIDTH - 1:0] trap_mepc_E;
     logic [WORD_WIDTH - 1:0] csr_rdata_E;
-    logic [WORD_WIDTH - 1:0] mtvec;
-    logic [WORD_WIDTH - 1:0] mepc;
+    logic [WORD_WIDTH - 1:0] mtvec_reg;
+    logic [WORD_WIDTH - 1:0] mepc_reg;
 
     // EX_MEM
     ex_mem_data_t data_E_exmem;
@@ -212,7 +212,7 @@ module core
         .pc_src_with_trap_E(pc_src_with_trap_E),
         .pc_target_E(pc_target_in),
         .pc_plus4_F(pc_plus4_F_out),
-        .mtvec_reg(mtvec),
+        .mtvec_reg(mtvec_reg),
         .pc_pre_F(pc_pre_out)
     );
 
@@ -383,8 +383,8 @@ module core
         .trap_mtval_E(trap_mtval_E),
         .trap_mepc_E(trap_mepc_E),
         .csr_rdata_E(csr_rdata_E),
-        .mtvec(mtvec),
-        .mepc(mepc)
+        .mtvec_reg(mtvec_reg),
+        .mepc_reg(mepc_reg)
     );
 
     // EX_MEM Pipeline Register
@@ -440,6 +440,7 @@ module core
         .alu_result_W(data_W_memwb.alu_result),
         .load_result_W(data_W_memwb.load_result),
         .pc_plus4_W(data_W_memwb.pc_plus4),
+        .csr_rdata_W(data_W_memwb.csr_rdata),
         .result_src_W(ctrl_W.result_src),
         .result_W(result_W_out)
     );

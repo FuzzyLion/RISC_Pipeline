@@ -20,8 +20,8 @@ module csr_file
     input logic [WORD_WIDTH - 1:0] trap_mepc_E,
 
     output logic [WORD_WIDTH - 1:0] csr_rdata_E,
-    output logic [WORD_WIDTH - 1:0] mtvec,
-    output logic [WORD_WIDTH - 1:0] mepc
+    output logic [WORD_WIDTH - 1:0] mtvec_reg,
+    output logic [WORD_WIDTH - 1:0] mepc_reg
 );
 
     localparam logic [11:0] CSR_MSTATUS = 12'h300;
@@ -33,8 +33,6 @@ module csr_file
     localparam logic [11:0] CSR_MTVAL = 12'h343;
     localparam logic [11:0] CSR_MIP = 12'h344;
 
-    logic [WORD_WIDTH - 1:0] mtvec_reg;
-    logic [WORD_WIDTH - 1:0] mepc_reg;
     logic [WORD_WIDTH - 1:0] mcause_reg;
     logic [WORD_WIDTH - 1:0] mtval_reg;
     logic [WORD_WIDTH - 1:0] mscratch_reg;
@@ -54,6 +52,9 @@ module csr_file
         csr_instr_E = valid_E && (csrtype_E !== TRAP) && (csr_en_E == 1'b1);
 
         case (csrtype_E)
+            TRAP: begin
+                csr_we = 1'b0;
+            end
             CSRRW, CSRRWI: begin
                 csr_we = csr_instr_E;
             end 
@@ -106,6 +107,9 @@ module csr_file
         endcase
 
         case (csrtype_E)
+            TRAP: begin
+                csr_wdata_E = '0;
+            end
             CSRRW: begin
                 csr_wdata_E = rs1_val_E;
             end
@@ -157,7 +161,7 @@ module csr_file
                     mstatus_reg <= csr_wdata_E;
                 end
                 CSR_MTVEC: begin
-                    mtvec_reg <= csr_wdata_E;
+                    mtvec_reg <= {csr_wdata_E[WORD_WIDTH - 1:2], 2'b00};
                 end
                 CSR_MSCRATCH: begin
                     mscratch_reg <= csr_wdata_E;

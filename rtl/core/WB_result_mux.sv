@@ -4,6 +4,7 @@ module WB_result_mux
     input logic [WORD_WIDTH - 1:0] alu_result_W,
     input logic [WORD_WIDTH - 1:0] load_result_W,
     input logic [WORD_WIDTH - 1:0] pc_plus4_W,
+    input logic [WORD_WIDTH - 1:0] csr_rdata_W,
 
     input result_src_e result_src_W,
 
@@ -20,6 +21,9 @@ module WB_result_mux
             end
             RSLT_PCPLUS4: begin
                 result_W = pc_plus4_W;
+            end
+            RSLT_CSR_RDATA: begin
+                result_W = csr_rdata_W;
             end
             default: begin
                 result_W = '0;

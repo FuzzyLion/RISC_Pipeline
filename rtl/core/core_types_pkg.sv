@@ -111,7 +111,8 @@ package core_types_pkg;
     typedef enum logic [1:0] {
         RSLT_ALU = 2'b00,
         RSLT_RDATA = 2'b01,
-        RSLT_PCPLUS4 = 2'b10
+        RSLT_PCPLUS4 = 2'b10,
+        RSLT_CSR_RDATA = 2'b11
     } result_src_e;
 
     typedef enum logic {
