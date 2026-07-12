@@ -2,7 +2,7 @@
 
 module core_smoke_alu_tb
     import core_types_pkg::*;
-;
+();
 
     logic clk;
     logic reset;

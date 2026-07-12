@@ -16,7 +16,7 @@ module control_unit
     stype_e stype_D;
     btype_e btype_D;
     csrtype_e csrtype_D;
-    trap_ecall_ebreak_e trap_ecall_ebreak_D;
+    csr_imm_e csr_imm_D;
     logic [2:0] funct3;
     logic [6:0] funct7;
     logic [11:0] csr_source;
@@ -34,7 +34,8 @@ module control_unit
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        pc_src_mret: PC_MRET_DIS
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -52,7 +53,7 @@ module control_unit
     assign stype_D = stype_e'(funct3);
     assign btype_D = btype_e'(funct3);
     assign csrtype_D = csrtype_e'(funct3);
-    assign trap_ecall_ebreak_D = trap_ecall_ebreak_e'(csr_source);
+    assign csr_imm_D = csr_imm_e'(csr_source);
 
 
     always_comb begin
@@ -311,13 +312,17 @@ module control_unit
 
                 case (csrtype_D)
                     TRAP: begin
+                        ctrl_D.csrtype = TRAP;
 
-                        case (trap_ecall_ebreak_D)
-                            TRAP_ECALL: begin
+                        case (csr_imm_D)
+                            CSR_ECALL: begin
                                 trap_event_illegal_instr_D = TRAP_EVENT_ENV_CALL_M_MODE;
                             end
-                            TRAP_EBREAK: begin
+                            CSR_EBREAK: begin
                                 trap_event_illegal_instr_D = TRAP_EVENT_BREAKPOINT;
+                            end
+                            CSR_MRET: begin
+                                ctrl_D.pc_src_mret = PC_MRET_EN;
                             end
                             default: begin
                                 trap_event_illegal_instr_D = TRAP_EVENT_NONE;
@@ -327,24 +332,36 @@ module control_unit
                     end
                     CSRRW: begin
                         ctrl_D.rf_write = 1'b1;  
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRW;
                     end
                     CSRRS: begin
                         ctrl_D.rf_write = 1'b1;
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRS;
                     end
                     CSRRC: begin
                         ctrl_D.rf_write = 1'b1;
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRC;
                     end
                     CSRRWI: begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRWI;
                     end
                     CSRRSI: begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRSI;
                     end
                     CSRRCI:begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
+                        ctrl_D.result_src = RSLT_CSR_RDATA;
+                        ctrl_D.csrtype = CSRRCI;
                     end
                     default: begin
                         trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;

@@ -19,79 +19,79 @@ trap_handler:
     csrr t1, mcause
     addi t2, x0, 0
 
-jumpbranchmisaligned:
-    bne t1, t2, illegalinstr
+jump_branch_misaligned:
+    bne t1, t2, illegal_instr
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-illegalinstr:
+illegal_instr:
     addi t2, x0, 2
-    bne t1, t2, softwareinterrupt
+    bne t1, t2, software_interrupt
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-softwareinterrupt:
-    addi t2, x0, 32771
-    bne t1, t2, timerinterrupt
+software_interrupt:
+    addi t2, x0, 0x80000003
+    bne t1, t2, timer_interrupt
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-timerinterrupt:
-    addi t2, x0, 32775
-    bne t1, t2, externalinterrupt
+timer_interrupt:
+    addi t2, x0, 0x80000007
+    bne t1, t2, external_interrupt
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-externalinterrupt:
-    addi t2, x0, 32779
+external_interrupt:
+    addi t2, x0, 0x8000000B
     bne t1, t2, breakpoint
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
 breakpoint:
     addi t2, x0, 3
-    bne t1, t2, loadmisaligned
+    bne t1, t2, load_misaligned
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-loadmisaligned:
-    addi t2, x0, 5
-    bne t1, t2, storemisaligned
+load_misaligned:
+    addi t2, x0, 4
+    bne t1, t2, store_misaligned
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-storemisaligned:
+store_misaligned:
     addi t2, x0, 6
-    bne t1, t2, machineenvcall
+    bne t1, t2, machine_envcall
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
-machineenvcall:
+machine_envcall:
     addi t2, x0, 11
     bne t1, t2, exit
     csrr t3, mepc
     addi t3, t3, 4
     csrw mepc, t3
-    j done
+    j trap_return
 
 #restore registers and return from the exception
-done:
+trap_return:
     lw t1, 0(t0)
     lw t2, 4(t0)
     csrrw t0, mscratch, t0

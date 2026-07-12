@@ -27,7 +27,8 @@ module ID_EX
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        pc_src_mret: PC_MRET_DIS
     };
 
     always_ff @(posedge clk) begin

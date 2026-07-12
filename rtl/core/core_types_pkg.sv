@@ -125,6 +125,11 @@ package core_types_pkg;
         PC_TRAP_HANDLER = 1'b1
     } pc_src_with_trap_e;
 
+    typedef enum logic { 
+        PC_MRET_DIS = 1'b0,
+        PC_MRET_EN = 1'b1
+    } pc_src_mret_e;
+
     typedef enum logic [1:0] {
         AE_RS1_VAL = 2'b00,
         AE_RESULT_W = 2'b01,
@@ -163,9 +168,10 @@ package core_types_pkg;
     } trap_event_e;
 
     typedef enum logic [11:0] { 
-        TRAP_ECALL = 12'b0000_0000_0000,
-        TRAP_EBREAK = 12'b0000_0000_0001
-    } trap_ecall_ebreak_e;
+        CSR_ECALL = 12'b0000_0000_0000,
+        CSR_EBREAK = 12'b0000_0000_0001,
+        CSR_MRET = 12'b0011_0000_0010
+    } csr_imm_e;
 
     //--------------------------------------------------------------------------------------
 
@@ -183,6 +189,7 @@ package core_types_pkg;
         stype_e store_type;
         csrtype_e csrtype;
         logic csr_en;
+        pc_src_mret_e pc_src_mret;
     } control_bundle_t;
 
     typedef struct packed {

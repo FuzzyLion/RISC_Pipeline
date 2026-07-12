@@ -2,7 +2,7 @@
 
 module alu_op_tb
     import core_types_pkg::*;
-;
+();
 
     alu_ctrl_e alu_control_E;
     btype_e btype_E;

@@ -3,10 +3,12 @@ module pc_mux
 (
     input pc_src_e pc_src_E,
     input pc_src_with_trap_e pc_src_with_trap_E,
+    input pc_src_mret_e pc_src_mret_E,
 
     input logic [WORD_WIDTH - 1:0] pc_target_E,
     input logic [WORD_WIDTH - 1:0] pc_plus4_F,
     input logic [WORD_WIDTH - 1:0] mtvec_reg,
+    input logic [WORD_WIDTH - 1:0] mepc_reg,
 
     output logic [WORD_WIDTH - 1:0] pc_pre_F
 );
@@ -14,6 +16,9 @@ module pc_mux
     always_comb begin
         if (pc_src_with_trap_E == PC_TRAP_HANDLER) begin
             pc_pre_F = mtvec_reg;
+        end
+        else if (pc_src_mret_E == PC_MRET_EN) begin
+            pc_pre_F = mepc_reg;
         end
         else begin
             case (pc_src_E)

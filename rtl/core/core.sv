@@ -32,6 +32,7 @@ module core
     // pc_mux
     pc_src_e pc_src_E;
     pc_src_with_trap_e pc_src_with_trap_E;
+    pc_src_mret_e pc_src_mret_E;
     logic [WORD_WIDTH - 1:0] pc_target_in;
     logic [WORD_WIDTH - 1:0] pc_pre_out;
 
@@ -210,9 +211,11 @@ module core
     pc_mux pc_mux1 (
         .pc_src_E(pc_src_E),
         .pc_src_with_trap_E(pc_src_with_trap_E),
+        .pc_src_mret_E(pc_src_mret_E),
         .pc_target_E(pc_target_in),
         .pc_plus4_F(pc_plus4_F_out),
         .mtvec_reg(mtvec_reg),
+        .mepc_reg(mepc_reg),
         .pc_pre_F(pc_pre_out)
     );
 
