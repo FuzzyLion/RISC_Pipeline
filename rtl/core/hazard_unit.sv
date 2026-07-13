@@ -85,7 +85,7 @@ module hazard_unit
                     (ctrl_E.result_src == RSLT_RDATA) &&
                     ((rs1_idx_D == rd_idx_E) || (rs2_idx_D == rd_idx_E));
 
-        redirect = (pc_src_E == PC_TARGET);
+        redirect = (pc_src_E == PC_TARGET) || (pc_src_E == PC_MRET);
 
         if (trap_flush_D && trap_flush_E) begin
             hazard_stallflush_ctrl.flush_D = 1'b1;

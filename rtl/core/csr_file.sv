@@ -6,6 +6,7 @@ module csr_file
 
     input logic valid_E,
     input logic csr_en_E,
+    input logic mret_en_E,
 
     input logic [WORD_WIDTH - 1:0] instr_E,
     input logic [WORD_WIDTH - 1:0] rs1_val_E,
@@ -150,9 +151,14 @@ module csr_file
             mepc_reg <= trap_mepc_E;
             mcause_reg <= trap_mcause_E;
             mtval_reg <= trap_mtval_E;
-            mstatus_reg[7] <= mstatus_reg[3];
-            mstatus_reg[3] <= 1'b0;
+            mstatus_reg[7] <= mstatus_reg[3]; // MPIE <- MIE
+            mstatus_reg[3] <= 1'b0; // MPIE <- 0
             mstatus_reg[12:11] <= 2'b11; // Machine Mode
+        end
+        else if (mret_en_E && valid_E) begin
+            mstatus_reg[3] <= mstatus_reg[7]; // MIE <- MPIE
+            mstatus_reg[7] <= 1'b1; // MPIE <- 1
+            mstatus_reg[12:11] <= 2'b11;
         end
         else if (csr_we) begin : CSR_Instructions
             

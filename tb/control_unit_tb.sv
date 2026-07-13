@@ -610,7 +610,7 @@ module control_unit_tb
 
         check_ctrl_bundle("I-Type-IMM control bundle", CTRL_ITYPE_IMM);
         check_imm_src("I mode imm", IMM_I);
-        check_trap_event("ADDI trap event", TRAP_EVENT_NONE);
+        check_trap_event("ADDI trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask 
 
     task automatic test_lui_instr();
@@ -1094,7 +1094,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRW control bundle", expected_ctrl);
         check_imm_src("CSRRW imm source", IMM_I);
-        check_trap_event("CSRRW trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRW trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_csrrs_instr();
@@ -1111,7 +1111,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRS control bundle", expected_ctrl);
         check_imm_src("CSRRS imm source", IMM_I);
-        check_trap_event("CSRRS trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRS trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_csrrc_instr();
@@ -1128,7 +1128,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRC control bundle", expected_ctrl);
         check_imm_src("CSRRC imm source", IMM_I);
-        check_trap_event("CSRRC trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRC trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_csrrwi_instr();
@@ -1145,7 +1145,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRWI control bundle", expected_ctrl);
         check_imm_src("CSRRWI imm source", IMM_CSR);
-        check_trap_event("CSRRWI trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRWI trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_csrrsi_instr();
@@ -1162,7 +1162,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRSI control bundle", expected_ctrl);
         check_imm_src("CSRRSI imm source", IMM_CSR);
-        check_trap_event("CSRRSI trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRSI trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_csrrci_instr();
@@ -1179,7 +1179,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRCI control bundle", expected_ctrl);
         check_imm_src("CSRRCI imm source", IMM_CSR);
-        check_trap_event("CSRRCI trap event", TRAP_EVENT_NONE);
+        check_trap_event("CSRRCI trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic test_unsupported_csr_funct3();

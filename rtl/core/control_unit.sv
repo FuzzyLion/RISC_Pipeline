@@ -35,7 +35,7 @@ module control_unit
         store_type: SB,
         csrtype: TRAP,
         csr_en: 1'b0,
-        pc_src_mret: PC_MRET_DIS
+        mret_en: 1'b0
     };
 
     assign opcode_D = opcode_e'(instr_D[6:0]); 
@@ -60,7 +60,7 @@ module control_unit
 
         ctrl_D = CTRL_NOP;
         imm_src_D = IMM_I;
-        trap_event_illegal_instr_D = TRAP_EVENT_NONE;
+        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
 
         
         case (opcode_D)
@@ -322,10 +322,17 @@ module control_unit
                                 trap_event_illegal_instr_D = TRAP_EVENT_BREAKPOINT;
                             end
                             CSR_MRET: begin
-                                ctrl_D.pc_src_mret = PC_MRET_EN;
+                                if ((instr_D[19:15] == 5'b0) &&
+                                    (instr_D[11:7] == 5'b0)) begin
+                                    ctrl_D.mret_en = 1'b1;
+                                end
+                                else begin
+                                    ctrl_D.mret_en = 1'b0;
+                                    trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
+                                end
                             end
                             default: begin
-                                trap_event_illegal_instr_D = TRAP_EVENT_NONE;
+                                trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                             end
                         endcase
 

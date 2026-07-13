@@ -32,7 +32,6 @@ module core
     // pc_mux
     pc_src_e pc_src_E;
     pc_src_with_trap_e pc_src_with_trap_E;
-    pc_src_mret_e pc_src_mret_E;
     logic [WORD_WIDTH - 1:0] pc_target_in;
     logic [WORD_WIDTH - 1:0] pc_pre_out;
 
@@ -211,7 +210,6 @@ module core
     pc_mux pc_mux1 (
         .pc_src_E(pc_src_E),
         .pc_src_with_trap_E(pc_src_with_trap_E),
-        .pc_src_mret_E(pc_src_mret_E),
         .pc_target_E(pc_target_in),
         .pc_plus4_F(pc_plus4_F_out),
         .mtvec_reg(mtvec_reg),
@@ -325,6 +323,7 @@ module core
         .jump_E(ctrl_E.jump),
         .branch_E(ctrl_E.branch),
         .zero_E(zero_E_out),
+        .mret_en_E(ctrl_E.mret_en),
         .pc_E(data_E_idex.pc),
         .alu_src_AE(alu_src_AE_out),
         .imm_E(data_E_idex.imm),
@@ -376,6 +375,7 @@ module core
         .reset(reset),
         .valid_E(data_E_idex.valid),
         .csr_en_E(csr_en_E),
+        .mret_en_E(ctrl_E.mret_en),
         .instr_E(data_E_idex.instr),
         .rs1_val_E(alu_src_AE_out),
         .rs1_idx_E(data_E_idex.rs1_idx),

@@ -3,7 +3,6 @@ module pc_mux
 (
     input pc_src_e pc_src_E,
     input pc_src_with_trap_e pc_src_with_trap_E,
-    input pc_src_mret_e pc_src_mret_E,
 
     input logic [WORD_WIDTH - 1:0] pc_target_E,
     input logic [WORD_WIDTH - 1:0] pc_plus4_F,
@@ -17,9 +16,6 @@ module pc_mux
         if (pc_src_with_trap_E == PC_TRAP_HANDLER) begin
             pc_pre_F = mtvec_reg;
         end
-        else if (pc_src_mret_E == PC_MRET_EN) begin
-            pc_pre_F = mepc_reg;
-        end
         else begin
             case (pc_src_E)
                 PC_PLUS4: begin
@@ -27,6 +23,9 @@ module pc_mux
                 end 
                 PC_TARGET: begin
                     pc_pre_F = pc_target_E;
+                end
+                PC_MRET: begin
+                    pc_pre_F = mepc_reg;
                 end
                 default: begin
                     pc_pre_F = 32'b0;

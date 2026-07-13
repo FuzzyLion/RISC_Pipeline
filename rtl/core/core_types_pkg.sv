@@ -115,20 +115,16 @@ package core_types_pkg;
         RSLT_CSR_RDATA = 2'b11
     } result_src_e;
 
-    typedef enum logic {
-        PC_PLUS4 = 1'b0,
-        PC_TARGET = 1'b1
+    typedef enum logic [1:0] {
+        PC_PLUS4 = 2'b00,
+        PC_TARGET = 2'b01,
+        PC_MRET = 2'b10
     } pc_src_e;
 
     typedef enum logic {
         PC_TRAP_NONE = 1'b0,
         PC_TRAP_HANDLER = 1'b1
     } pc_src_with_trap_e;
-
-    typedef enum logic { 
-        PC_MRET_DIS = 1'b0,
-        PC_MRET_EN = 1'b1
-    } pc_src_mret_e;
 
     typedef enum logic [1:0] {
         AE_RS1_VAL = 2'b00,
@@ -163,8 +159,7 @@ package core_types_pkg;
         TRAP_EVENT_LOAD_ACCESS_FAULT = 4'b0111,
         TRAP_EVENT_STORE_ADDR_MISALIGNED = 4'b1000,
         TRAP_EVENT_STORE_ACCESS_FAULT = 4'b1001,
-        TRAP_EVENT_ENV_CALL_M_MODE = 4'b1010,
-        TRAP_EVENT_NONE = 4'b1111
+        TRAP_EVENT_ENV_CALL_M_MODE = 4'b1010
     } trap_event_e;
 
     typedef enum logic [11:0] { 
@@ -189,7 +184,7 @@ package core_types_pkg;
         stype_e store_type;
         csrtype_e csrtype;
         logic csr_en;
-        pc_src_mret_e pc_src_mret;
+        logic mret_en;
     } control_bundle_t;
 
     typedef struct packed {

@@ -28,7 +28,7 @@ module ID_EX
         store_type: SB,
         csrtype: TRAP,
         csr_en: 1'b0,
-        pc_src_mret: PC_MRET_DIS
+        mret_en: 1'b0
     };
 
     always_ff @(posedge clk) begin
@@ -45,8 +45,9 @@ module ID_EX
             ctrl_E.mem_write <= data_D.valid && ctrl_D.mem_write;
             ctrl_E.jump <= data_D.valid && ctrl_D.jump;
             ctrl_E.branch <= data_D.valid && ctrl_D.branch;
+            ctrl_E.mret_en <= data_D.valid && ctrl_D.mret_en;
 
-            trap_event_illegal_instr_E <= data_D.valid ? trap_event_illegal_instr_D : TRAP_EVENT_NONE;
+            trap_event_illegal_instr_E <= data_D.valid ? trap_event_illegal_instr_D : TRAP_EVENT_ILLEGAL_INSTR;
 
             data_E <= data_D;
         end

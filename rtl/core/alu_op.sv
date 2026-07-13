@@ -27,7 +27,7 @@ module alu_op
 
     always_comb begin
         alu_result_E = '0;
-        trap_event_load_store_E = TRAP_EVENT_NONE;
+        trap_event_load_store_E = TRAP_EVENT_ILLEGAL_INSTR;
 
         case (alu_control_E)
             CTRL_ADD: begin
@@ -90,7 +90,7 @@ module alu_op
             end
             default: begin
                 trap_event_load_store_E = is_load_E ? 
-                                          TRAP_EVENT_NONE : 
+                                          TRAP_EVENT_ILLEGAL_INSTR : 
                                           trap_event_load_store_E; 
                                           // Make sure it will not overwrite by sotre instrucations
             end
@@ -113,7 +113,7 @@ module alu_op
             end
             default: begin
                     trap_event_load_store_E = is_store_E ? 
-                                              TRAP_EVENT_NONE : 
+                                              TRAP_EVENT_ILLEGAL_INSTR : 
                                               trap_event_load_store_E;
                                               // Make sure it will not overwrite by load instrucations
             end
