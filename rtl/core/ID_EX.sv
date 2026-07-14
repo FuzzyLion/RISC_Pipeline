@@ -47,7 +47,7 @@ module ID_EX
             ctrl_E.branch <= data_D.valid && ctrl_D.branch;
             ctrl_E.mret_en <= data_D.valid && ctrl_D.mret_en;
 
-            trap_event_illegal_instr_E <= data_D.valid ? trap_event_illegal_instr_D : TRAP_EVENT_ILLEGAL_INSTR;
+            trap_event_illegal_instr_E <= data_D.valid ? trap_event_illegal_instr_D : TRAP_EVENT_NONE;
 
             data_E <= data_D;
         end

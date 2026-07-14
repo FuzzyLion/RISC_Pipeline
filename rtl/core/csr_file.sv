@@ -5,7 +5,7 @@ module csr_file
     input logic reset,
 
     input logic valid_E,
-    input logic csr_en_E,
+    input logic csr_en_E, // Euqals to CSR opcode
     input logic mret_en_E,
 
     input logic [WORD_WIDTH - 1:0] instr_E,
@@ -22,8 +22,12 @@ module csr_file
 
     output logic [WORD_WIDTH - 1:0] csr_rdata_E,
     output logic [WORD_WIDTH - 1:0] mtvec_reg,
-    output logic [WORD_WIDTH - 1:0] mepc_reg
+    output logic [WORD_WIDTH - 1:0] mepc_reg,
+
+    output logic illegal_csr_access_E
 );
+
+    localparam logic [WORD_WIDTH - 1:0] MSTATUS_WRITE_MUSK = 32'h0000_0088;
 
     localparam logic [11:0] CSR_MSTATUS = 12'h300;
     localparam logic [11:0] CSR_MIE = 12'h304;
@@ -41,6 +45,7 @@ module csr_file
     logic [WORD_WIDTH - 1:0] mie_reg;
     logic [WORD_WIDTH - 1:0] mip_reg;
 
+    logic csr_addr_supported;
     logic csr_instr_E;
     logic csr_we;
     logic [11:0] csr_addr;
@@ -135,7 +140,27 @@ module csr_file
         endcase
     end
 
+    always_comb begin
+        case (csr_addr)
+            CSR_MSTATUS, CSR_MIE, CSR_MTVEC, CSR_MSCRATCH, 
+            CSR_MEPC, CSR_MCAUSE, CSR_MTVAL, CSR_MIP: begin
+                csr_addr_supported = 1'b1;
+            end
+
+            default: begin
+                csr_addr_supported = 1'b0;
+            end
+        endcase
+
+    illegal_csr_access_E = csr_instr_E && !csr_addr_supported;
+end
+
     always_ff @(posedge clk) begin
+        /*
+        A CSR’s address is defined by the decode logic that maps the CSR address 
+        to its storage register, not by the register’s physical location or 
+        declaration.
+        */
         
         if (reset) begin : Init_CSRs
             mtvec_reg <= 32'b0;
@@ -148,14 +173,30 @@ module csr_file
             mip_reg <= 32'b0;
         end
         else if (trap_entry_E) begin : trap_occurs
+            /*
+            [ Trigger Condition Met ]
+            │
+            ├──> 1. mstatus.MPIE  <=  mstatus.MIE   (Backup current MIE state)
+            ├──> 2. mstatus.MIE   <=  0             (Disable global interrupts)
+            ├──> 3. mepc          <=  PC            (Save return address)
+            ├──> 4. mcause        <=  Interrupt_ID  (Record cause of interrupt)
+            └──> 5. PC            <=  mtvec         (Jump to trap handler)
+            */
             mepc_reg <= trap_mepc_E;
             mcause_reg <= trap_mcause_E;
             mtval_reg <= trap_mtval_E;
             mstatus_reg[7] <= mstatus_reg[3]; // MPIE <- MIE
-            mstatus_reg[3] <= 1'b0; // MPIE <- 0
+            mstatus_reg[3] <= 1'b0; // MIE <- 0
             mstatus_reg[12:11] <= 2'b11; // Machine Mode
         end
-        else if (mret_en_E && valid_E) begin
+        else if (mret_en_E && valid_E) begin : trap_return
+            /*
+            [ Execute mret ]
+            │
+            ├──> 1. mstatus.MIE   <=  mstatus.MPIE  (Restore global interrupt state)
+            ├──> 2. mstatus.MPIE  <=  1             (Reset backup bit)
+            └──> 3. PC            <=  mepc          (Return to original execution)
+            */
             mstatus_reg[3] <= mstatus_reg[7]; // MIE <- MPIE
             mstatus_reg[7] <= 1'b1; // MPIE <- 1
             mstatus_reg[12:11] <= 2'b11;
@@ -164,7 +205,14 @@ module csr_file
             
             case (csr_addr)
                 CSR_MSTATUS: begin
-                    mstatus_reg <= csr_wdata_E;
+                    // Unimplemented WPRI fields are read as zero, writes are ignored
+                    // 32'h0000_1800 means only MPP = 11
+                    // Only update MIE & MPIE in CSR instrs
+                    mstatus_reg <= 32'h0000_1800 | 
+                                   (csr_wdata_E & MSTATUS_WRITE_MUSK);
+                end
+                CSR_MIE: begin
+                    mie_reg <= csr_wdata_E;
                 end
                 CSR_MTVEC: begin
                     mtvec_reg <= {csr_wdata_E[WORD_WIDTH - 1:2], 2'b00};
@@ -181,18 +229,13 @@ module csr_file
                 CSR_MTVAL: begin
                     mtval_reg <= csr_wdata_E;
                 end
+                CSR_MIP: begin
+                    mip_reg <= csr_wdata_E;
+                end
                 default: begin
-                    mtvec_reg <= 32'b0;
-                    mepc_reg <= 32'b0;
-                    mcause_reg <= 32'b0;
-                    mtval_reg <= 32'b0;
-                    mscratch_reg <= 32'b0;
-                    mstatus_reg <= 32'h0000_1800;
-                    mie_reg <= 32'b0;
-                    mip_reg <= 32'b0;
+                    // All CSRs remain its former status
                 end
             endcase
-
         end
 
     end

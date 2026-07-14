@@ -11,6 +11,7 @@ module trap_ctrl
     input trap_event_e trap_event_illegal_instr_E,
     input trap_event_e trap_event_branch_jump_E,
     input trap_event_e trap_event_load_store_E,
+    input logic illegal_csr_access_E,
 
     output pc_src_with_trap_e pc_src_with_trap_E,
     
@@ -32,7 +33,8 @@ module trap_ctrl
 
     always_comb begin : trap_define
         illegal_instr = valid_E &&
-                        (trap_event_illegal_instr_E == TRAP_EVENT_ILLEGAL_INSTR);
+                        (illegal_csr_access_E ||
+                        (trap_event_illegal_instr_E == TRAP_EVENT_ILLEGAL_INSTR));
         instr_addr_misaligned = valid_E &&
                         (trap_event_branch_jump_E == TRAP_EVENT_INSTR_ADDR_MISALIGNED);
         load_misaligned = valid_E &&

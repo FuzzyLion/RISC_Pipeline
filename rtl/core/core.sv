@@ -94,6 +94,7 @@ module core
     logic [WORD_WIDTH - 1:0] csr_rdata_E;
     logic [WORD_WIDTH - 1:0] mtvec_reg;
     logic [WORD_WIDTH - 1:0] mepc_reg;
+    logic illegal_csr_access_E;
 
     // EX_MEM
     ex_mem_data_t data_E_exmem;
@@ -359,6 +360,7 @@ module core
         .trap_event_illegal_instr_E(trap_event_illegal_instr_E),
         .trap_event_branch_jump_E(trap_event_branch_jump_E),
         .trap_event_load_store_E(trap_event_load_store_E),
+        .illegal_csr_access_E(illegal_csr_access_E),
         .pc_src_with_trap_E(pc_src_with_trap_E),
         .trap_mcause_E(trap_mcause_E),
         .trap_mtval_E(trap_mtval_E),
@@ -387,7 +389,8 @@ module core
         .trap_mepc_E(trap_mepc_E),
         .csr_rdata_E(csr_rdata_E),
         .mtvec_reg(mtvec_reg),
-        .mepc_reg(mepc_reg)
+        .mepc_reg(mepc_reg),
+        .illegal_csr_access_E(illegal_csr_access_E)
     );
 
     // EX_MEM Pipeline Register

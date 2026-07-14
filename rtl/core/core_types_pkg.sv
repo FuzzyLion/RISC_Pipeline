@@ -159,7 +159,8 @@ package core_types_pkg;
         TRAP_EVENT_LOAD_ACCESS_FAULT = 4'b0111,
         TRAP_EVENT_STORE_ADDR_MISALIGNED = 4'b1000,
         TRAP_EVENT_STORE_ACCESS_FAULT = 4'b1001,
-        TRAP_EVENT_ENV_CALL_M_MODE = 4'b1010
+        TRAP_EVENT_ENV_CALL_M_MODE = 4'b1010,
+        TRAP_EVENT_NONE = 4'b1111
     } trap_event_e;
 
     typedef enum logic [11:0] { 
