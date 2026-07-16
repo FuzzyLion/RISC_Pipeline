@@ -2,7 +2,7 @@
 
 module reg_file_tb
     import core_types_pkg::*;
-;
+();
 
     logic clk;
     logic reset;

@@ -23,7 +23,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_IMM = '{
@@ -39,7 +40,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_UTYPE = '{
@@ -55,7 +57,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_STYPE = '{
@@ -71,7 +74,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SW,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE = '{
@@ -87,7 +91,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE = '{
@@ -103,7 +108,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_JTYPE = '{
@@ -119,7 +125,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_LOAD = '{
@@ -135,7 +142,8 @@ module control_unit_tb
         load_type: LW,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_JALR = '{
@@ -151,7 +159,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_UTYPE_AUIPC = '{
@@ -167,7 +176,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SUB = '{
@@ -183,7 +193,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLL = '{
@@ -199,7 +210,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLT = '{
@@ -215,7 +227,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SLTU = '{
@@ -231,7 +244,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_XOR = '{
@@ -247,7 +261,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SRL = '{
@@ -263,7 +278,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_SRA = '{
@@ -279,7 +295,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_OR = '{
@@ -295,7 +312,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_RTYPE_AND = '{
@@ -311,7 +329,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLTI = '{
@@ -327,7 +346,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLTIU = '{
@@ -343,7 +363,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_XORI = '{
@@ -359,7 +380,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_ORI = '{
@@ -375,7 +397,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_ANDI = '{
@@ -391,7 +414,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_SLLI = '{
@@ -407,7 +431,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_SRLI = '{
@@ -423,7 +448,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_ITYPE_SRAI = '{
@@ -439,7 +465,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE_BNE = '{
@@ -455,7 +482,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE_BLT = '{
@@ -471,7 +499,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE_BGE = '{
@@ -487,7 +516,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE_BLTU = '{
@@ -503,7 +533,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     localparam control_bundle_t CTRL_BTYPE_BGEU = '{
@@ -519,7 +550,8 @@ module control_unit_tb
         load_type: LB,
         store_type: SB,
         csrtype: TRAP,
-        csr_en: 1'b0
+        csr_en: 1'b0,
+        mret_en: 1'b0
     };
 
     control_unit dut(
@@ -572,9 +604,12 @@ module control_unit_tb
         test_unsupported_rtype_funct7();
         test_unsupported_shift_imm_funct7();
         test_unsupported_jalr_funct3();
+        test_unsupported_load_funct3();
         test_addi_negative_imm_decode();
         test_ecall_instr();
         test_ebreak_instr();
+        test_mret_instr();
+        test_malformed_mret_instr();
         test_csrrw_instr();
         test_csrrs_instr();
         test_csrrc_instr();
@@ -610,7 +645,7 @@ module control_unit_tb
 
         check_ctrl_bundle("I-Type-IMM control bundle", CTRL_ITYPE_IMM);
         check_imm_src("I mode imm", IMM_I);
-        check_trap_event("ADDI trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("ADDI trap event", TRAP_EVENT_NONE);
     endtask 
 
     task automatic test_lui_instr();
@@ -1039,6 +1074,17 @@ module control_unit_tb
         check_trap_event("unsupported JALR trap event", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
+    task automatic test_unsupported_load_funct3();
+        apply_instr_defaults();
+
+        instr_D = 32'h00003083; // LOAD opcode with reserved funct3=011
+        #1;
+
+        check_ctrl_bundle("unsupported load funct3", CTRL_NOP);
+        check_imm_src("unsupported load imm source", IMM_I);
+        check_trap_event("unsupported load trap event", TRAP_EVENT_ILLEGAL_INSTR);
+    endtask
+
     task automatic test_addi_negative_imm_decode();
         apply_instr_defaults();
 
@@ -1080,6 +1126,37 @@ module control_unit_tb
         check_trap_event("EBREAK trap event", TRAP_EVENT_BREAKPOINT);
     endtask
 
+    task automatic test_mret_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h30200073; // mret
+        expected_ctrl = CTRL_NOP;
+        expected_ctrl.csr_en = 1'b1;
+        expected_ctrl.mret_en = 1'b1;
+        #1;
+
+        check_ctrl_bundle("MRET control bundle", expected_ctrl);
+        check_imm_src("MRET imm source", IMM_I);
+        check_trap_event("MRET trap event", TRAP_EVENT_NONE);
+    endtask
+
+    task automatic test_malformed_mret_instr();
+        control_bundle_t expected_ctrl;
+
+        apply_instr_defaults();
+
+        instr_D = 32'h302000f3; // MRET encoding with rd=x1 is illegal
+        expected_ctrl = CTRL_NOP;
+        expected_ctrl.csr_en = 1'b1;
+        #1;
+
+        check_ctrl_bundle("malformed MRET control bundle", expected_ctrl);
+        check_imm_src("malformed MRET imm source", IMM_I);
+        check_trap_event("malformed MRET trap event", TRAP_EVENT_ILLEGAL_INSTR);
+    endtask
+
     task automatic test_csrrw_instr();
         control_bundle_t expected_ctrl;
 
@@ -1094,7 +1171,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRW control bundle", expected_ctrl);
         check_imm_src("CSRRW imm source", IMM_I);
-        check_trap_event("CSRRW trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRW trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_csrrs_instr();
@@ -1111,7 +1188,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRS control bundle", expected_ctrl);
         check_imm_src("CSRRS imm source", IMM_I);
-        check_trap_event("CSRRS trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRS trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_csrrc_instr();
@@ -1128,7 +1205,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRC control bundle", expected_ctrl);
         check_imm_src("CSRRC imm source", IMM_I);
-        check_trap_event("CSRRC trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRC trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_csrrwi_instr();
@@ -1145,7 +1222,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRWI control bundle", expected_ctrl);
         check_imm_src("CSRRWI imm source", IMM_CSR);
-        check_trap_event("CSRRWI trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRWI trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_csrrsi_instr();
@@ -1162,7 +1239,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRSI control bundle", expected_ctrl);
         check_imm_src("CSRRSI imm source", IMM_CSR);
-        check_trap_event("CSRRSI trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRSI trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_csrrci_instr();
@@ -1179,7 +1256,7 @@ module control_unit_tb
 
         check_ctrl_bundle("CSRRCI control bundle", expected_ctrl);
         check_imm_src("CSRRCI imm source", IMM_CSR);
-        check_trap_event("CSRRCI trap event", TRAP_EVENT_ILLEGAL_INSTR);
+        check_trap_event("CSRRCI trap event", TRAP_EVENT_NONE);
     endtask
 
     task automatic test_unsupported_csr_funct3();
@@ -1265,6 +1342,11 @@ module control_unit_tb
         if (ctrl_D.csr_en !== expected_ctrl_bundle.csr_en) begin
             $fatal(1, "%s: csr_en expected %0b, got %0b",
                    name, expected_ctrl_bundle.csr_en, ctrl_D.csr_en);
+        end
+
+        if (ctrl_D.mret_en !== expected_ctrl_bundle.mret_en) begin
+            $fatal(1, "%s: mret_en expected %0b, got %0b",
+                   name, expected_ctrl_bundle.mret_en, ctrl_D.mret_en);
         end
     endtask 
 

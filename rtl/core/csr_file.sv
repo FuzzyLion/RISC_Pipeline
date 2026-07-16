@@ -152,8 +152,8 @@ module csr_file
             end
         endcase
 
-    illegal_csr_access_E = csr_instr_E && !csr_addr_supported;
-end
+        illegal_csr_access_E = csr_instr_E && !csr_addr_supported;
+    end
 
     always_ff @(posedge clk) begin
         /*

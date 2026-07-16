@@ -5,7 +5,11 @@ module alu_op_tb
 ();
 
     alu_ctrl_e alu_control_E;
+    logic mem_write_E;
     btype_e btype_E;
+    itype_load_e load_type_E;
+    stype_e store_type_E;
+    result_src_e result_src_E;
     logic branch_E;
 
     logic [WORD_WIDTH - 1:0] alu_src_AE;
@@ -14,14 +18,20 @@ module alu_op_tb
 
     logic zero_E;
     logic [WORD_WIDTH - 1:0] alu_result_E;
+    trap_event_e trap_event_load_store_E;
 
     alu_op dut (
         .alu_control_E(alu_control_E),
+        .mem_write_E(mem_write_E),
         .btype_E(btype_E),
+        .load_type_E(load_type_E),
+        .store_type_E(store_type_E),
+        .result_src_E(result_src_E),
         .branch_E(branch_E),
         .alu_src_AE(alu_src_AE),
         .alu_src_BE(alu_src_BE),
         .pc_E(pc_E),
+        .trap_event_load_store_E(trap_event_load_store_E),
         .zero_E(zero_E),
         .alu_result_E(alu_result_E)
     );
@@ -56,6 +66,15 @@ module alu_op_tb
         test_bltu_not_taken_instr();
         test_bgeu_taken_instr();
         test_bgeu_not_taken_instr();
+        test_non_memory_no_trap();
+        test_byte_load_any_address();
+        test_halfword_load_alignment();
+        test_word_load_alignment();
+        test_byte_store_any_address();
+        test_halfword_store_alignment();
+        test_word_store_alignment();
+        test_invalid_active_load_type();
+        test_invalid_active_store_type();
         test_invalid_control();
 
         $display("ALU_OP PASS: all tests completed");
@@ -64,7 +83,11 @@ module alu_op_tb
 
     task automatic apply_alu_defaults();
         alu_control_E = CTRL_ADD;
+        mem_write_E = 1'b0;
         btype_E = BEQ;
+        load_type_E = LB;
+        store_type_E = SB;
+        result_src_E = RSLT_ALU;
         branch_E = 1'b0;
         alu_src_AE = 32'b0;
         alu_src_BE = 32'b0;
@@ -456,6 +479,115 @@ module alu_op_tb
 
         check_alu_result("Invalid control", 32'h0000_0000, alu_result_E);
         check_zero_E("Invalid control zero_E", 1'b1, zero_E);
+        check_trap_event("Invalid ALU control is not a load/store fault", TRAP_EVENT_NONE);
+    endtask
+
+    task automatic test_non_memory_no_trap();
+        apply_alu_defaults();
+
+        alu_src_AE = 32'h0000_0001;
+        alu_src_BE = 32'h0000_0002;
+        #1;
+
+        check_trap_event("Non-memory operation", TRAP_EVENT_NONE);
+    endtask
+
+    task automatic test_byte_load_any_address();
+        apply_alu_defaults();
+
+        result_src_E = RSLT_RDATA;
+        load_type_E = LB;
+        alu_src_AE = 32'h0000_0103;
+        #1;
+
+        check_trap_event("Byte load at odd address", TRAP_EVENT_NONE);
+    endtask
+
+    task automatic test_halfword_load_alignment();
+        apply_alu_defaults();
+
+        result_src_E = RSLT_RDATA;
+        load_type_E = LH;
+        alu_src_AE = 32'h0000_0102;
+        #1;
+        check_trap_event("Aligned halfword load", TRAP_EVENT_NONE);
+
+        alu_src_AE = 32'h0000_0101;
+        #1;
+        check_trap_event("Misaligned halfword load", TRAP_EVENT_LOAD_ADDR_MISALIGNED);
+    endtask
+
+    task automatic test_word_load_alignment();
+        apply_alu_defaults();
+
+        result_src_E = RSLT_RDATA;
+        load_type_E = LW;
+        alu_src_AE = 32'h0000_0104;
+        #1;
+        check_trap_event("Aligned word load", TRAP_EVENT_NONE);
+
+        alu_src_AE = 32'h0000_0102;
+        #1;
+        check_trap_event("Misaligned word load", TRAP_EVENT_LOAD_ADDR_MISALIGNED);
+    endtask
+
+    task automatic test_byte_store_any_address();
+        apply_alu_defaults();
+
+        mem_write_E = 1'b1;
+        store_type_E = SB;
+        alu_src_AE = 32'h0000_0103;
+        #1;
+
+        check_trap_event("Byte store at odd address", TRAP_EVENT_NONE);
+    endtask
+
+    task automatic test_halfword_store_alignment();
+        apply_alu_defaults();
+
+        mem_write_E = 1'b1;
+        store_type_E = SH;
+        alu_src_AE = 32'h0000_0102;
+        #1;
+        check_trap_event("Aligned halfword store", TRAP_EVENT_NONE);
+
+        alu_src_AE = 32'h0000_0101;
+        #1;
+        check_trap_event("Misaligned halfword store", TRAP_EVENT_STORE_ADDR_MISALIGNED);
+    endtask
+
+    task automatic test_word_store_alignment();
+        apply_alu_defaults();
+
+        mem_write_E = 1'b1;
+        store_type_E = SW;
+        alu_src_AE = 32'h0000_0104;
+        #1;
+        check_trap_event("Aligned word store", TRAP_EVENT_NONE);
+
+        alu_src_AE = 32'h0000_0102;
+        #1;
+        check_trap_event("Misaligned word store", TRAP_EVENT_STORE_ADDR_MISALIGNED);
+    endtask
+
+    task automatic test_invalid_active_load_type();
+        apply_alu_defaults();
+
+        result_src_E = RSLT_RDATA;
+        load_type_E = itype_load_e'(3'b011);
+        #1;
+
+        check_trap_event("Invalid active load type", TRAP_EVENT_ILLEGAL_INSTR);
+    endtask
+
+    task automatic test_invalid_active_store_type();
+        apply_alu_defaults();
+
+        mem_write_E = 1'b1;
+        store_type_E = stype_e'(3'b111);
+        #1;
+
+        check_trap_event("Invalid active store type", TRAP_EVENT_ILLEGAL_INSTR);
     endtask
 
     task automatic check_alu_result(
@@ -477,6 +609,16 @@ module alu_op_tb
         if (expected_zero_E !== real_zero_E) begin
             $fatal(1, "%s: zero_E expected %0b, got %0b",
                    name, expected_zero_E, real_zero_E);
+        end
+    endtask
+
+    task automatic check_trap_event(
+        input string name,
+        input trap_event_e expected_trap_event
+    );
+        if (trap_event_load_store_E !== expected_trap_event) begin
+            $fatal(1, "%s: trap event expected %0d, got %0d",
+                   name, expected_trap_event, trap_event_load_store_E);
         end
     endtask
 

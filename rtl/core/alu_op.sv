@@ -27,7 +27,7 @@ module alu_op
 
     always_comb begin
         alu_result_E = '0;
-        trap_event_load_store_E = TRAP_EVENT_ILLEGAL_INSTR;
+        trap_event_load_store_E = TRAP_EVENT_NONE;
 
         case (alu_control_E)
             CTRL_ADD: begin
@@ -73,51 +73,46 @@ module alu_op
             end
         endcase
 
-        case (load_type_E)
-            LB, LBU: begin
-                // 1-byte load is always aligned, no check needed
-            end
-            LH, LHU: begin
-                if ((alu_result_E[1:0] == 2'b01) || 
-                    (alu_result_E[1:0] == 2'b11)) begin
-                    trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+        if (is_load_E) begin
+            case (load_type_E)
+                LB, LBU: begin
+                    // 1-byte load is always aligned, no check needed
                 end
-            end 
-            LW: begin
-                if (alu_result_E[1:0] !== 2'b00) begin
-                    trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+                LH, LHU: begin
+                    if (alu_result_E[0] != 1'b0) begin
+                        trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+                    end
                 end
-            end
-            default: begin
-                trap_event_load_store_E = is_load_E ? 
-                                          TRAP_EVENT_ILLEGAL_INSTR : 
-                                          trap_event_load_store_E; 
-                                          // Make sure it will not overwrite by sotre instrucations
-            end
-        endcase
-
-        case (store_type_E)
-            SB: begin
-                // 1-byte store is always aligned, no check needed
-            end
-            SH: begin
-                if ((alu_result_E[1:0] == 2'b01) || 
-                    (alu_result_E[1:0] == 2'b11)) begin
-                    trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                LW: begin
+                    if (alu_result_E[1:0] != 2'b00) begin
+                        trap_event_load_store_E = TRAP_EVENT_LOAD_ADDR_MISALIGNED;
+                    end
                 end
-            end
-            SW: begin
-                if (alu_result_E[1:0] !== 2'b00) begin
-                    trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                default: begin
+                    trap_event_load_store_E = TRAP_EVENT_ILLEGAL_INSTR;
                 end
-            end
-            default: begin
-                    trap_event_load_store_E = is_store_E ? 
-                                              TRAP_EVENT_ILLEGAL_INSTR : 
-                                              trap_event_load_store_E;
-                                              // Make sure it will not overwrite by load instrucations
-            end
-        endcase
+            endcase
+        end
+        else if (is_store_E) begin
+            case (store_type_E)
+                SB: begin
+                    // 1-byte store is always aligned, no check needed
+                end
+                SH: begin
+                    if (alu_result_E[0] != 1'b0) begin
+                        trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                    end
+                end
+                SW: begin
+                    if (alu_result_E[1:0] != 2'b00) begin
+                        trap_event_load_store_E = TRAP_EVENT_STORE_ADDR_MISALIGNED;
+                    end
+                end
+                default: begin
+                    trap_event_load_store_E = TRAP_EVENT_ILLEGAL_INSTR;
+                end
+            endcase
+        end
         
         if (branch_E) begin
             case (btype_E)

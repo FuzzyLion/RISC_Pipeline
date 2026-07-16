@@ -6,6 +6,7 @@ module EX_forward_muxAE
     input logic [WORD_WIDTH - 1:0] rs1_val_E,
     input logic [WORD_WIDTH - 1:0] result_W,
     input logic [WORD_WIDTH - 1:0] alu_result_M,
+    input logic [WORD_WIDTH - 1:0] csr_rdata_M,
 
     output logic [WORD_WIDTH - 1:0] alu_src_AE
 );
@@ -20,6 +21,9 @@ module EX_forward_muxAE
             end
             AE_ALU_RESULT_M: begin
                 alu_src_AE = alu_result_M;
+            end
+            AE_CSR_RDATA_M: begin
+                alu_src_AE = csr_rdata_M;
             end
             default: begin
                 alu_src_AE = '0;

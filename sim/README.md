@@ -85,9 +85,9 @@ assembly sources
 ```
 
 The local build uses [`software/linker/core.ld`](../software/linker/core.ld) to
-place `.text` at byte address `0x00000000` and `.trap` at byte address
-`0x00000100`. See the linker, `ld`, `objcopy`, and `objdump` notes above for the
-details of this flow.
+place `.text` at byte address `0x00000000` and `.trap` at the next aligned
+address after `.text`. See the linker, `ld`, `objcopy`, and `objdump` notes
+above for the details of this flow.
 
 ## Generated Files
 

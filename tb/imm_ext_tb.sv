@@ -2,7 +2,7 @@
 
 module imm_ext_tb
     import core_types_pkg::*;
-;
+();
 
     imm_src_e imm_src_D;
     logic [WORD_WIDTH - 1:0] instr_D;

@@ -41,7 +41,7 @@ memory image:
 .trap
 ```
 
-## Address Conversion
+## Address Conversion Example
 
 The CPU uses byte addresses, while the hex file addresses 32-bit words:
 
@@ -49,7 +49,7 @@ The CPU uses byte addresses, while the hex file addresses 32-bit words:
 CPU byte address 0x100 / 4 = hex word address 0x40
 ```
 
-An ELF with `.trap` at byte address `0x100` therefore produces:
+For example, an ELF with `.trap` at byte address `0x100` produces:
 
 ```text
 @00000000
@@ -58,7 +58,9 @@ An ELF with `.trap` at byte address `0x100` therefore produces:
 ... .trap words ...
 ```
 
-The address marker preserves the gap between `.text` and `.trap`.
+The address marker preserves the gap between `.text` and `.trap`. The current
+linker script normally places `.trap` directly after `.text`, so its byte and
+word addresses vary with the linked program size.
 
 ## Input and Output
 

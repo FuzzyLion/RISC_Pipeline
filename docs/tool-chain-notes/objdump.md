@@ -34,7 +34,7 @@ Disassembles executable sections in the ELF.
 This form makes the dump easier to compare with RTL register indices and exact
 instruction behavior.
 
-## Example Output
+## Fixed-Address Example Output
 
 ```text
 00000000 <_start>:
@@ -46,8 +46,10 @@ instruction behavior.
  100: 30200073  mret
 ```
 
-This output can confirm that `_start` is at `0x0`, `trap_handler` is at
-`0x100`, and `la` was expanded as expected.
+This historical fixed-address example shows how the dump verifies section and
+symbol placement. The current linker script packs `.trap` immediately after
+`.text`, so the actual `trap_handler` address depends on program size and must
+be checked in the generated dump or map file.
 
 ## Input and Output
 

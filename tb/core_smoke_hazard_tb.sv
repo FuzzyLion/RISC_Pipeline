@@ -2,7 +2,7 @@
 
 module core_smoke_hazard_tb
     import core_types_pkg::*;
-;
+();
 
     logic clk;
     logic reset;
@@ -48,7 +48,7 @@ module core_smoke_hazard_tb
         check_word("x1", dut.core_processor.reg_file1.regs[1], 32'd36);
         check_word("x2", dut.core_processor.reg_file1.regs[2], 32'd7);
         check_word("x3", dut.core_processor.reg_file1.regs[3], 32'd23);
-        // RF.sv had make some alteration to support the bypass procedure
+        // reg_file.sv had make some alteration to support the bypass procedure
         check_word("x4", dut.core_processor.reg_file1.regs[4], 32'd22);
         check_word("x5", dut.core_processor.reg_file1.regs[5], 32'd19);
         check_word("x6", dut.core_processor.reg_file1.regs[6], 32'd18);

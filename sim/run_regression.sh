@@ -15,6 +15,7 @@ tests=(
   "run_smoke_branch.sh"
   "run_smoke_hazard.sh"
   "run_smoke_alu.sh"
+  "run_smoke_csr_trap.sh"
 )
 
 echo "Running regression tests..."

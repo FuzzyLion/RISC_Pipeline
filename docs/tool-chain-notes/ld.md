@@ -18,7 +18,8 @@ than calling `riscv64-elf-ld` directly.
 ```
 
 Loads [`software/linker/core.ld`](../../software/linker/core.ld). The script
-places `.text` at `0x00000000` and `.trap` at `0x00000100`.
+places `.text` at `0x00000000` and packs `.trap` at the next four-byte-aligned
+address after `.text`.
 
 ### `-e <entry>`
 

@@ -21,7 +21,7 @@ module pc_target_gen
     logic redirect_E;
     
     always_comb begin
-        trap_event_branch_jump_E = TRAP_EVENT_ILLEGAL_INSTR;
+        trap_event_branch_jump_E = TRAP_EVENT_NONE;
 
         case (pc_target_src_E)
             PC_TARGET_PC_IMM: begin

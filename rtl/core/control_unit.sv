@@ -60,7 +60,7 @@ module control_unit
 
         ctrl_D = CTRL_NOP;
         imm_src_D = IMM_I;
-        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
+        trap_event_illegal_instr_D = TRAP_EVENT_NONE;
 
         
         case (opcode_D)
@@ -129,6 +129,7 @@ module control_unit
                         ctrl_D.result_src = RSLT_ALU;
                         ctrl_D.alu_src = BE_RDATA_E;
                         ctrl_D.load_type = LB;
+                        trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase
             end

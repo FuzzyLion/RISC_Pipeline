@@ -1,17 +1,9 @@
-.section .text.start, "ax", @progbits
-.globl _start
-
-_start:
-    la   t0, trap_handler
-    csrw mtvec, t0
-
 .section .trap, "ax", @progbits
 .align 2
 .globl trap_handler
 
 trap_handler:
     # save registers that will be overwriten
-    csrrw t0, mscratch, t0
     sw t1, 0(t0)
     sw t2, 4(t0)
     sw t3, 8(t0)
@@ -31,12 +23,14 @@ trap_return:
     lw t1, 0(t0)
     lw t2, 4(t0)
     lw t3, 8(t0)
-    csrrw t0, mscratch, t0
     mret
 
 exit:
     lw t1, 0(t0)
     lw t2, 4(t0)
     lw t3, 8(t0)
-    csrrw t0, mscratch, t0
-    mret
+    addi x31, x0, 2
+    j fail
+
+fail:
+    j fail

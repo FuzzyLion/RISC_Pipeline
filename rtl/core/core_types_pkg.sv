@@ -129,13 +129,15 @@ package core_types_pkg;
     typedef enum logic [1:0] {
         AE_RS1_VAL = 2'b00,
         AE_RESULT_W = 2'b01,
-        AE_ALU_RESULT_M = 2'b10
+        AE_ALU_RESULT_M = 2'b10,
+        AE_CSR_RDATA_M = 2'b11
     } forward_ae;
 
     typedef enum logic [1:0] {
         BE_RDATA_RS2_VAL = 2'b00,
         BE_RDATA_RESULT_W = 2'b01,
-        BE_RDATA_ALU_RESULT_M = 2'b10
+        BE_RDATA_ALU_RESULT_M = 2'b10,
+        BE_CSR_RDATA_M = 2'b11
     } forward_rdata_be;
 
     typedef enum logic {

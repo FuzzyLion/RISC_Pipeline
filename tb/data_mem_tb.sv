@@ -2,7 +2,7 @@
 
 module data_mem_tb
     import core_types_pkg::*;
-;
+();
     
     logic clk;
 

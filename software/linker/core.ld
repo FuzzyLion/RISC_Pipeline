@@ -8,18 +8,17 @@ MEMORY
 
 SECTIONS
 {
-    .text 0x00000000 : ALIGN(4)
+    .text ORIGIN(IMEM) : ALIGN(4)
     {
         KEEP(*(.text.start))
         *(.text .text.*)
     } > IMEM
 
-    .trap 0x00000100 : ALIGN(4)
+    .trap ALIGN(4) :
     {
         KEEP(*(.trap .trap.*))
     } > IMEM
 }
 
-ASSERT(SIZEOF(.text) <= 0x100,
-       "normal text overlaps trap handler")
-       
+ASSERT(ADDR(.trap) + SIZEOF(.trap) <= ORIGIN(IMEM) + LENGTH(IMEM),
+       "instruction image exceeds IMEM")

@@ -17,20 +17,20 @@ MEMORY
 
 SECTIONS
 {
-    .text 0x00000000 : ALIGN(4)
+    .text ORIGIN(IMEM) : ALIGN(4)
     {
         KEEP(*(.text.start))
         *(.text .text.*)
     } > IMEM
 
-    .trap 0x00000100 : ALIGN(4)
+    .trap ALIGN(4) :
     {
         KEEP(*(.trap .trap.*))
     } > IMEM
 }
 
-ASSERT(SIZEOF(.text) <= 0x100,
-       "normal text overlaps trap handler")
+ASSERT(ADDR(.trap) + SIZEOF(.trap) <= ORIGIN(IMEM) + LENGTH(IMEM),
+       "instruction image exceeds IMEM")
 ```
 
 ## Main Statements
@@ -73,11 +73,11 @@ range and a size limit.
 Defines how input sections are combined into output sections.
 
 ```ld
-.text 0x00000000 : ALIGN(4)
+.text ORIGIN(IMEM) : ALIGN(4)
 ```
 
-Creates the output `.text` section at byte address `0x00000000` with four-byte
-alignment.
+Creates the output `.text` section at the first byte of `IMEM`, currently
+`0x00000000`, with four-byte alignment.
 
 ```ld
 KEEP(*(.text.start))
@@ -103,31 +103,35 @@ if the linked image exceeds the region.
 ### Trap Section
 
 ```ld
-.trap 0x00000100 : ALIGN(4)
+.trap ALIGN(4) :
 {
     KEEP(*(.trap .trap.*))
 } > IMEM
 ```
 
-Places the trap handler at byte address `0x100`. Since `instr_mem` stores
-32-bit words:
+Places `.trap` at the next four-byte-aligned address after `.text`. The trap
+handler address is therefore determined by the final size of the linked
+program instead of a fixed partition. Startup code obtains that address from
+the `trap_handler` symbol and writes it to `mtvec`:
 
-```text
-byte address 0x100 / 4 = word index 0x40 = 64
+```asm
+la   t0, trap_handler
+csrw mtvec, t0
 ```
 
-The trap handler therefore begins at `mem_instr[64]`.
+This compact layout avoids limiting ordinary program text to the first 256
+bytes of the 1 KiB instruction memory.
 
 ### `ASSERT(...)`
 
 ```ld
-ASSERT(SIZEOF(.text) <= 0x100,
-       "normal text overlaps trap handler")
+ASSERT(ADDR(.trap) + SIZEOF(.trap) <= ORIGIN(IMEM) + LENGTH(IMEM),
+       "instruction image exceeds IMEM")
 ```
 
-Requires `.text` to fit below the trap section. The maximum is 256 bytes, or 64
-normal 32-bit instructions. The linker stops with the provided message if this
-condition is false.
+Checks that the end of `.trap`, which follows `.text`, remains inside `IMEM`.
+The linker stops with the provided message if the complete executable image
+exceeds 1024 bytes.
 
 ## Related Notes
 

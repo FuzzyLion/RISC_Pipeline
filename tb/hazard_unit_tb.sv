@@ -2,7 +2,7 @@
 
 module hazard_unit_tb
     import core_types_pkg::*;
-;
+();
 
     logic valid_D;
     logic valid_E;
@@ -21,6 +21,8 @@ module hazard_unit_tb
     ex_mem_control_t ctrl_M;
     mem_wb_control_t ctrl_W;
     pc_src_e pc_src_E;
+    logic trap_flush_D;
+    logic trap_flush_E;
 
     hazard_forward_t hazard_forward_ctrl;
     hazard_stallflush_t hazard_stallflush_ctrl;
@@ -41,6 +43,8 @@ module hazard_unit_tb
         .ctrl_M(ctrl_M),
         .ctrl_W(ctrl_W),
         .pc_src_E(pc_src_E),
+        .trap_flush_D(trap_flush_D),
+        .trap_flush_E(trap_flush_E),
         .hazard_forward_ctrl(hazard_forward_ctrl),
         .hazard_stallflush_ctrl(hazard_stallflush_ctrl)
     );
@@ -52,12 +56,17 @@ module hazard_unit_tb
         test_wb_forward_rs1();
         test_mem_forward_rs2();
         test_wb_forward_rs2();
+        test_csr_mem_forward_rs1();
+        test_csr_mem_forward_rs2();
         test_load_use_rs1();
         test_load_use_rs2();
         test_redirect();
+        test_mret_redirect();
+        test_trap_flush();
 
         test_mem_prior_wb_rs1();
         test_mem_prior_wb_rs2();
+        test_csr_mem_prior_wb_rs1();
         test_redirect_prior_lwstall();
 
         test_mem_x0_forward();
@@ -100,7 +109,10 @@ module hazard_unit_tb
             alu_src: BE_RDATA_E,
             btype: BEQ,
             load_type: LB,
-            store_type: SB
+            store_type: SB,
+            csrtype: TRAP,
+            csr_en: 1'b0,
+            mret_en: 1'b0
         };
 
         ctrl_M = '{
@@ -117,6 +129,8 @@ module hazard_unit_tb
         };
 
         pc_src_E = PC_PLUS4;
+        trap_flush_D = 1'b0;
+        trap_flush_E = 1'b0;
     endtask
 
     // ------------------------ FUNCTION CHECKS -------------------------
@@ -176,6 +190,30 @@ module hazard_unit_tb
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask
 
+    task automatic test_csr_mem_forward_rs1();
+        apply_no_hazard_defaults();
+
+        ctrl_M.rf_write = 1'b1;
+        ctrl_M.result_src = RSLT_CSR_RDATA;
+        rd_idx_M = 5'd3;
+        rs1_idx_E = 5'd3;
+        #1;
+
+        check_forward("CSR MEM forward rs1", AE_CSR_RDATA_M, BE_RDATA_RS2_VAL);
+    endtask
+
+    task automatic test_csr_mem_forward_rs2();
+        apply_no_hazard_defaults();
+
+        ctrl_M.rf_write = 1'b1;
+        ctrl_M.result_src = RSLT_CSR_RDATA;
+        rd_idx_M = 5'd4;
+        rs2_idx_E = 5'd4;
+        #1;
+
+        check_forward("CSR MEM forward rs2", AE_RS1_VAL, BE_CSR_RDATA_M);
+    endtask
+
     task automatic test_load_use_rs1();
         apply_no_hazard_defaults();
 
@@ -219,6 +257,25 @@ module hazard_unit_tb
         check_stallflush("hazard redirect", 1'b0, 1'b0, 1'b1, 1'b1);
     endtask  
 
+    task automatic test_mret_redirect();
+        apply_no_hazard_defaults();
+
+        pc_src_E = PC_MRET;
+        #1;
+
+        check_stallflush("MRET redirect", 1'b0, 1'b0, 1'b1, 1'b1);
+    endtask
+
+    task automatic test_trap_flush();
+        apply_no_hazard_defaults();
+
+        trap_flush_D = 1'b1;
+        trap_flush_E = 1'b1;
+        #1;
+
+        check_stallflush("trap flush", 1'b0, 1'b0, 1'b1, 1'b1);
+    endtask
+
     // --------------------------- CORNER CASES ---------------------------
     task automatic test_mem_prior_wb_rs1();
         apply_no_hazard_defaults();
@@ -248,6 +305,20 @@ module hazard_unit_tb
         check_forward("MEM prior WB for rs2", AE_RS1_VAL, BE_RDATA_ALU_RESULT_M);
         check_stallflush("no hazard stall/flush", 1'b0, 1'b0, 1'b0, 1'b0);
     endtask 
+
+    task automatic test_csr_mem_prior_wb_rs1();
+        apply_no_hazard_defaults();
+
+        ctrl_M.rf_write = 1'b1;
+        ctrl_M.result_src = RSLT_CSR_RDATA;
+        ctrl_W.rf_write = 1'b1;
+        rd_idx_M = 5'd3;
+        rd_idx_W = 5'd3;
+        rs1_idx_E = 5'd3;
+        #1;
+
+        check_forward("CSR MEM prior WB for rs1", AE_CSR_RDATA_M, BE_RDATA_RS2_VAL);
+    endtask
 
     task automatic test_redirect_prior_lwstall();
         apply_no_hazard_defaults();

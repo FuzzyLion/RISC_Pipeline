@@ -6,6 +6,7 @@ module EX_forward_rd_muxBE
     input logic [WORD_WIDTH - 1:0] rs2_val_E,
     input logic [WORD_WIDTH - 1:0] result_W,
     input logic [WORD_WIDTH - 1:0] alu_result_M,
+    input logic [WORD_WIDTH - 1:0] csr_rdata_M,
 
     output logic [WORD_WIDTH - 1:0] write_data_E
 );
@@ -20,6 +21,9 @@ module EX_forward_rd_muxBE
             end
             BE_RDATA_ALU_RESULT_M: begin
                 write_data_E = alu_result_M;
+            end
+            BE_CSR_RDATA_M: begin
+                write_data_E = csr_rdata_M;
             end
             default: begin
                 write_data_E = '0;

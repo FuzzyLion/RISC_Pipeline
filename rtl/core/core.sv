@@ -298,6 +298,7 @@ module core
         .rs1_val_E(data_E_idex.rs1_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),
+        .csr_rdata_M(data_M_exmem.csr_rdata),
         .alu_src_AE(alu_src_AE_out)
     );
 
@@ -307,6 +308,7 @@ module core
         .rs2_val_E(data_E_idex.rs2_val),
         .result_W(result_W_out),
         .alu_result_M(data_M_exmem.alu_result),
+        .csr_rdata_M(data_M_exmem.csr_rdata),
         .write_data_E(write_data_E_out)
     );
 

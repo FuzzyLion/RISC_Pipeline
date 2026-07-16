@@ -31,6 +31,7 @@ module hazard_unit
 
     logic m_can_forward;
     logic w_can_forward;
+    logic csr_can_forward;
     logic lwstall;
     logic redirect;
 
@@ -55,14 +56,23 @@ module hazard_unit
                         valid_M &&
                         ctrl_M.rf_write && 
                         (ctrl_M.result_src != RSLT_RDATA) && 
+                        (ctrl_M.result_src != RSLT_CSR_RDATA) &&
                         (rd_idx_M != '0);
         w_can_forward = valid_E &&
                         valid_W &&
                         ctrl_W.rf_write && 
                         (rd_idx_W != '0);
+        csr_can_forward = valid_E &&
+                          valid_M &&
+                          ctrl_M.rf_write &&
+                          (ctrl_M.result_src == RSLT_CSR_RDATA) &&
+                          (rd_idx_M != '0);
 
         // RAW from MEM ALU result
-        if (m_can_forward && (rs1_idx_E == rd_idx_M)) begin
+        if (csr_can_forward && (rs1_idx_E == rd_idx_M)) begin
+            hazard_forward_ctrl.forward_AE = AE_CSR_RDATA_M;
+        end
+        else if (m_can_forward && (rs1_idx_E == rd_idx_M)) begin
             hazard_forward_ctrl.forward_AE = AE_ALU_RESULT_M;
         end
         else if (w_can_forward && (rs1_idx_E == rd_idx_W)) begin
@@ -70,7 +80,10 @@ module hazard_unit
         end 
 
         // RAW from WB result
-        if (m_can_forward && (rs2_idx_E == rd_idx_M)) begin
+        if (csr_can_forward && (rs2_idx_E == rd_idx_M)) begin
+            hazard_forward_ctrl.forward_BE = BE_CSR_RDATA_M;
+        end
+        else if (m_can_forward && (rs2_idx_E == rd_idx_M)) begin
             hazard_forward_ctrl.forward_BE = BE_RDATA_ALU_RESULT_M;
         end
         else if (w_can_forward && (rs2_idx_E == rd_idx_W)) begin
