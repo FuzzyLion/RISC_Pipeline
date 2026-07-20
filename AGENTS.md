@@ -22,16 +22,62 @@ Current project goals include:
 8. Eventually run broader tests and a lightweight RTOS.
 
 The project has completed the Phase 3 baseline verification milestone and is
-entering Phase 4: CSR, exceptions, and interrupts. The five-stage pipeline,
-basic hazard handling, directed module tests, processor smoke tests, and a
-lightweight selected `riscv-tests`/`rv32ui` flow are in place. The current
-effort should preserve that regression baseline while adding architectural
-trap support in small, explainable steps.
+actively working through Phase 4: CSR, exceptions, and interrupts. A basic
+machine-mode CSR and synchronous-trap path is now integrated end to end,
+including CSR forwarding, `ecall`, `mret`, trap metadata, handler redirect,
+and a repeated CSR/trap smoke program. Directed processor smokes now prove
+precise illegal-instruction and instruction/load/store-address-misaligned trap
+behavior for selected cases. Phase 4 is not complete: interrupt sources/control
+and broader synchronous-exception coverage are still pending. Preserve the
+Phase 3 baseline and the current CSR/trap closure while adding the remaining
+behavior in small, explainable steps.
 
 Relevant planning docs:
 
 1. `requirements.md`
 2. `docs/plans/`
+
+## Current Phase 4 Working Boundary
+
+Treat the current CSR/trap implementation as a useful baseline, not as proof
+of full privileged-architecture compliance.
+
+1. `control_unit.sv` decodes CSR instructions, `ecall`, `ebreak`, and `mret`.
+2. `csr_file.sv` owns machine CSR state and trap-entry/`mret` state updates.
+3. `pc_target_gen.sv` and `alu_op.sv` detect control-flow and load/store
+   misalignment events; they do not own trap priority or CSR updates.
+4. `trap_ctrl.sv` selects the authoritative synchronous trap, produces
+   `mcause`/`mtval`/`mepc`, and requests pipeline flushing.
+5. `pc_mux.sv` gives trap redirect to `mtvec` priority over normal redirect and
+   uses `mepc` for `mret`.
+6. `hazard_unit.sv` includes CSR-result forwarding and treats `mret` as a
+   redirect that flushes younger instructions.
+7. `sim/run_regression.sh` currently contains seven module tests and nine core
+   smoke tests, including the mixed CSR/ECALL/EBREAK smoke and four directed
+   precise-trap smokes.
+
+The CSR/trap smoke proves a focused path: all six base Zicsr read/modify/write
+forms used by the project, zero-source pure reads, two `ebreak` sites and one
+`ecall` site,
+register preservation under the current handler contract, `mepc` advancement,
+and `mret`. Four additional directed smokes cover selected illegal-instruction
+and instruction/load/store-address-misaligned cases, checking CSR metadata,
+younger-instruction flushing, and suppression of the faulting instruction's
+register or memory side effect. They do not prove interrupts, nested traps,
+general ABI-safe handler behavior, illegal CSR access, or every possible
+older in-flight side effect.
+
+When working in this area:
+
+1. Keep trap detection, trap arbitration/metadata, CSR state, and PC redirect
+   as separate responsibilities.
+2. For RV32I without the C extension, JALR must still clear target bit 0 by ISA
+   definition; then the final target must be checked for 4-byte alignment.
+3. Do not describe a green CSR/trap smoke as Phase 4 completion.
+4. Keep expanding directed precise-exception coverage before claiming broad
+   illegal-instruction, illegal-CSR, or alignment-exception closure.
+5. Define exception-versus-interrupt-versus-normal-redirect priority before
+   integrating timer or external interrupts.
 
 ## Project context
 

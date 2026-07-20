@@ -50,7 +50,7 @@ module core_smoke_csr_trap_tb
         check_word("t1 preserved", dut.core_processor.reg_file1.regs[6], 32'h0000_0011);
         check_word("t2 preserved", dut.core_processor.reg_file1.regs[7], 32'h0000_0022);
         check_word("t3 preserved", dut.core_processor.reg_file1.regs[28], 32'h0000_0033);
-        check_word("three ECALL returns", dut.core_processor.reg_file1.regs[9], 32'd3);
+        check_word("three mixed trap returns", dut.core_processor.reg_file1.regs[9], 32'd3);
 
         check_word("CSRRW old value", dut.core_processor.reg_file1.regs[18], 32'h0000_0000);
         check_word("CSRRS old value", dut.core_processor.reg_file1.regs[19], 32'h0000_000f);

@@ -4,9 +4,13 @@
 _start:
     addi x31, x0, 0
 
+    addi t0, x0, 0x100
+    csrw mscratch, t0
+
     # Install the direct-mode trap handler without relying on a fixed link address.
     la   t4, trap_handler
     csrw mtvec, t4
+
 
     # Contract with the current handler: t0 is a stable, aligned DMEM scratch base.
     addi t0, x0, 0x100
@@ -15,9 +19,13 @@ _start:
     addi t3, x0, 0x33
     addi s1, x0, 0
 
-    # ECALL site 1: basic entry, return, and scratch-register preservation.
-    ecall
+    # EBREAK site 1: basic entry, return, and scratch-register preservation.
+    ebreak
     addi s1, s1, 1
+
+    csrr a0, mcause
+    addi a1, x0, 3
+    bne  a0, a1, fail_ebreak_cause
 
     addi a0, x0, 0x100
     bne  t0, a0, fail_preserve
@@ -67,9 +75,12 @@ _start:
     bne  s8, a1, fail_csr
     bne  s9, a1, fail_csr
 
-    # ECALL site 2: trap entry must overwrite mtval and return here exactly once.
-    ecall
+    # EBREAK site 2: trap entry must overwrite mtval and return here exactly once.
+    ebreak
     addi s1, s1, 1
+    csrr a0, mcause
+    addi a1, x0, 3
+    bne  a0, a1, fail_ebreak_cause
     addi a0, x0, 2
     bne  s1, a0, fail_second_return
 
@@ -116,4 +127,8 @@ fail_third_return:
 
 fail_mepc:
     addi x31, x0, 8
+    j test_done
+
+fail_ebreak_cause:
+    addi x31, x0, 9
     j test_done

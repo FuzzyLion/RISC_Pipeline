@@ -162,7 +162,7 @@ module csr_file
         declaration.
         */
         
-        if (reset) begin : Init_CSRs
+        if (reset) begin : init_CSRs
             mtvec_reg <= 32'b0;
             mepc_reg <= 32'b0;
             mcause_reg <= 32'b0;

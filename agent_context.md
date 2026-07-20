@@ -1,12 +1,20 @@
 # Agent Context
 
-This repository is a learning-first SystemVerilog RISC-V CPU project. The current RTL implements a small RV32I-oriented five-stage pipeline core with internal instruction and data memories, Verilator smoke tests, a selected `riscv-tests`/`rv32ui` ISA-lite flow, and planning documents for CSR, exception, interrupt, SoC, FPGA, cache, FPU, and RTOS work. The Phase 3 baseline verification milestone is complete enough to move into Phase 4, but the design is still intentionally short of full ISA compliance.
+This repository is a learning-first SystemVerilog RISC-V CPU project. The
+current RTL implements an RV32I-oriented five-stage pipeline core with internal
+instruction and data memories, machine-mode CSR and synchronous-trap support,
+Verilator smoke tests, a selected `riscv-tests`/`rv32ui` ISA-lite flow, and
+planning documents for interrupts, SoC, FPGA, cache, FPU, and RTOS work. The
+Phase 3 baseline is established, and Phase 4 now has a working basic CSR/trap
+slice, but the design is still intentionally short of full ISA and privileged
+architecture compliance.
 
 The code is not a complete RV32I processor yet. The active decode now covers
 the full R-type integer ALU group, the RV32I ALU-immediate group, all six base
 branch conditions, `lui`, `auipc`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`,
-`sh`, `sw`, `jal`, and `jalr`. System instructions, CSR behavior, exceptions,
-and interrupts are still outside the implemented subset.
+`sh`, `sw`, `jal`, and `jalr`. Decode also covers `ecall`, `ebreak`, `mret`,
+`csrrw`, `csrrs`, `csrrc`, `csrrwi`, `csrrsi`, and `csrrci`. Basic synchronous
+exceptions and machine CSR state are integrated; interrupts are not.
 
 ## Compact Directory Tree
 
@@ -33,7 +41,13 @@ and interrupts are still outside the implemented subset.
 │   ├── smoke_branch.s
 │   ├── smoke_branch.hex
 │   ├── smoke_hazard.s
-│   └── smoke_hazard.hex
+│   ├── smoke_hazard.hex
+│   ├── smoke_csr_trap.s
+│   ├── smoke_csr_trap.hex
+│   ├── smoke_illegal_trap.s
+│   ├── smoke_instr_misaligned_trap.s
+│   ├── smoke_load_misaligned_trap.s
+│   └── smoke_store_misaligned_trap.s
 ├── rtl/
 │   └── core/
 │       ├── filelist.f
@@ -61,7 +75,14 @@ and interrupts are still outside the implemented subset.
 │       ├── store_data.sv
 │       ├── data_mem.sv
 │       ├── load_data.sv
-│       └── WB_result_mux.sv
+│       ├── WB_result_mux.sv
+│       ├── csr_file.sv
+│       └── trap_ctrl.sv
+├── software/
+│   ├── linker/core.ld
+│   ├── runtime/trap_handler.s
+│   ├── scripts/build_riscv_lite_test.sh
+│   └── tests/riscv_lite/
 ├── sim/
 │   ├── build_hex.sh
 │   ├── run_isa_lite.sh
@@ -77,7 +98,12 @@ and interrupts are still outside the implemented subset.
 │   ├── run_regression.sh
 │   ├── run_smoke_alu.sh
 │   ├── run_smoke_branch.sh
-│   └── run_smoke_hazard.sh
+│   ├── run_smoke_hazard.sh
+│   ├── run_smoke_csr_trap.sh
+│   ├── run_smoke_illegal_trap.sh
+│   ├── run_smoke_instr_misaligned_trap.sh
+│   ├── run_smoke_load_misaligned_trap.sh
+│   └── run_smoke_store_misaligned_trap.sh
 └── tb/
     ├── alu_op_tb.sv
     ├── control_unit_tb.sv
@@ -85,7 +111,12 @@ and interrupts are still outside the implemented subset.
     ├── core_isa_lite_tb.sv
     ├── core_smoke_alu_tb.sv
     ├── core_smoke_branch_tb.sv
+    ├── core_smoke_csr_trap_tb.sv
     ├── core_smoke_hazard_tb.sv
+    ├── core_smoke_illegal_trap_tb.sv
+    ├── core_smoke_instr_misaligned_trap_tb.sv
+    ├── core_smoke_load_misaligned_trap_tb.sv
+    ├── core_smoke_store_misaligned_trap_tb.sv
     ├── data_mem_tb.sv
     ├── hazard_unit_tb.sv
     ├── imm_ext_tb.sv
@@ -103,31 +134,42 @@ keep it as an external reference tree rather than editing it directly.
 
 `rtl/core/top.sv` is a thin wrapper around `core`. Its comment marks it as a future board/SoC wrapper point for clock, reset, memory, and peripherals.
 
-`rtl/core/core.sv` is the main pipeline integration module. It wires control, PC logic, instruction memory, register file, immediate generation, forwarding muxes, ALU, branch target generation, pipeline registers, store/load data alignment, data memory, writeback mux, and the hazard unit.
+`rtl/core/core.sv` is the main pipeline integration module. It wires control,
+PC logic, instruction memory, register file, immediate generation, forwarding
+muxes, ALU, branch target generation, pipeline registers, store/load data
+alignment, data memory, writeback, hazard control, `csr_file`, and `trap_ctrl`.
 
 `rtl/core/control_unit.sv` decodes the instruction in the Decode stage into
 `control_bundle_t` and `imm_src_e`. Implemented active cases include the R-type
 ALU instructions, `addi`, `slti`, `sltiu`, `xori`, `ori`, `andi`, `slli`,
 `srli`, `srai`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`, `sh`, `sw`, `lui`,
 `auipc`, `beq`, `bne`, `blt`, `bge`, `bltu`, `bgeu`, `jal`, and `jalr`.
-Unsupported funct combinations fall back to the NOP control bundle.
+It also decodes the six supported Zicsr forms plus `ecall`, `ebreak`, and
+`mret`, and emits an illegal-instruction event for unsupported encodings.
 
-`rtl/core/hazard_unit.sv` generates forwarding selects plus stall/flush controls. It forwards MEM non-load ALU results and WB results into EX operands, stalls on load-use hazards where an EX-stage load feeds a Decode-stage source, and flushes Decode/Execute on taken branch or jump redirects from EX.
+`rtl/core/hazard_unit.sv` generates forwarding selects plus stall/flush
+controls. It forwards MEM ALU or CSR results and WB results into EX operands,
+stalls on load-use hazards where an EX-stage load feeds a Decode-stage source,
+and flushes Decode/Execute on taken branch/jump, `mret`, or trap redirects.
 
 `rtl/core/IF_ID.sv`, `rtl/core/ID_EX.sv`, `rtl/core/EX_MEM.sv`, and `rtl/core/MEM_WB.sv` are the four pipeline-register modules. They use packed structs from the package, synchronous reset, valid bits, and side-effect control gating so bubbles do not write registers, write memory, branch, or jump.
 
-`rtl/core/pc_reg.sv`, `rtl/core/pc_plus4_adder.sv`, and `rtl/core/pc_mux.sv` implement the Fetch-stage PC path. The PC register can stall, reset goes to zero, the adder computes `PC + 4`, and the mux chooses either the sequential PC or an EX-stage redirect target.
+`rtl/core/pc_reg.sv`, `rtl/core/pc_plus4_adder.sv`, and `rtl/core/pc_mux.sv`
+implement the Fetch-stage PC path. The PC register can stall, reset goes to
+zero, and the adder computes `PC + 4`. The mux chooses sequential execution,
+an EX-stage branch/jump target, `mepc` for `mret`, or `mtvec` for trap entry;
+trap entry has priority over the ordinary redirect selector.
 
 `rtl/core/pc_target_gen.sv` computes branch/jump targets and `pc_src_E`.
 PC-relative targets use `pc_E + imm_E`; `jalr` uses `alu_src_AE + imm_E` and
-clears target bit 0. The module cannot determine whether `alu_src_AE` came from
+clears target bit 0 as required by the ISA. The module cannot determine whether `alu_src_AE` came from
 the original operand or a forwarding path; that behavior belongs to the
 upstream forwarding mux and integration tests. `alu_op.sv` evaluates all six
 RV32I branch conditions and presents the taken/not-taken result through
 `zero_E`, which `pc_target_gen` combines with `branch_E`. Because the core does
-not implement the compressed-instruction extension, a JALR target with bit 1
-set will later need an instruction-address-misaligned exception rather than
-further silent alignment.
+not implement the compressed-instruction extension, the final taken target
+must be 4-byte aligned. A target with bit 1 set emits an
+instruction-address-misaligned event; an untaken branch does not.
 
 `rtl/core/instr_mem.sv` is a simple word-array instruction memory initialized with `$readmemh`. It indexes memory using `pc_F[MEM_ADDR_WIDTH+1:2]`, so the core presents byte addresses while the model stores 32-bit instruction words.
 
@@ -140,19 +182,26 @@ further silent alignment.
 `rtl/core/alu_op.sv` implements add, sub, and, or, xor, pass-B, signed/unsigned
 set-less-than, logical shifts, arithmetic right shift, and the AUIPC
 `pc_E + U-immediate` operation. It also evaluates BEQ, BNE, BLT, BGE, BLTU, and
-BGEU when branch control is active.
+BGEU when branch control is active. For an active load or store, it also
+classifies halfword/word address misalignment and emits the corresponding trap
+event.
 
-`rtl/core/EX_forward_muxAE.sv` selects the EX-stage ALU A operand from the ID/EX `rs1` value, WB result, or MEM ALU result.
+`rtl/core/EX_forward_muxAE.sv` selects the EX-stage ALU A operand from the
+ID/EX `rs1` value, WB result, MEM ALU result, or MEM CSR read result.
 
-`rtl/core/EX_forward_rd_muxBE.sv` selects the forwarded EX-stage `rs2` value used both as store write data and as the pre-immediate ALU B source.
+`rtl/core/EX_forward_rd_muxBE.sv` selects the forwarded EX-stage `rs2` value
+from the original operand, WB result, MEM ALU result, or MEM CSR read result.
+The selected value is used both as store data and as the pre-immediate ALU B
+source.
 
 `rtl/core/EX_muxBE.sv` chooses the ALU B operand between forwarded `rs2` data and the EX-stage immediate.
 
 `rtl/core/store_data.sv` prepares store data before the data memory. It uses
 the MEM-stage store type and address low bits to shift `rs2` data into the
 correct byte lanes and generate a 4-bit write strobe for `sb`, `sh`, and `sw`.
-Misaligned `sh` and `sw` currently produce no write strobe; a later exception
-path should turn those cases into architectural traps.
+Misaligned `sh` and `sw` produce no write strobe in this formatting block; the
+EX-stage alignment event is expected to trap and suppress the faulting
+instruction before any architectural store occurs.
 
 `rtl/core/data_mem.sv` is a simple word-array data memory with combinational
 read and synchronous byte-lane writes. It treats ALU results as byte addresses
@@ -166,10 +215,25 @@ inference.
 `rtl/core/load_data.sv` post-processes the 32-bit data-memory read word for
 `lb`, `lh`, `lw`, `lbu`, and `lhu`. It selects the addressed byte or halfword
 using `alu_result_M[1:0]`, then sign-extends or zero-extends the value for
-writeback. Misaligned `lh`, `lhu`, and `lw` currently produce zero rather than
-raising an architectural exception.
+writeback. Alignment classification belongs to `alu_op` in EX; this module is
+only responsible for extracting data for a valid aligned load.
 
-`rtl/core/WB_result_mux.sv` selects the writeback value from ALU result, post-processed load result, or `PC + 4`.
+`rtl/core/WB_result_mux.sv` selects the writeback value from ALU result,
+post-processed load result, `PC + 4`, or CSR read data.
+
+`rtl/core/csr_file.sv` owns the current machine CSR state: `mstatus`, `mie`,
+`mtvec`, `mscratch`, `mepc`, `mcause`, `mtval`, and `mip`. It implements the
+project's CSR read/modify/write behavior, rejects unsupported CSR addresses,
+records trap metadata and machine-status state on trap entry, and restores the
+relevant `mstatus` fields on `mret`. `mtvec` is forced to word alignment, so
+the implemented path is effectively Direct mode only.
+
+`rtl/core/trap_ctrl.sv` arbitrates the current synchronous trap events. Its
+priority is illegal instruction/CSR access, `ecall`, `ebreak`, instruction
+address misalignment, load address misalignment, then store address
+misalignment. It produces `mcause`, `mtval`, and `mepc`, requests the trap PC
+redirect, and generates pipeline flush controls. This policy layer does not
+own CSR storage.
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
@@ -180,31 +244,53 @@ testbenches keep one instruction or behavior per task. Test tasks explicitly
 apply defaults, assign direct inputs, wait `#1`, and call reusable check tasks.
 Coverage includes arithmetic wraparound, signed versus unsigned comparison,
 shift behavior, all branch conditions, AUIPC calculation and decode, load/store
-decode variants, `zero_E`, and invalid control handling.
+decode variants, `zero_E`, CSR/system decode, `mret`, CSR-result forwarding,
+trap flushing, and instruction/load/store alignment events.
 
 `tb/data_mem_tb.sv` covers initial zero contents, combinational reads,
 synchronous writes, write-disable behavior, byte-lane write strobes, ignored low
 address bits for word indexing, and independence of adjacent words.
 
-`tb/pc_target_gen_tb.sv` covers positive and negative PC-relative offsets, 32-bit address wraparound, JALR target calculation, JALR bit-0 clearing, use of `alu_src_AE` rather than `pc_E`, and jump/branch redirect decisions. It intentionally does not claim to verify where `alu_src_AE` originated.
+`tb/pc_target_gen_tb.sv` covers positive and negative PC-relative offsets,
+32-bit address wraparound, JALR target calculation and bit-0 clearing, use of
+`alu_src_AE` rather than `pc_E`, jump/branch/`mret` redirect decisions, and
+taken-versus-untaken instruction-address-misaligned behavior. It intentionally
+does not claim to verify where `alu_src_AE` originated.
 
-`tb/core_basic_smoke_tb.sv`, `tb/core_smoke_branch_tb.sv`,
-`tb/core_smoke_hazard_tb.sv`, and `tb/core_smoke_alu_tb.sv` instantiate `top`,
+The nine processor smoke testbenches instantiate `top`,
 load one program each, enforce a timeout, and inspect architectural state
 hierarchically. The ALU smoke covers ALU-immediate results plus taken and
-not-taken cases for the six branch conditions. These are directed smoke tests,
-not a complete ISA verification environment.
+not-taken cases for the six branch conditions. The CSR/trap smoke covers the
+six supported CSR forms, zero-source pure reads, two `ebreak` sites and one
+`ecall` site,
+handler return and register preservation, and final `mcause`, `mtval`,
+`mstatus`, and `mepc` state. Four precise-trap smokes cover illegal instruction,
+instruction-address misalignment, load-address misalignment, and store-address
+misalignment. Each checks CSR metadata, younger-instruction flushing, and a
+cause-specific suppressed side effect: JAL link-register writeback, load
+destination writeback, or store memory modification. These are directed smoke
+tests, not complete ISA or privileged-architecture verification.
 
 `sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`,
 `sim/run_imm_ext.sh`, `sim/run_data_mem.sh`, `sim/run_pc_target_gen.sh`, and
 `sim/run_hazard_unit.sh` run module-level Verilator tests.
 `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`,
-`sim/run_smoke_hazard.sh`, and `sim/run_smoke_alu.sh` rebuild their assembly
-programs and run processor-level smoke tests. `sim/run_regression.sh` is the
-unified entry point and runs eleven tests: seven module tests and four processor
-smoke tests. `sim/build_hex.sh` assembles `.s` files into `.hex` using
-`riscv64-elf-gcc` with `-march=rv32i`, `-mabi=ilp32`, no runtime, and text base
-zero.
+`sim/run_smoke_hazard.sh`, `sim/run_smoke_alu.sh`,
+`sim/run_smoke_csr_trap.sh`, and the four precise-trap scripts rebuild their
+assembly programs and run processor-level smoke tests. `sim/run_regression.sh`
+is the unified entry point and runs sixteen tests: seven module tests and nine
+processor smoke tests.
+`sim/build_hex.sh` assembles one or more `.s` files into `.hex` using
+`riscv64-elf-gcc` with `-march=rv32i_zicsr`, `-mabi=ilp32`, no standard
+runtime, and `software/linker/core.ld`. The linker places `.text` at zero and
+the optional `.trap` section at the next aligned instruction address.
+
+`programs/smoke_csr_trap.s`, `software/runtime/trap_handler.s`, and
+`tb/core_smoke_csr_trap_tb.sv` form the current integrated synchronous-trap
+closure. The program initializes `mtvec` from the linked handler symbol and
+uses a stable data-memory scratch area required by the minimal handler. This
+runtime is a teaching smoke handler, not a general ABI-safe or nested-trap-safe
+runtime.
 
 `software/tests/riscv_lite/env/riscv_test.h`,
 `software/scripts/build_riscv_lite_test.sh`, `tb/core_isa_lite_tb.sv`, and
@@ -230,17 +316,37 @@ The implemented datapath is organized as a classic five-stage pipeline: IF, ID, 
 
 Control is generated in Decode as a packed `control_bundle_t`, then carried through later stages with narrower packed control bundles where possible. Pipeline registers carry explicit `valid` bits, and side-effecting controls are gated by validity as they enter later stages.
 
-Branches and jumps are resolved in EX. `pc_target_gen` chooses between PC-relative targets and `jalr` register-relative targets. When `pc_src_E` selects the target path, the hazard unit flushes Decode and Execute so wrong-path instructions are converted into bubbles.
+Branches and jumps are resolved in EX. `pc_target_gen` chooses between
+PC-relative targets and `jalr` register-relative targets. JALR clears bit 0 by
+ISA definition, after which the current RV32I-only core requires the final
+target to be 4-byte aligned. A real redirect flushes Decode and Execute so
+wrong-path instructions become bubbles; a misaligned redirect instead enters
+the trap path.
 
 AUIPC is also completed in EX. Decode selects `CTRL_PASS_B4PC` and the U-type
 immediate; the ALU receives the instruction's pipelined `pc_E` and computes
 `pc_E + imm_E`. This uses the AUIPC instruction address, not `PC + 4`.
 
-Forwarding is handled for EX-stage operands. The A operand can come from the original `rs1`, WB result, or MEM ALU result. The B-side register data can come from original `rs2`, WB result, or MEM ALU result, and then a separate mux chooses between that register data and the immediate for the actual ALU B input. MEM-stage forwarding excludes load results because load data is not available early enough for the next EX-stage consumer.
+Forwarding is handled for EX-stage operands. Both register operands can receive
+the original value, a WB result, a MEM ALU result, or a MEM CSR read result;
+the B-side immediate mux runs after register forwarding. MEM-stage forwarding
+excludes load results because load data is not available early enough for the
+next EX-stage consumer.
 
-Load-use hazards are detected when a valid EX-stage load writes a nonzero `rd` that matches either source of a valid Decode-stage instruction. In that case Fetch and Decode stall, while Execute is flushed to insert a bubble. Redirects have priority over load-use stalls in the current hazard unit.
+Load-use hazards are detected when a valid EX-stage load writes a nonzero `rd`
+that matches either source of a valid Decode-stage instruction. Fetch and
+Decode stall while Execute is flushed to insert a bubble. Trap flushes and
+redirects have priority over load-use stalls in the current hazard unit.
 
-CSR, exceptions, interrupts, external memory handshakes, SoC integration, cache, FPU, and RTOS support are not visible as implemented RTL in the current source tree. They appear as planning goals in `docs/plans`.
+Synchronous trap sources are classified in Decode or EX, then arbitrated by
+`trap_ctrl`. On trap entry, `csr_file` records `mepc`, `mcause`, and `mtval`
+and updates `mstatus`; `pc_mux` redirects to `mtvec`. `mret` restores the
+implemented machine-status fields and redirects through `mepc`. This is a
+basic machine-mode path, not a full privileged implementation.
+
+Interrupt sources/control, external memory handshakes, SoC integration, cache,
+FPU, and RTOS support are not implemented in the current source tree. They
+remain planning goals in `docs/plans`.
 
 ## Coding Conventions Visible in the Repository
 
@@ -269,59 +375,75 @@ Implemented or visibly present:
 5. Decode support for R-type ALU instructions; `addi`, `slti`, `sltiu`,
    `xori`, `ori`, `andi`, `slli`, `srli`, and `srai`; `lb`, `lh`, `lw`, `lbu`,
    `lhu`, `sb`, `sh`, and `sw`; `lui`, `auipc`; all six base branch
-   conditions; `jal`; and `jalr`.
-6. EX-stage branch/jump redirect handling.
-7. EX operand forwarding from MEM ALU results and WB results.
-8. Load-use stall insertion.
-9. Verilator smoke tests for basic execution, branch flushing, hazards, and
-   ALU-immediate plus branch-condition behavior.
-10. Module-level Verilator tests for ALU, register file, immediate extension, control decode, data memory, PC target generation, and hazard control.
-11. A unified regression script covering seven module tests and four processor
-    smoke tests.
-12. Assembly source and generated hex images for all four smoke programs, with
-    explicit completion markers.
-13. A lightweight selected `riscv-tests`/`rv32ui` flow for current Phase 3-safe
+   conditions; `jal`; `jalr`; all six project-supported Zicsr forms; `ecall`;
+   `ebreak`; and `mret`.
+6. EX-stage branch/jump/`mret` redirect handling and trap redirect priority.
+7. EX operand forwarding from MEM ALU results, MEM CSR results, and WB results.
+8. Load-use stall insertion plus redirect and trap flushing.
+9. Machine CSR state for `mstatus`, `mie`, `mtvec`, `mscratch`, `mepc`,
+   `mcause`, `mtval`, and `mip`, including basic trap-entry and `mret` updates.
+10. Synchronous trap classification for illegal instruction/CSR access,
+    `ecall`, `ebreak`, instruction-address misalignment, load-address
+    misalignment, and store-address misalignment.
+11. Module-level Verilator tests for ALU, register file, immediate extension,
+    control decode, data memory, PC target generation, and hazard control,
+    including CSR/system and alignment-event cases.
+12. Nine processor smoke tests for basic execution, branch flushing, hazards,
+    ALU/branches, repeated mixed CSR/ECALL/EBREAK handling, illegal instruction,
+    and the three implemented address-misalignment trap classes.
+13. A unified directed regression containing seven module tests and nine
+    processor smoke tests.
+14. A lightweight selected `riscv-tests`/`rv32ui` flow for current Phase 3-safe
     integer ALU, branch, jump, `lui`, and `auipc` cases.
-14. A documented verification-tool decision to retain Verilator/SystemVerilog now and defer Cocotb until randomized, parameterized, latency-driven, Cache reference-model, or differential testing justifies it.
+15. A documented decision to retain Verilator/SystemVerilog now and defer
+    Cocotb until randomized, parameterized, latency-driven, Cache
+    reference-model, or differential testing justifies it.
 
 Partially implemented or uncertain:
 
-1. Full architectural RV32I compliance is incomplete because CSR, exceptions,
-   interrupts, traps, and privileged/system behavior are not implemented yet.
-2. Byte and halfword loads/stores are implemented in the current internal memory
+1. Full architectural RV32I and privileged compliance remains incomplete.
+   The current CSR/trap path is a deliberately small machine-mode teaching
+   implementation, not a complete privileged architecture.
+2. Byte and halfword loads/stores are implemented in the internal memory
    path, but they are still covered only by directed unit tests rather than
    broad program-level ISA tests.
-3. Misaligned instruction and data accesses are not architecturally handled
-   yet. The data-memory word index uses address bits `[MEM_ADDR_WIDTH+1:2]`,
-   while `load_data` and `store_data` use `[1:0]` for subword lane selection.
-   Misaligned halfword and word data accesses currently produce zero/no-write
-   behavior rather than traps, and JALR clears only target bit 0. Phase 4 must
-   detect unsupported alignment and raise the appropriate exception instead of
-   silently correcting or masking the access.
-4. Memory bounds behavior is unclear from the repository.
-5. The selected `riscv-tests` integration is intentionally lightweight. It does
+3. Directed program-level tests prove selected alignment traps suppress the
+   faulting JAL/load/store side effect, flush a younger register write, and
+   preserve an older register write. They do not cover every possible older
+   in-flight register or memory side effect or every alignment variant.
+4. Illegal-instruction handling has one integrated precise-exception test.
+   Unsupported-CSR detection still lacks equivalent program-level coverage.
+5. The minimal trap handler is sufficient for the current smoke contract but
+   is not a general ABI-safe, nested-trap-safe, or interrupt-ready runtime.
+6. Memory bounds behavior is unclear from the repository.
+7. The selected `riscv-tests` integration is intentionally lightweight. It does
    not initialize data memory from ELF sections and does not support upstream
-   tests that require CSR, traps, `ecall`, privileged behavior, misaligned
+   tests that require full CSR/trap/privileged behavior, misaligned
    exception handling, or instruction-cache coherence.
-6. The current regression is useful but remains a focused Phase 3 baseline
-   rather than broad ISA compliance proof.
+8. The current regression is a focused Phase 3 plus basic-Phase-4 baseline,
+   not broad ISA or privileged compliance proof.
 
 Not implemented as visible RTL:
 
-1. CSR file and CSR instruction handling.
-2. Exceptions and interrupts.
+1. Interrupt sources, interrupt arbitration, and timer/external/software
+   interrupt delivery.
+2. Nested trap handling and a production-quality context-save runtime.
 3. External bus or handshake memory interface.
-4. SoC wrapper, peripherals, FPGA board integration, cache, FPU, and RTOS support.
+4. SoC wrapper, peripherals, FPGA board integration, cache, FPU, and RTOS
+   support.
 
 ## Suggested Next Steps
 
 1. Keep `sim/run_regression.sh` green before and after RTL changes.
-2. Treat Phase 4 as the active milestone: design the minimum CSR, exception,
-   and interrupt path before changing RTL.
-3. Define exception priority and pipeline flush behavior before adding trap
-   entry logic.
-4. Decide how instruction-address, load-address, and store-address misalignment
-   should be detected and reported.
-5. Preserve the Phase 3 regression and selected ISA-lite tests as the baseline
-   while Phase 4 changes are added.
-6. Introduce a clearer memory interface boundary before Cache work, since the current memories are internal single-model arrays.
+2. Add program-level precise synchronous-exception coverage for unsupported
+   CSR access and additional older in-flight side-effect combinations.
+3. Keep proving the faulting instruction has no side effect, younger
+   instructions are flushed, and older instructions retire exactly once.
+4. Define exception-versus-interrupt-versus-normal-redirect priority before
+   adding timer or external interrupt sources.
+5. Only then integrate the minimum interrupt path and extend the handler
+   contract deliberately.
+6. Preserve the Phase 3 regression, current CSR/trap smoke, and selected
+   ISA-lite tests throughout Phase 4.
+7. Introduce a clearer memory interface boundary before Cache work, since the
+   current memories are internal single-model arrays.
