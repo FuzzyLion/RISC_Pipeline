@@ -13,7 +13,7 @@ module data_mem
     Initialization is handled separately to preserve RAM inference!
     */
 
-    input logic mem_write_M,
+    input logic data_mem_write,
 
     input logic [WORD_WIDTH - 1:0] alu_result_M,
     input logic [WORD_WIDTH - 1:0] store_wdata_M,
@@ -76,7 +76,7 @@ module data_mem
     always @(posedge clk) begin // Synchronous write
     // always_ff stipulate the inner variables can only be write in this section
     
-        if (mem_write_M) begin
+        if (data_mem_write) begin
             
             // When the specific byte lanes are enable, update the pointed bytes
             if (store_wstrb_M[0]) begin

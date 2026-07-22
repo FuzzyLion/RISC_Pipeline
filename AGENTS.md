@@ -27,10 +27,15 @@ machine-mode CSR and synchronous-trap path is now integrated end to end,
 including CSR forwarding, `ecall`, `mret`, trap metadata, handler redirect,
 and a repeated CSR/trap smoke program. Directed processor smokes now prove
 precise illegal-instruction and instruction/load/store-address-misaligned trap
-behavior for selected cases. Phase 4 is not complete: interrupt sources/control
-and broader synchronous-exception coverage are still pending. Preserve the
-Phase 3 baseline and the current CSR/trap closure while adding the remaining
-behavior in small, explainable steps.
+behavior for selected cases. A first machine-timer interrupt RTL path is now
+integrated: MMIO writes program `mtimecmp`, timer expiry drives `mip.MTIP`, and
+`trap_ctrl.sv` gates delivery with `mie.MTIE` and `mstatus.MIE` after all
+synchronous exceptions. The existing sixteen-test regression remains green,
+but no timer-specific processor smoke has closed this path yet. Phase 4 is not
+complete: timer delivery still needs directed proof, software/external
+interrupts are absent, and broader synchronous-exception coverage remains
+pending. Preserve the Phase 3 baseline and the current CSR/trap closure while
+adding the remaining behavior in small, explainable steps.
 
 Relevant planning docs:
 
@@ -43,10 +48,13 @@ Treat the current CSR/trap implementation as a useful baseline, not as proof
 of full privileged-architecture compliance.
 
 1. `control_unit.sv` decodes CSR instructions, `ecall`, `ebreak`, and `mret`.
-2. `csr_file.sv` owns machine CSR state and trap-entry/`mret` state updates.
+2. `csr_file.sv` owns machine CSR state and trap-entry/`mret` state updates. It
+   exposes full `mstatus`/`mie`/`mip` values; the implemented `mip.MTIP` bit is
+   a read-only view of the hardware timer request.
 3. `pc_target_gen.sv` and `alu_op.sv` detect control-flow and load/store
    misalignment events; they do not own trap priority or CSR updates.
-4. `trap_ctrl.sv` selects the authoritative synchronous trap, produces
+4. `trap_ctrl.sv` selects the authoritative trap, gives every implemented
+   synchronous exception priority over the machine-timer interrupt, produces
    `mcause`/`mtval`/`mepc`, and requests pipeline flushing.
 5. `pc_mux.sv` gives trap redirect to `mtvec` priority over normal redirect and
    uses `mepc` for `mret`.
@@ -55,6 +63,10 @@ of full privileged-architecture compliance.
 7. `sim/run_regression.sh` currently contains seven module tests and nine core
    smoke tests, including the mixed CSR/ECALL/EBREAK smoke and four directed
    precise-trap smokes.
+8. `soc_addr_map_pkg.sv`, `mmio_decoder.sv`, and `machine_timer.sv` implement
+   the first timer path. The decoder reserves two aligned word addresses for
+   the low/high halves of `mtimecmp`, prevents those writes from aliasing into
+   data RAM, and accepts only full-word stores for the timer registers.
 
 The CSR/trap smoke proves a focused path: all six base Zicsr read/modify/write
 forms used by the project, zero-source pure reads, two `ebreak` sites and one
@@ -63,9 +75,9 @@ register preservation under the current handler contract, `mepc` advancement,
 and `mret`. Four additional directed smokes cover selected illegal-instruction
 and instruction/load/store-address-misaligned cases, checking CSR metadata,
 younger-instruction flushing, and suppression of the faulting instruction's
-register or memory side effect. They do not prove interrupts, nested traps,
-general ABI-safe handler behavior, illegal CSR access, or every possible
-older in-flight side effect.
+register or memory side effect. They do not yet prove timer-interrupt delivery,
+nested traps, general ABI-safe handler behavior, illegal CSR access, or every
+possible older in-flight side effect.
 
 When working in this area:
 
@@ -76,8 +88,9 @@ When working in this area:
 3. Do not describe a green CSR/trap smoke as Phase 4 completion.
 4. Keep expanding directed precise-exception coverage before claiming broad
    illegal-instruction, illegal-CSR, or alignment-exception closure.
-5. Define exception-versus-interrupt-versus-normal-redirect priority before
-   integrating timer or external interrupts.
+5. Preserve the implemented priority of synchronous exceptions over timer
+   interrupts, and add directed proof before claiming interrupt closure or
+   adding software/external interrupt sources.
 
 ## Project context
 

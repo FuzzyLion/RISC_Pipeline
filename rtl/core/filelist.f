@@ -1,4 +1,7 @@
 rtl/core/core_types_pkg.sv
+rtl/core/soc_addr_map_pkg.sv
+rtl/core/mmio_decoder.sv
+rtl/core/machine_timer.sv
 rtl/core/core.sv
 rtl/core/top.sv
 rtl/core/hazard_unit.sv

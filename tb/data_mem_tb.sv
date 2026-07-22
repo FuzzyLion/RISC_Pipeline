@@ -16,7 +16,7 @@ module data_mem_tb
 
     data_mem dut (
         .clk(clk),
-        .mem_write_M(mem_write_M),
+        .data_mem_write(mem_write_M),
         .alu_result_M(alu_result_M),
         .store_wdata_M(store_wdata_M),
         .store_wstrb_M(store_wstrb_M),

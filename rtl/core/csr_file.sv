@@ -7,6 +7,7 @@ module csr_file
     input logic valid_E,
     input logic csr_en_E, // Euqals to CSR opcode
     input logic mret_en_E,
+    input logic timer_irq,
 
     input logic [WORD_WIDTH - 1:0] instr_E,
     input logic [WORD_WIDTH - 1:0] rs1_val_E,
@@ -21,8 +22,11 @@ module csr_file
     input logic [WORD_WIDTH - 1:0] trap_mepc_E,
 
     output logic [WORD_WIDTH - 1:0] csr_rdata_E,
+    output logic [WORD_WIDTH - 1:0] mstatus_reg,
     output logic [WORD_WIDTH - 1:0] mtvec_reg,
     output logic [WORD_WIDTH - 1:0] mepc_reg,
+    output logic [WORD_WIDTH - 1:0] mip_reg,
+    output logic [WORD_WIDTH - 1:0] mie_reg,
 
     output logic illegal_csr_access_E
 );
@@ -41,9 +45,7 @@ module csr_file
     logic [WORD_WIDTH - 1:0] mcause_reg;
     logic [WORD_WIDTH - 1:0] mtval_reg;
     logic [WORD_WIDTH - 1:0] mscratch_reg;
-    logic [WORD_WIDTH - 1:0] mstatus_reg;
-    logic [WORD_WIDTH - 1:0] mie_reg;
-    logic [WORD_WIDTH - 1:0] mip_reg;
+
 
     logic csr_addr_supported;
     logic csr_instr_E;
@@ -140,7 +142,7 @@ module csr_file
         endcase
     end
 
-    always_comb begin
+    always_comb begin : csr_addr_access
         case (csr_addr)
             CSR_MSTATUS, CSR_MIE, CSR_MTVEC, CSR_MSCRATCH, 
             CSR_MEPC, CSR_MCAUSE, CSR_MTVAL, CSR_MIP: begin
@@ -153,6 +155,12 @@ module csr_file
         endcase
 
         illegal_csr_access_E = csr_instr_E && !csr_addr_supported;
+    end
+
+    always_comb begin : MTIP_hardware_pending
+        mip_reg = 32'b0;
+
+        mip_reg[7] = timer_irq;
     end
 
     always_ff @(posedge clk) begin
@@ -170,7 +178,6 @@ module csr_file
             mscratch_reg <= 32'b0;
             mstatus_reg <= 32'h0000_1800;
             mie_reg <= 32'b0;
-            mip_reg <= 32'b0;
         end
         else if (trap_entry_E) begin : trap_occurs
             /*
@@ -212,7 +219,9 @@ module csr_file
                                    (csr_wdata_E & MSTATUS_WRITE_MUSK);
                 end
                 CSR_MIE: begin
-                    mie_reg <= csr_wdata_E;
+                    // Currently only support machine timer interrupt
+                    // Only update MTIE in CSR instrs
+                    mie_reg <= csr_wdata_E & 32'h0000_0080;
                 end
                 CSR_MTVEC: begin
                     mtvec_reg <= {csr_wdata_E[WORD_WIDTH - 1:2], 2'b00};
@@ -229,9 +238,7 @@ module csr_file
                 CSR_MTVAL: begin
                     mtval_reg <= csr_wdata_E;
                 end
-                CSR_MIP: begin
-                    mip_reg <= csr_wdata_E;
-                end
+                // MIP is a read-only reg, so no CSR_MIP is enabled
                 default: begin
                     // All CSRs remain its former status
                 end

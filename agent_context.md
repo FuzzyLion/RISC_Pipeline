@@ -14,7 +14,9 @@ the full R-type integer ALU group, the RV32I ALU-immediate group, all six base
 branch conditions, `lui`, `auipc`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`,
 `sh`, `sw`, `jal`, and `jalr`. Decode also covers `ecall`, `ebreak`, `mret`,
 `csrrw`, `csrrs`, `csrrc`, `csrrwi`, `csrrsi`, and `csrrci`. Basic synchronous
-exceptions and machine CSR state are integrated; interrupts are not.
+exceptions and machine CSR state are integrated. A first machine-timer
+interrupt RTL path is also wired end to end, but it does not yet have a
+timer-specific processor smoke proving delivery and return behavior.
 
 ## Compact Directory Tree
 
@@ -47,7 +49,8 @@ exceptions and machine CSR state are integrated; interrupts are not.
 │   ├── smoke_illegal_trap.s
 │   ├── smoke_instr_misaligned_trap.s
 │   ├── smoke_load_misaligned_trap.s
-│   └── smoke_store_misaligned_trap.s
+│   ├── smoke_store_misaligned_trap.s
+│   └── smoke_timer_interrupt.s
 ├── rtl/
 │   └── core/
 │       ├── filelist.f
@@ -73,6 +76,9 @@ exceptions and machine CSR state are integrated; interrupts are not.
 │       ├── EX_forward_rd_muxBE.sv
 │       ├── EX_muxBE.sv
 │       ├── store_data.sv
+│       ├── soc_addr_map_pkg.sv
+│       ├── mmio_decoder.sv
+│       ├── machine_timer.sv
 │       ├── data_mem.sv
 │       ├── load_data.sv
 │       ├── WB_result_mux.sv
@@ -137,7 +143,8 @@ keep it as an external reference tree rather than editing it directly.
 `rtl/core/core.sv` is the main pipeline integration module. It wires control,
 PC logic, instruction memory, register file, immediate generation, forwarding
 muxes, ALU, branch target generation, pipeline registers, store/load data
-alignment, data memory, writeback, hazard control, `csr_file`, and `trap_ctrl`.
+alignment, data memory, writeback, hazard control, `csr_file`, `trap_ctrl`, and
+the first MMIO machine-timer interrupt path.
 
 `rtl/core/control_unit.sv` decodes the instruction in the Decode stage into
 `control_bundle_t` and `imm_src_e`. Implemented active cases include the R-type
@@ -203,6 +210,22 @@ Misaligned `sh` and `sw` produce no write strobe in this formatting block; the
 EX-stage alignment event is expected to trap and suppress the faulting
 instruction before any architectural store occurs.
 
+`rtl/core/soc_addr_map_pkg.sv` defines the hardware-side MMIO address contract
+for the low and high 32-bit halves of `mtimecmp`. Assembly source must define
+matching platform addresses separately because the assembler cannot import a
+SystemVerilog package.
+
+`rtl/core/mmio_decoder.sv` recognizes aligned full-word stores to the two
+`mtimecmp` addresses. It produces the timer write data and low/high write
+enables, and prevents timer MMIO writes from aliasing into the internal data
+RAM. Timer MMIO reads and partial timer-register writes are not implemented.
+
+`rtl/core/machine_timer.sv` owns internal 64-bit `mtime` and `mtimecmp` state.
+`mtime` increments once per core clock, `mtimecmp` resets to its maximum value,
+and the level-sensitive `timer_irq` request is asserted while
+`mtime >= mtimecmp`. Software must move `mtimecmp` into the future to clear the
+request after servicing an interrupt.
+
 `rtl/core/data_mem.sv` is a simple word-array data memory with combinational
 read and synchronous byte-lane writes. It treats ALU results as byte addresses
 and indexes the internal word array with address bits `[MEM_ADDR_WIDTH+1:2]`.
@@ -225,15 +248,19 @@ post-processed load result, `PC + 4`, or CSR read data.
 `mtvec`, `mscratch`, `mepc`, `mcause`, `mtval`, and `mip`. It implements the
 project's CSR read/modify/write behavior, rejects unsupported CSR addresses,
 records trap metadata and machine-status state on trap entry, and restores the
-relevant `mstatus` fields on `mret`. `mtvec` is forced to word alignment, so
-the implemented path is effectively Direct mode only.
+relevant `mstatus` fields on `mret`. It currently permits software to write
+only `mie.MTIE`; `mip.MTIP` is a read-only architectural view of `timer_irq`.
+`mtvec` is forced to word alignment, so the implemented path is effectively
+Direct mode only.
 
-`rtl/core/trap_ctrl.sv` arbitrates the current synchronous trap events. Its
+`rtl/core/trap_ctrl.sv` arbitrates the current trap events. Its
 priority is illegal instruction/CSR access, `ecall`, `ebreak`, instruction
 address misalignment, load address misalignment, then store address
-misalignment. It produces `mcause`, `mtval`, and `mepc`, requests the trap PC
-redirect, and generates pipeline flush controls. This policy layer does not
-own CSR storage.
+misalignment. All implemented synchronous exceptions take priority over a
+pending and enabled machine-timer interrupt. A taken timer interrupt records
+interrupt cause 7. The module produces `mcause`, `mtval`, and `mepc`, requests
+the trap PC redirect, and generates pipeline flush controls. This policy layer
+does not own CSR storage.
 
 `rtl/core/filelist.f` lists the core RTL files for Verilator builds.
 
@@ -344,9 +371,13 @@ and updates `mstatus`; `pc_mux` redirects to `mtvec`. `mret` restores the
 implemented machine-status fields and redirects through `mepc`. This is a
 basic machine-mode path, not a full privileged implementation.
 
-Interrupt sources/control, external memory handshakes, SoC integration, cache,
-FPU, and RTOS support are not implemented in the current source tree. They
-remain planning goals in `docs/plans`.
+For the first timer path, an M-stage aligned word store is decoded away from
+data RAM and programs one half of `mtimecmp`. Timer expiry drives the read-only
+`mip.MTIP` view in `csr_file`; `trap_ctrl` combines it with `mie.MTIE` and
+`mstatus.MIE`, taking the interrupt only when no synchronous exception wins.
+This RTL path is integrated, but timer-specific program-level verification is
+still pending. External memory handshakes, broader SoC integration, cache, FPU,
+and RTOS support remain planning goals in `docs/plans`.
 
 ## Coding Conventions Visible in the Repository
 
@@ -398,6 +429,11 @@ Implemented or visibly present:
 15. A documented decision to retain Verilator/SystemVerilog now and defer
     Cocotb until randomized, parameterized, latency-driven, Cache
     reference-model, or differential testing justifies it.
+16. A first machine-timer interrupt RTL path with MMIO-programmable 64-bit
+    `mtimecmp`, an internal 64-bit `mtime`, read-only `mip.MTIP`, software-
+    writable `mie.MTIE`, global `mstatus.MIE` gating, and synchronous-exception
+    priority over timer delivery. The pre-existing sixteen-test regression
+    remains green after integration.
 
 Partially implemented or uncertain:
 
@@ -422,11 +458,14 @@ Partially implemented or uncertain:
    exception handling, or instruction-cache coherence.
 8. The current regression is a focused Phase 3 plus basic-Phase-4 baseline,
    not broad ISA or privileged compliance proof.
+9. The timer RTL is integrated, but the draft timer program is not registered
+   in the regression and no processor-level timer test currently proves MMIO
+   programming, interrupt metadata, flush behavior, handler acknowledgement,
+   or `mret` recovery.
 
 Not implemented as visible RTL:
 
-1. Interrupt sources, interrupt arbitration, and timer/external/software
-   interrupt delivery.
+1. External and software interrupt sources and their delivery paths.
 2. Nested trap handling and a production-quality context-save runtime.
 3. External bus or handshake memory interface.
 4. SoC wrapper, peripherals, FPGA board integration, cache, FPU, and RTOS
@@ -439,10 +478,11 @@ Not implemented as visible RTL:
    CSR access and additional older in-flight side-effect combinations.
 3. Keep proving the faulting instruction has no side effect, younger
    instructions are flushed, and older instructions retire exactly once.
-4. Define exception-versus-interrupt-versus-normal-redirect priority before
-   adding timer or external interrupt sources.
-5. Only then integrate the minimum interrupt path and extend the handler
-   contract deliberately.
+4. Add a directed timer-interrupt smoke that proves MMIO programming,
+   `mip.MTIP`/`mie.MTIE`/`mstatus.MIE` gating, cause 7 metadata, precise flush,
+   acknowledgement by advancing `mtimecmp`, and `mret` recovery.
+5. Preserve synchronous-exception priority while extending the design later
+   with software or external interrupt sources.
 6. Preserve the Phase 3 regression, current CSR/trap smoke, and selected
    ISA-lite tests throughout Phase 4.
 7. Introduce a clearer memory interface boundary before Cache work, since the

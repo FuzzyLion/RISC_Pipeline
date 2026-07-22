@@ -13,6 +13,10 @@ module trap_ctrl
     input trap_event_e trap_event_load_store_E,
     input logic illegal_csr_access_E,
 
+    input logic [WORD_WIDTH - 1:0] mstatus_reg,
+    input logic [WORD_WIDTH - 1:0] mip_reg,
+    input logic [WORD_WIDTH - 1:0] mie_reg,
+
     output pc_src_with_trap_e pc_src_with_trap_E,
     
     output logic [WORD_WIDTH - 1:0] trap_mcause_E,
@@ -31,6 +35,10 @@ module trap_ctrl
     logic env_call;
     logic env_break;
 
+    logic timer_interrupt_req;
+    logic sync_exception_E;
+    logic timer_interrupt_taken_E;
+
     always_comb begin : trap_define
         illegal_instr = valid_E &&
                         (illegal_csr_access_E ||
@@ -48,13 +56,21 @@ module trap_ctrl
     end
 
     always_comb begin : trap_entry
-        trap_entry_E = illegal_instr ||
+        // Synchronous exception judgment
+        sync_exception_E = illegal_instr ||
                        env_call ||
                        env_break ||
                        instr_addr_misaligned ||
                        load_misaligned ||
                        store_misaligned;
 
+        // Interrupt enable judgment
+        timer_interrupt_req = mip_reg[7] && mie_reg[7] && mstatus_reg[3];
+        timer_interrupt_taken_E = valid_E && timer_interrupt_req && !sync_exception_E;
+
+        trap_entry_E = sync_exception_E || timer_interrupt_taken_E;
+
+        // Decide whether jump to mtvec or not
         pc_src_with_trap_E = pc_src_with_trap_e'(trap_entry_E);
     end
 
@@ -120,6 +136,14 @@ module trap_ctrl
         else if (store_misaligned) begin
             trap_mcause_E = {1'b0, 31'd6};
             trap_mtval_E = alu_result_E;
+            trap_mepc_E = pc_E;
+            trap_flush_D = 1'b1;
+            trap_flush_E = 1'b1;
+            trap_flush_M = 1'b1;
+        end
+        else if (timer_interrupt_taken_E) begin
+            trap_mcause_E = {1'b1, 31'd7};
+            trap_mtval_E = '0;
             trap_mepc_E = pc_E;
             trap_flush_D = 1'b1;
             trap_flush_E = 1'b1;

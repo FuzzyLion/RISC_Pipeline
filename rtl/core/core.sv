@@ -92,8 +92,11 @@ module core
     logic [WORD_WIDTH - 1:0] trap_mtval_E;
     logic [WORD_WIDTH - 1:0] trap_mepc_E;
     logic [WORD_WIDTH - 1:0] csr_rdata_E;
+    logic [WORD_WIDTH - 1:0] mstatus_reg;
     logic [WORD_WIDTH - 1:0] mtvec_reg;
     logic [WORD_WIDTH - 1:0] mepc_reg;
+    logic [WORD_WIDTH - 1:0] mip_reg;
+    logic [WORD_WIDTH - 1:0] mie_reg;
     logic illegal_csr_access_E;
 
     // EX_MEM
@@ -103,6 +106,13 @@ module core
     // store_data
     logic [3:0] store_wstrb_M_en;
     logic [WORD_WIDTH - 1:0] store_wdata_M_out;
+
+    // Machine timer MMIO
+    logic [WORD_WIDTH - 1:0] mtimecmp_wdata_M;
+    logic mtimecmp_high_we;
+    logic mtimecmp_low_we;
+    logic data_mem_write;
+    logic timer_irq;
 
     // data_mem
     logic [WORD_WIDTH - 1:0] mem_rdata_M_out;
@@ -363,6 +373,9 @@ module core
         .trap_event_branch_jump_E(trap_event_branch_jump_E),
         .trap_event_load_store_E(trap_event_load_store_E),
         .illegal_csr_access_E(illegal_csr_access_E),
+        .mstatus_reg(mstatus_reg),
+        .mip_reg(mip_reg),
+        .mie_reg(mie_reg),
         .pc_src_with_trap_E(pc_src_with_trap_E),
         .trap_mcause_E(trap_mcause_E),
         .trap_mtval_E(trap_mtval_E),
@@ -380,6 +393,7 @@ module core
         .valid_E(data_E_idex.valid),
         .csr_en_E(csr_en_E),
         .mret_en_E(ctrl_E.mret_en),
+        .timer_irq(timer_irq),
         .instr_E(data_E_idex.instr),
         .rs1_val_E(alu_src_AE_out),
         .rs1_idx_E(data_E_idex.rs1_idx),
@@ -390,8 +404,11 @@ module core
         .trap_mtval_E(trap_mtval_E),
         .trap_mepc_E(trap_mepc_E),
         .csr_rdata_E(csr_rdata_E),
+        .mstatus_reg(mstatus_reg),
         .mtvec_reg(mtvec_reg),
         .mepc_reg(mepc_reg),
+        .mip_reg(mip_reg),
+        .mie_reg(mie_reg),
         .illegal_csr_access_E(illegal_csr_access_E)
     );
 
@@ -415,10 +432,32 @@ module core
         .store_wstrb_M(store_wstrb_M_en)
     );
 
+    // Machine Timer MMIO Decode
+    mmio_decoder mmio_decoder1 (
+        .mem_write_M(ctrl_M.mem_write),
+        .alu_result_M(data_M_exmem.alu_result),
+        .store_wdata_M(store_wdata_M_out),
+        .store_wstrb_M(store_wstrb_M_en),
+        .mtimecmp_wdata_M(mtimecmp_wdata_M),
+        .mtimecmp_high_we(mtimecmp_high_we),
+        .mtimecmp_low_we(mtimecmp_low_we),
+        .data_mem_write(data_mem_write)
+    );
+
+    // Machine Timer
+    machine_timer machine_timer1 (
+        .clk(clk),
+        .reset(reset),
+        .mtimecmp_low_we(mtimecmp_low_we),
+        .mtimecmp_high_we(mtimecmp_high_we),
+        .mtimecmp_wdata(mtimecmp_wdata_M),
+        .timer_irq(timer_irq)
+    );
+
     // Data Memory
     data_mem data_mem1 (
         .clk(clk),
-        .mem_write_M(ctrl_M.mem_write),
+        .data_mem_write(data_mem_write),
         .alu_result_M(data_M_exmem.alu_result),
         .store_wdata_M(store_wdata_M_out),
         .store_wstrb_M(store_wstrb_M_en),
