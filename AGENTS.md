@@ -30,12 +30,14 @@ precise illegal-instruction and instruction/load/store-address-misaligned trap
 behavior for selected cases. A first machine-timer interrupt RTL path is now
 integrated: MMIO writes program `mtimecmp`, timer expiry drives `mip.MTIP`, and
 `trap_ctrl.sv` gates delivery with `mie.MTIE` and `mstatus.MIE` after all
-synchronous exceptions. The existing sixteen-test regression remains green,
-but no timer-specific processor smoke has closed this path yet. Phase 4 is not
-complete: timer delivery still needs directed proof, software/external
-interrupts are absent, and broader synchronous-exception coverage remains
-pending. Preserve the Phase 3 baseline and the current CSR/trap closure while
-adding the remaining behavior in small, explainable steps.
+synchronous exceptions. A directed one-shot timer smoke now proves MMIO
+programming, pending-bit gating, cause 7 delivery, precise flushing, handler
+acknowledgement, and `mret` recovery. The existing seventeen-test regression
+remains green. Phase 4 is not broad privileged-architecture closure:
+software/external interrupts are absent, periodic scheduling is not yet
+implemented, and broader synchronous-exception coverage remains pending.
+Preserve the Phase 3 baseline and the current CSR/trap closure while adding the
+remaining behavior in small, explainable steps.
 
 Relevant planning docs:
 
@@ -60,9 +62,9 @@ of full privileged-architecture compliance.
    uses `mepc` for `mret`.
 6. `hazard_unit.sv` includes CSR-result forwarding and treats `mret` as a
    redirect that flushes younger instructions.
-7. `sim/run_regression.sh` currently contains seven module tests and nine core
+7. `sim/run_regression.sh` currently contains seven module tests and ten core
    smoke tests, including the mixed CSR/ECALL/EBREAK smoke and four directed
-   precise-trap smokes.
+   precise-trap smokes plus the one-shot machine-timer interrupt smoke.
 8. `soc_addr_map_pkg.sv`, `mmio_decoder.sv`, and `machine_timer.sv` implement
    the first timer path. The decoder reserves two aligned word addresses for
    the low/high halves of `mtimecmp`, prevents those writes from aliasing into
@@ -75,9 +77,10 @@ register preservation under the current handler contract, `mepc` advancement,
 and `mret`. Four additional directed smokes cover selected illegal-instruction
 and instruction/load/store-address-misaligned cases, checking CSR metadata,
 younger-instruction flushing, and suppression of the faulting instruction's
-register or memory side effect. They do not yet prove timer-interrupt delivery,
-nested traps, general ABI-safe handler behavior, illegal CSR access, or every
-possible older in-flight side effect.
+register or memory side effect. The timer smoke proves one interrupt using a
+fixed initial deadline and a one-shot handler acknowledgement. These tests do
+not yet prove periodic timer scheduling, nested traps, general ABI-safe handler
+behavior, illegal CSR access, or every possible older in-flight side effect.
 
 When working in this area:
 
@@ -89,8 +92,8 @@ When working in this area:
 4. Keep expanding directed precise-exception coverage before claiming broad
    illegal-instruction, illegal-CSR, or alignment-exception closure.
 5. Preserve the implemented priority of synchronous exceptions over timer
-   interrupts, and add directed proof before claiming interrupt closure or
-   adding software/external interrupt sources.
+   interrupts and its directed timer proof when adding software/external
+   interrupt sources.
 
 ## Project context
 

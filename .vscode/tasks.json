@@ -51,7 +51,7 @@
         "core_smoke_tb",
         "-f",
         "rtl/core/filelist.f",
-        "tb/core_smoke_tb.sv"
+        "tb/core_basic_smoke_tb.sv"
       ],
       "group": "test",
       "problemMatcher": {

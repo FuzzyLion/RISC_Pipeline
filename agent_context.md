@@ -15,8 +15,8 @@ branch conditions, `lui`, `auipc`, `lb`, `lh`, `lw`, `lbu`, `lhu`, `sb`,
 `sh`, `sw`, `jal`, and `jalr`. Decode also covers `ecall`, `ebreak`, `mret`,
 `csrrw`, `csrrs`, `csrrc`, `csrrwi`, `csrrsi`, and `csrrci`. Basic synchronous
 exceptions and machine CSR state are integrated. A first machine-timer
-interrupt RTL path is also wired end to end, but it does not yet have a
-timer-specific processor smoke proving delivery and return behavior.
+interrupt path is also wired end to end. Its directed processor smoke proves
+one-shot delivery, handler acknowledgement, and return behavior.
 
 ## Compact Directory Tree
 
@@ -50,7 +50,8 @@ timer-specific processor smoke proving delivery and return behavior.
 │   ├── smoke_instr_misaligned_trap.s
 │   ├── smoke_load_misaligned_trap.s
 │   ├── smoke_store_misaligned_trap.s
-│   └── smoke_timer_interrupt.s
+│   ├── smoke_timer_interrupt.s
+│   └── smoke_timer_interrupt.hex
 ├── rtl/
 │   └── core/
 │       ├── filelist.f
@@ -109,7 +110,8 @@ timer-specific processor smoke proving delivery and return behavior.
 │   ├── run_smoke_illegal_trap.sh
 │   ├── run_smoke_instr_misaligned_trap.sh
 │   ├── run_smoke_load_misaligned_trap.sh
-│   └── run_smoke_store_misaligned_trap.sh
+│   ├── run_smoke_store_misaligned_trap.sh
+│   └── run_smoke_timer_interrupt.sh
 └── tb/
     ├── alu_op_tb.sv
     ├── control_unit_tb.sv
@@ -123,6 +125,7 @@ timer-specific processor smoke proving delivery and return behavior.
     ├── core_smoke_instr_misaligned_trap_tb.sv
     ├── core_smoke_load_misaligned_trap_tb.sv
     ├── core_smoke_store_misaligned_trap_tb.sv
+    ├── core_smoke_timer_interrupt_tb.sv
     ├── data_mem_tb.sv
     ├── hazard_unit_tb.sv
     ├── imm_ext_tb.sv
@@ -284,7 +287,7 @@ address bits for word indexing, and independence of adjacent words.
 taken-versus-untaken instruction-address-misaligned behavior. It intentionally
 does not claim to verify where `alu_src_AE` originated.
 
-The nine processor smoke testbenches instantiate `top`,
+The ten processor smoke testbenches instantiate `top`,
 load one program each, enforce a timeout, and inspect architectural state
 hierarchically. The ALU smoke covers ALU-immediate results plus taken and
 not-taken cases for the six branch conditions. The CSR/trap smoke covers the
@@ -296,7 +299,10 @@ instruction-address misalignment, load-address misalignment, and store-address
 misalignment. Each checks CSR metadata, younger-instruction flushing, and a
 cause-specific suppressed side effect: JAL link-register writeback, load
 destination writeback, or store memory modification. These are directed smoke
-tests, not complete ISA or privileged-architecture verification.
+tests, not complete ISA or privileged-architecture verification. The timer
+smoke additionally proves MMIO programming of `mtimecmp`, pending interrupt
+gating, cause 7 metadata, D/E/M flushing, one-shot acknowledgement, register
+preservation under the teaching handler contract, and `mret` recovery.
 
 `sim/run_alu_op.sh`, `sim/run_reg_file.sh`, `sim/run_control_unit.sh`,
 `sim/run_imm_ext.sh`, `sim/run_data_mem.sh`, `sim/run_pc_target_gen.sh`, and
@@ -304,9 +310,10 @@ tests, not complete ISA or privileged-architecture verification.
 `sim/run_basic_smoke.sh`, `sim/run_smoke_branch.sh`,
 `sim/run_smoke_hazard.sh`, `sim/run_smoke_alu.sh`,
 `sim/run_smoke_csr_trap.sh`, and the four precise-trap scripts rebuild their
-assembly programs and run processor-level smoke tests. `sim/run_regression.sh`
-is the unified entry point and runs sixteen tests: seven module tests and nine
-processor smoke tests.
+assembly programs and run processor-level smoke tests.
+`sim/run_smoke_timer_interrupt.sh` does the same for the timer path.
+`sim/run_regression.sh` is the unified entry point and runs seventeen tests:
+seven module tests and ten processor smoke tests.
 `sim/build_hex.sh` assembles one or more `.s` files into `.hex` using
 `riscv64-elf-gcc` with `-march=rv32i_zicsr`, `-mabi=ilp32`, no standard
 runtime, and `software/linker/core.ld`. The linker places `.text` at zero and
@@ -375,8 +382,9 @@ For the first timer path, an M-stage aligned word store is decoded away from
 data RAM and programs one half of `mtimecmp`. Timer expiry drives the read-only
 `mip.MTIP` view in `csr_file`; `trap_ctrl` combines it with `mie.MTIE` and
 `mstatus.MIE`, taking the interrupt only when no synchronous exception wins.
-This RTL path is integrated, but timer-specific program-level verification is
-still pending. External memory handshakes, broader SoC integration, cache, FPU,
+The one-shot timer smoke proves this path through handler acknowledgement and
+`mret`; periodic deadline calculation from the current `mtime` value is not
+implemented. External memory handshakes, broader SoC integration, cache, FPU,
 and RTOS support remain planning goals in `docs/plans`.
 
 ## Coding Conventions Visible in the Repository
@@ -419,10 +427,11 @@ Implemented or visibly present:
 11. Module-level Verilator tests for ALU, register file, immediate extension,
     control decode, data memory, PC target generation, and hazard control,
     including CSR/system and alignment-event cases.
-12. Nine processor smoke tests for basic execution, branch flushing, hazards,
+12. Ten processor smoke tests for basic execution, branch flushing, hazards,
     ALU/branches, repeated mixed CSR/ECALL/EBREAK handling, illegal instruction,
-    and the three implemented address-misalignment trap classes.
-13. A unified directed regression containing seven module tests and nine
+    the three implemented address-misalignment trap classes, and one-shot
+    machine-timer interrupt delivery.
+13. A unified directed regression containing seven module tests and ten
     processor smoke tests.
 14. A lightweight selected `riscv-tests`/`rv32ui` flow for current Phase 3-safe
     integer ALU, branch, jump, `lui`, and `auipc` cases.
@@ -432,8 +441,10 @@ Implemented or visibly present:
 16. A first machine-timer interrupt RTL path with MMIO-programmable 64-bit
     `mtimecmp`, an internal 64-bit `mtime`, read-only `mip.MTIP`, software-
     writable `mie.MTIE`, global `mstatus.MIE` gating, and synchronous-exception
-    priority over timer delivery. The pre-existing sixteen-test regression
-    remains green after integration.
+    priority over timer delivery. The timer smoke proves MMIO programming,
+    interrupt gating, cause 7 metadata, precise flushing, one-shot handler
+    acknowledgement, and `mret` recovery; the seventeen-test regression is
+    green.
 
 Partially implemented or uncertain:
 
@@ -450,7 +461,7 @@ Partially implemented or uncertain:
 4. Illegal-instruction handling has one integrated precise-exception test.
    Unsupported-CSR detection still lacks equivalent program-level coverage.
 5. The minimal trap handler is sufficient for the current smoke contract but
-   is not a general ABI-safe, nested-trap-safe, or interrupt-ready runtime.
+   is not a general ABI-safe, reentrant, or nested-trap-safe runtime.
 6. Memory bounds behavior is unclear from the repository.
 7. The selected `riscv-tests` integration is intentionally lightweight. It does
    not initialize data memory from ELF sections and does not support upstream
@@ -458,10 +469,9 @@ Partially implemented or uncertain:
    exception handling, or instruction-cache coherence.
 8. The current regression is a focused Phase 3 plus basic-Phase-4 baseline,
    not broad ISA or privileged compliance proof.
-9. The timer RTL is integrated, but the draft timer program is not registered
-   in the regression and no processor-level timer test currently proves MMIO
-   programming, interrupt metadata, flush behavior, handler acknowledgement,
-   or `mret` recovery.
+9. The timer handler uses a fixed one-shot acknowledgement deadline and clears
+   `mie.MTIE`; it does not yet read the current `mtime`, calculate a periodic
+   next deadline, or prove repeated timer ticks.
 
 Not implemented as visible RTL:
 
@@ -478,9 +488,8 @@ Not implemented as visible RTL:
    CSR access and additional older in-flight side-effect combinations.
 3. Keep proving the faulting instruction has no side effect, younger
    instructions are flushed, and older instructions retire exactly once.
-4. Add a directed timer-interrupt smoke that proves MMIO programming,
-   `mip.MTIP`/`mie.MTIE`/`mstatus.MIE` gating, cause 7 metadata, precise flush,
-   acknowledgement by advancing `mtimecmp`, and `mret` recovery.
+4. Extend the one-shot timer path only when needed with readable `mtime` MMIO,
+   periodic next-deadline calculation, and repeated-tick verification.
 5. Preserve synchronous-exception priority while extending the design later
    with software or external interrupt sources.
 6. Preserve the Phase 3 regression, current CSR/trap smoke, and selected

@@ -2,6 +2,9 @@
 .align 2
 .globl trap_handler
 
+.equ MTIMECMP_LOW_ADDR,  0x10000000
+.equ MTIMECMP_HIGH_ADDR, 0x10000004
+
 trap_handler:
     # Save registers that will be overwritten.
     csrrw t0, mscratch, t0
@@ -31,6 +34,9 @@ trap_handler:
     addi t2, x0, 6
     beq  t1, t2, store_misaligned
 
+    li t2, 0x80000007
+    beq  t1, t2, machine_timer_interrupt
+
     j fatal_trap
 
 illegal_instr:
@@ -58,6 +64,28 @@ load_misaligned:
 
 store_misaligned:
     j fatal_trap
+
+machine_timer_interrupt:
+    # Use the standard RV32 three-store sequence so the comparator never sees
+    # an unintended mixed old/new 64-bit deadline.
+    li t1, MTIMECMP_LOW_ADDR
+    li t2, -1
+    sw t2, 0(t1)
+
+    li t1, MTIMECMP_HIGH_ADDR
+    li t2, 1
+    sw t2, 0(t1)
+
+    li t1, MTIMECMP_LOW_ADDR
+    li t2, 0
+    sw t2, 0(t1)
+
+    # One-shot policy: after one delivery, do not accept another timer
+    # interrupt.
+    li t2, 0x80
+    csrrc x0, mie, t2
+
+    j trap_return
 
 # Restore registers and return from the exception.
 trap_return:
