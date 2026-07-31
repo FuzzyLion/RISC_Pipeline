@@ -24,4 +24,4 @@ programs/isa/
 # Third-party riscv-tests
 tools/riscv-tests/
 
-trap_handler_backup.s
+*.drawio

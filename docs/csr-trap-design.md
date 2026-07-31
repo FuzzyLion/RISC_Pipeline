@@ -1,21 +1,21 @@
-# Phase 4: CSR, Exceptions, and Machine-Timer Interrupts
+# CSR, Exceptions, and Machine-Timer Interrupts
 
-Phase 4 is complete against this project's minimum milestone. The core now has
-a working Machine Mode loop: software can access the implemented CSRs, a trap
-can enter through `mtvec`, the handler can inspect the recorded cause, and
-`mret` can return to normal execution. A one-shot machine-timer interrupt also
-works through the real MMIO path.
+Phase 4 now meets this project's minimum milestone. The core has a complete
+Machine Mode loop: software can access the implemented CSRs, traps enter
+through `mtvec`, the handler can inspect the recorded cause, and `mret` returns
+to normal execution. A one-shot machine-timer interrupt also works through the
+real MMIO path.
 
-That statement has a deliberate boundary. This is not full RISC-V privileged
-architecture support. It is the smallest design that makes traps real,
-precise, testable, and useful for the next SoC phase.
+The boundary matters. This is not full RISC-V privileged-architecture support.
+It is the smallest design that makes traps precise, testable, and useful for
+the next SoC phase.
 
-Current reference point: commit `b8e497e`, with the seventeen-test directed
-regression registered in `sim/run_regression.sh`.
+The seventeen-test directed regression that protects this milestone is
+registered in `sim/run_regression.sh`.
 
 ## 1. Scope
 
-The implemented CSR set is:
+The implemented CSR set includes:
 
 - `mstatus`
 - `mie`
@@ -26,7 +26,7 @@ The implemented CSR set is:
 - `mtval`
 - `mip`
 
-The core decodes all six base CSR read/modify/write forms used by the project:
+The core decodes all six base CSR read/modify/write forms used in this project:
 `CSRRW`, `CSRRS`, `CSRRC`, `CSRRWI`, `CSRRSI`, and `CSRRCI`. It also decodes
 `ecall`, `ebreak`, and `mret`.
 
@@ -44,7 +44,7 @@ The implemented interrupt source is one machine timer. Software programs the
 as the read-only `mip.MTIP` bit and is accepted only when both `mie.MTIE` and
 `mstatus.MIE` are set.
 
-The following work is intentionally outside this closure:
+The following work remains intentionally outside this milestone:
 
 - software and external interrupts
 - vectored `mtvec` mode
@@ -56,9 +56,9 @@ The following work is intentionally outside this closure:
 
 ## 2. Architecture and Ownership
 
-The main design decision was to keep detection, arbitration, architectural
-state, and redirection separate. They belong to the same trap flow, but they
-are not the same job.
+The main design decision is to keep detection, arbitration, architectural
+state, and redirection separate. They belong to one trap flow, but each has a
+different job.
 
 | Block | Responsibility | What it does not own |
 | --- | --- | --- |
@@ -93,24 +93,24 @@ handler
         +--> mret: restore mstatus and PC <- mepc
 ```
 
-This split costs a few more explicit signals in `core.sv`, but it keeps the
-design explainable. It also avoids turning `csr_file.sv` into a second control
-unit or making `trap_ctrl.sv` a hidden CSR bank.
+This split adds a few explicit signals to `core.sv`, but the ownership stays
+easy to explain. It also keeps `csr_file.sv` from becoming a second Control
+Unit and `trap_ctrl.sv` from turning into a hidden CSR bank.
 
 ## 3. Key Design Decisions and Trade-offs
 
 **The precise trap boundary is the EX stage.**
 
-The current instruction becomes authoritative in EX, after forwarding and
-address/target calculation are available. On trap entry, Fetch and Decode are
-flushed, and `trap_flush_M` prevents the current EX instruction from becoming
-the next MEM-stage instruction. The already older MEM-stage instruction is not
-the target of that kill and can still complete.
+The current instruction becomes authoritative in EX, once forwarding and
+address or target calculation are available. On trap entry, Fetch and Decode
+are flushed. `trap_flush_M` then prevents the current EX instruction from
+entering MEM. The older instruction already in MEM is not killed and can still
+complete.
 
 For a synchronous exception, the EX instruction is the faulting instruction
-and must not commit. For a timer interrupt, the same EX instruction is
-squashed even though it is legal. Its address is saved in `mepc`, so `mret`
-re-executes it. This gives one consistent precise boundary:
+and must not commit. For a timer interrupt, the same EX instruction is legal
+but still gets squashed. Its address is saved in `mepc`, so `mret` re-executes
+it. Both cases use the same precise boundary:
 
 ```text
 older instructions  -> complete once
@@ -118,16 +118,16 @@ current EX instruction -> does not commit
 younger instructions -> flushed
 ```
 
-The trade-off is that interrupt acceptance currently requires a valid
-EX-stage instruction. This is sufficient for the running-program model used
-now, but a future idle or `wfi` design may need an interrupt boundary that does
-not depend on `valid_E`.
+The trade-off is that an interrupt can currently be accepted only when EX holds
+a valid instruction. That is enough for the current running-program model. A
+future idle or `wfi` design may need an interrupt boundary that does not depend
+on `valid_E`.
 
 **Synchronous exceptions win over the timer interrupt.**
 
-The timer request is asynchronous to the current instruction. A synchronous
-exception describes that instruction itself. If both are visible at the same
-EX boundary, the instruction's own fault is therefore authoritative.
+The timer request is asynchronous to the current instruction, while a
+synchronous exception describes the instruction itself. If both appear at the
+same EX boundary, the instruction's own fault wins.
 
 The current priority is:
 
@@ -141,34 +141,33 @@ The current priority is:
 | 6 | Store-address misaligned | `6` |
 | 7 | Machine-timer interrupt | `0x8000_0007` |
 
-The synchronous order follows a simple question chain: is the instruction
-itself valid, did a legal control-flow instruction produce a legal target, and
-did a legal memory instruction produce a legal data address? The timer is
-considered only after no synchronous event has won.
+The synchronous order follows a simple sequence of questions: is the
+instruction itself valid, did a legal control-flow instruction produce a legal
+target, and did a legal memory instruction produce a legal data address? The
+timer is considered only when no synchronous event wins.
 
-A trap redirect also wins over an ordinary branch, jump, or `mret` redirect in
-`pc_mux.sv`. If a timer is accepted while a branch is in EX, the branch is
+In `pc_mux.sv`, a trap redirect also wins over an ordinary branch, jump, or
+`mret` redirect. If a timer is accepted while a branch is in EX, that branch is
 squashed and later re-executed from `mepc`.
 
 **Trap entry and pipeline flush remain separate concepts.**
 
-In the current implementation, one accepted trap drives all three trap flush
-outputs. It would be possible to collapse these signals into one wire, but
-their meanings are different:
+One accepted trap currently drives all three trap-flush outputs. They could be
+collapsed into one wire, but their meanings are different:
 
 - `trap_entry_E` says architectural trap state must be recorded.
 - `trap_flush_D` and `trap_flush_E` remove younger work.
 - `trap_flush_M` kills the current EX instruction before it gains MEM-stage
   side effects.
 
-Keeping the roles explicit makes later memory waits, multiple execution units,
-or interrupt boundaries easier to reason about.
+Keeping those roles explicit will make later memory waits, multiple execution
+units, and new interrupt boundaries easier to reason about.
 
 **CSR state has one owner and restricted write masks.**
 
-`csr_file.sv` is the only persistent CSR owner. A CSR address selects a
-concrete state register; the CSR instruction type only decides how the new
-value is formed.
+`csr_file.sv` is the only owner of persistent CSR state. A CSR address selects
+the state register, while the instruction type decides how to form the new
+value.
 
 CSR instructions return the old CSR value to `rd`. `CSRRW` and `CSRRWI`
 always write. `CSRRS` and `CSRRC` become pure reads when `rs1 == x0`.
@@ -183,20 +182,20 @@ Only implemented bits are writable:
 - `mtvec` is forced to word alignment, so the current path is Direct mode
   only.
 
-This is stricter than storing arbitrary 32-bit values, but it prevents software
-from creating interrupt state the hardware does not implement.
+This is stricter than storing arbitrary 32-bit values, and deliberately so: it
+prevents software from creating interrupt state that the hardware does not
+implement.
 
 **Full CSR vectors are kept between modules.**
 
-The current design passes the full `mstatus`, `mie`, and `mip` values into
-`trap_ctrl.sv` instead of exposing only three one-bit signals. This creates some
-unused-bit noise today, but it gives software, timer, and future interrupt
+The design passes the full `mstatus`, `mie`, and `mip` values into
+`trap_ctrl.sv` instead of exposing only three one-bit signals. That leaves some
+unused-bit noise today, but it gives software, the timer, and future interrupt
 sources one stable architectural interface.
 
-The important part is not whether the interface is wide. The important part is
-that every value has one authority. In particular, `mip` is not a normal
-software-writable register. It is an architectural view assembled from
-hardware pending sources:
+The width is not the important part. What matters is that every value has one
+authority. In particular, `mip` is not a normal software-writable register. It
+is an architectural view assembled from pending hardware sources:
 
 ```text
 mip[3]  <- future software interrupt
@@ -207,13 +206,13 @@ mip[11] <- future external interrupt
 **CSR operands use the forwarded EX value.**
 
 CSR instructions can depend on a nearby producer just like ALU instructions.
-Using the original Decode-stage `rs1` value would bypass the forwarding rules
-and could write stale data into a CSR. The CSR source therefore comes from the
-forwarded EX operand.
+Using the original Decode-stage `rs1` value would bypass forwarding and could
+write stale data into a CSR. The CSR source therefore comes from the forwarded
+EX operand.
 
 CSR read results also have an explicit MEM-to-EX forwarding path. This avoids
-inserting artificial NOPs after a CSR read and keeps CSR behavior inside the
-existing hazard model.
+artificial NOPs after a CSR read and keeps CSR behavior inside the existing
+hazard model.
 
 **JALR masking happens before alignment checking.**
 
@@ -223,16 +222,15 @@ RISC-V defines JALR as clearing target bit 0. The core therefore computes:
 target = (forwarded_rs1 + sign_extended_imm) & 0xFFFF_FFFE
 ```
 
-Only then does the RV32I-only core check whether the final target is 4-byte
-aligned. A raw result of `0x101` becomes the legal target `0x100`; a final
-target of `0x102` is still misaligned and traps.
+The RV32I-only core checks 4-byte alignment only after this masking. A raw
+result of `0x101` becomes the legal target `0x100`; a final target of `0x102`
+is still misaligned and traps.
 
-This distinction matters because clearing bit 0 is normal JALR behavior, not
-an exception repair.
+Clearing bit 0 is normal JALR behavior, not an attempt to repair an exception.
 
 **`mepc` policy depends on the trap type.**
 
-Hardware always records the accepted EX-stage PC.
+Hardware records the accepted EX-stage PC in every case.
 
 - For `ecall` and the current teaching-policy `ebreak`, the handler advances
   `mepc` by 4 before `mret` so execution resumes after the trap instruction.
@@ -241,9 +239,9 @@ Hardware always records the accepted EX-stage PC.
 - Illegal and misaligned exceptions currently go to a fatal path rather than
   pretending that general recovery exists.
 
-`ebreak` and `ecall` remain different architectural causes even though this
-handler applies the same resume policy. The core has no Debug Module,
-`dpc`/`dcsr`, or `dret`, so this must not be described as debugger recovery.
+`ebreak` and `ecall` remain different architectural causes even though the
+handler gives them the same resume policy. The core has no Debug Module,
+`dpc`/`dcsr`, or `dret`, so this is not debugger recovery.
 
 **Trap entry and `mret` only change the status they own.**
 
@@ -266,13 +264,13 @@ mstatus.MPIE <- 1
 PC           <- mepc
 ```
 
-`mret` does not clear `mie` or `mip`. `mie` is software configuration, while
-`mip.MTIP` reflects whether the timer source is still pending. The handler must
-acknowledge that source by moving `mtimecmp` into the future.
+`mret` does not clear `mie` or `mip`. `mie` is software configuration;
+`mip.MTIP` reports whether the timer source is still pending. The handler must
+acknowledge the source by moving `mtimecmp` into the future.
 
 **The first timer is deliberately one-shot.**
 
-`machine_timer.sv` is a counter plus comparator, not a clock generator:
+`machine_timer.sv` is a counter and comparator, not a clock generator:
 
 ```text
 system clock -> mtime increments
@@ -286,39 +284,41 @@ Software writes `mtimecmp` through:
 0x1000_0004 -> mtimecmp[63:32]
 ```
 
-Only aligned full-word stores are accepted. The MMIO decoder removes those
-writes from the normal data-memory path, so timer programming cannot alias into
-RAM.
+Only aligned full-word stores are accepted. The MMIO decoder keeps those
+writes out of the normal data-memory path, so timer programming cannot alias
+into RAM.
 
 RV32 software updates the 64-bit compare value with a safe three-store
-sequence: write the low half as all ones, write the high half, then write the
-final low half. This prevents the comparator from observing an unintended
-mixed old/new deadline and firing early.
+sequence: write all ones to the low half, write the high half, then write the
+final low half. This prevents the comparator from seeing a mixed old/new
+deadline and firing early.
 
-The handler then disables `mie.MTIE`, making the test intentionally one-shot.
-Periodic scheduling was not included because software cannot yet read `mtime`
-through MMIO. A real periodic handler would need either readable `mtime`,
-software-maintained previous deadlines, or a hardware reload mechanism. That
-is SoC and runtime work, not evidence that the CPU trap path is incomplete.
+The handler then disables `mie.MTIE`, so the test is intentionally one-shot.
+Periodic scheduling is not included because software cannot yet read `mtime`
+through MMIO. A real periodic handler needs readable `mtime`, a previous
+deadline maintained in software, or a hardware reload mechanism. That belongs
+to the SoC and runtime, not to the basic CPU trap path.
 
 **The handler is a teaching runtime, not a production runtime.**
 
 The current handler uses `mscratch` as a known data-memory scratch base and
-saves only the temporary registers it overwrites. Cause dispatch is explicit:
-every supported `mcause` has a branch, and unknown causes go to `fatal_trap`.
+saves only the temporary registers it overwrites. Cause dispatch stays
+explicit: every supported `mcause` has its own branch, and unknown causes go to
+`fatal_trap`.
 
-This is intentionally small and easy to inspect. The cost is that it is not
-ABI-safe, reentrant, nested-trap-safe, or suitable for a general application.
+The handler is intentionally small and easy to inspect. The trade-off is that
+it is not ABI-safe, reentrant, nested-trap-safe, or suitable for a general
+application.
 
-The linked `.trap` section is not assumed to live at a fixed address. Startup
-loads the `trap_handler` symbol and writes it into `mtvec`. Linker placement
-chooses the address; startup code installs it.
+The linked `.trap` section does not have a fixed assumed address. The linker
+places it, then startup loads the `trap_handler` symbol and installs that
+address in `mtvec`.
 
 ## 4. Verification Evidence
 
-The verification strategy is directed and layered. Module tests check local
-contracts, while processor smokes prove that the pieces work together through
-real instruction streams.
+Verification is directed and layered. Module tests check local contracts;
+processor smokes prove that the pieces work together through real instruction
+streams.
 
 | Area | Evidence |
 | --- | --- |
@@ -329,7 +329,7 @@ real instruction streams.
 | Precise synchronous traps | Separate illegal-instruction and instruction/load/store-misaligned smokes |
 | Machine timer | MMIO programming, disabled pending state, cause 7, D/E/M flushing, one-shot acknowledgement, register preservation, and `mret` re-execution |
 
-The precise-trap smokes check more than `mcause`. They also check that a younger
+The precise-trap smokes check more than `mcause`. They prove that a younger
 instruction is flushed and that the faulting JAL, load, or store does not
 commit its prohibited side effect.
 
@@ -342,19 +342,19 @@ The timer smoke checks that:
 5. The handler moves `mtimecmp` into the future and clears `mie.MTIE`.
 6. `mret` returns to the saved `mepc`, and that instruction is re-executed.
 
-The regression currently contains seven module tests and ten processor smoke
-tests. A green regression is strong evidence for this scoped milestone, but it
-is not a claim of complete privileged compliance.
+The regression contains seven module tests and ten processor smoke tests. A
+green result is strong evidence for this scoped milestone, but it does not
+claim complete privileged compliance.
 
-The `x31` completion value is only a software/testbench protocol. It is not an
-architectural feature. Each program and testbench must agree on what a nonzero
-value means; the architectural trap record remains `mcause`, `mepc`, and
-`mtval`.
+The `x31` completion value belongs only to the software/testbench protocol. It
+is not an architectural feature. Each program and testbench must agree on the
+meaning of a nonzero value; the architectural trap record remains `mcause`,
+`mepc`, and `mtval`.
 
 ## 5. Known Limits and Future Expansion
 
-The next extensions should preserve the current ownership boundaries instead
-of widening `csr_file.sv` or `trap_ctrl.sv` without a clear contract.
+Future work should preserve the current ownership boundaries. Do not widen
+`csr_file.sv` or `trap_ctrl.sv` without a clear contract.
 
 1. **Broaden precise-exception coverage.** Add a processor-level unsupported
    CSR test and more combinations of older in-flight side effects. The key
@@ -386,7 +386,7 @@ of widening `csr_file.sv` or `trap_ctrl.sv` without a clear contract.
 
 ## 6. Phase 4 Closure
 
-Phase 4 can be closed because the project-level exit condition is now true:
+Phase 4 can close because the project-level exit condition now holds:
 
 ```text
 CSR instruction
@@ -397,10 +397,10 @@ CSR instruction
     -> mret and normal execution
 ```
 
-The important result is not the number of CSRs. It is that every control
-decision has one owner, every accepted trap has a precise architectural
-boundary, and the implemented path has a focused test that proves its real
-behavior.
+The important result is not the number of implemented CSRs. It is the fact that
+every control decision has one owner, every accepted trap has a precise
+architectural boundary, and the implemented path has a focused test that proves
+its real behavior.
 
 Relevant implementation and verification files:
 

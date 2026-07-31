@@ -1,109 +1,135 @@
-# 分阶段实施计划总览
+# Phased Implementation Plan
 
-本目录存放项目的详细阶段计划。  
-这里不仅是阶段索引，也作为当前项目规划区的总入口。
+This directory contains the detailed plan for each phase of the project. It is both the phase index and the main entry point for project planning.
 
-## 这个项目要做成什么样，才适合拿去找实习
+## What This Project Needs to Become Before It Is Internship-Ready
 
-这个项目真正的价值，不在于“我做了一个 CPU”，而在于你最后能不能把它讲明白、验证明白、取舍讲明白。
+The real value of this project is not simply being able to say, “I built a CPU.” What matters is whether you can explain the design clearly, show how you verified it, and defend the tradeoffs you made.
 
-如果你想把它作为实习主项目，建议把目标定到下面这个标准。
+If you want to use this as your main internship project, aim for the standard below.
 
-### 必须达到的硬标准
+### Non-Negotiable Requirements
 
-1. 你能用 3 到 5 分钟清楚讲完整体架构：
-   `RV32I`、五级流水、`branch` 在 `EX` 判定、握手式存储接口、Hazard 处理主线。
-2. 你能用自己的实现解释一条指令如何从 `IF` 走到 `WB`。
-3. 你能说清楚 forwarding、stall、flush 分别解决什么问题。
-4. 你有成体系的验证，不是只靠“看起来波形差不多”。
-5. 你能讲出至少 2 个亲手定位过的真实 bug。
-6. 你能解释为什么第一版不做乱序、rename、predictor，而是先把顺序流水线做扎实。
+1. You can explain the full architecture clearly in 3 to 5 minutes: `RV32I`, the five-stage pipeline, `branch` resolution in `EX`, the handshake-based memory interface, and the main Hazard Unit strategy.
+2. You can use your own implementation to explain how one instruction moves from `IF` to `WB`.
+3. You can explain what forwarding, stall, and flush each solve.
+4. You have a structured verification flow, not just waveforms that “look about right.”
+5. You can walk through at least 2 real bugs that you found and debugged yourself.
+6. You can explain why the first version focuses on a solid in-order pipeline instead of adding out-of-order execution, register renaming, or a predictor.
 
-### 如果做到，会明显加分的项目亮点
+### Features That Would Make the Project Stand Out
 
-1. 通过一批基础 `riscv-tests`
-2. 做出最小 CSR、异常、中断闭环
-3. 完成最小 SoC 集成
-4. 在 NEXYS Artix-7 上板运行
-5. 后续成功接入 Cache
-6. 后续成功接入 FPU
+1. Passing a meaningful set of basic `riscv-tests`
+2. Closing a minimal CSR, exception, and interrupt loop
+3. Completing a minimal SoC integration
+4. Running the design on a NEXYS Artix-7 board
+5. Successfully adding a Cache later
+6. Successfully adding an FPU later
 
-### 不该追求的“假高含金量”
+### Things That Look Impressive but Add Little Real Value
 
-1. 堆很多高级名词，但讲不清控制和时序
-2. 有代码，但没有测试和回归
-3. 能跑几个 case，但不知道为什么能跑
-4. 过早加入 predictor、rename、复杂总线，反而把主线做散
+1. Using lots of advanced terms without being able to explain the control logic or timing
+2. Having code without tests or regression
+3. Running a few cases without understanding why they work
+4. Adding a predictor, register renaming, or a complex bus too early and losing the main thread of the project
 
-## 当前最推荐的主线
+## Recommended Project Path
 
-1. 先做稳 `phase 1` 到 `phase 3`
-2. 再做 `phase 4` 到 `phase 6` 的系统闭环
-3. 最后推进 Cache、FPU 和 RTOS
+1. First, make `phase 1` through `phase 3` solid.
+2. Then close the system loop through `phase 4` to `phase 6`.
+3. Finally, move on to Cache, FPU, and RTOS work.
 
-换句话说：
+In other words, the real foundation of the project is:
 
-1. 五级流水线主体
-2. Hazard Unit 与控制优先级
-3. 验证闭环
+1. The five-stage pipeline itself
+2. The Hazard Unit and control priorities
+3. A complete verification loop
 
-这三块才是项目真正的“含金量地基”。
+These three areas are what give the project its real technical weight.
 
-## 阶段列表
+## Phase List
+
+Status labels describe the current repository, not the final ambition of each
+phase. A completed minimum milestone may still have follow-up work documented
+inside its phase file.
 
 ### Foundation
 
-1. [阶段 0：第一版架构边界](foundation/phase-0-architecture-boundary.md)
-2. [阶段 0 Q&A：评审与建议](foundation/phase-0-Q%26A.md)
-3. [Phase 1 前准备整理稿](foundation/phase-1-preparation-sheet.md)
+1. [Phase 0: First-Version Architecture Boundary](foundation/phase-0-architecture-boundary.md) — completed baseline
+2. [Phase 1 Preparation Sheet](foundation/phase-1-preparation-sheet.md) — completed baseline
+
+The longer Phase 0 learning review now lives in
+[`docs/notes/phase-0-review.md`](../notes/phase-0-review.md). It is useful
+history, but it is not an implementation plan.
 
 ### Core Bring-up
 
-1. [阶段 1：五级流水线 CPU 主体](core/phase-1-pipeline-core.md)
-2. [阶段 2：Hazard Unit 与控制闭环](core/phase-2-hazard-control.md)
-3. [阶段 3：系统化验证环境](core/phase-3-verification.md)
+1. [Phase 1: Five-Stage Pipeline Core](core/phase-1-pipeline-core.md) — completed baseline
+2. [Phase 2: Hazard Unit and Control Closure](core/phase-2-hazard-control.md) — completed baseline
+3. [Phase 3: Structured Verification Environment](core/phase-3-verification.md) — completed baseline
 
 ### System Bring-up
 
-1. [阶段 4：CSR、异常与中断](system/phase-4-csr-exception-interrupt.md)
-2. [阶段 5：SoC 集成与 FPGA 上板](system/phase-5-soc-fpga.md)
-3. [阶段 6：系统级测试与软件基线](system/phase-6-system-validation.md)
+1. [Phase 4: CSR, Exceptions, and Interrupts](system/phase-4-csr-exception-interrupt.md) — minimum milestone complete
+2. [Phase 5: SoC Integration and FPGA Bring-up](system/phase-5-soc-fpga.md) — next main phase
+3. [Phase 6: System-Level Validation and Software Baseline](system/phase-6-system-validation.md) — planned
 
 ### Extensions
 
-1. [阶段 7：Cache 设计与集成](extensions/phase-7-cache.md)
-2. [阶段 8：FPU 设计与集成](extensions/phase-8-fpu.md)
-3. [阶段 9：RTOS 与最终系统联调](extensions/phase-9-rtos-final-integration.md)
+1. [Phase 7: Cache Design and Integration](extensions/phase-7-cache.md) — planned
+2. [Phase 8: FPU Design and Integration](extensions/phase-8-fpu.md) — planned
+3. [Phase 9: RTOS and Final System Integration](extensions/phase-9-rtos-final-integration.md) — planned
 
-## 当前全局原则
+## Current Project-Wide Principles
 
-1. 第一版范围固定为 `RV32I`。
-2. `branch` 第一版在 `EX` 阶段判定。
-3. 存储接口采用极简握手式接口。
-4. `riscv-tests` 在阶段 2 和阶段 3 就开始接入。
-5. Cache 和 FPU 是明确必做项，但必须在主线稳定后分阶段推进。
-6. 验证与实现必须同步推进。
+1. The first version is limited to `RV32I`.
+2. In the first version, branches are resolved in `EX`.
+3. Phase 5 must replace the current fixed-latency internal-memory assumption
+   with a minimal request/response interface before SoC and Cache integration.
+4. `riscv-tests` should be introduced during Phases 2 and 3.
+5. Cache and FPU are required milestones, but they should be added in phases after the main pipeline is stable.
+6. Verification and implementation must move forward together.
 
-## 每阶段统一产出
+## Standard Deliverables for Every Phase
 
-1. 本阶段目标
-2. Time Limit
-3. 已实现模块或已完成设计
-4. 已运行测试
-5. 遗留问题列表或风险点
-6. 下一阶段入口条件
+1. Phase goal
+2. Time limit
+3. Implemented modules or completed design work
+4. Tests that were run
+5. Open issues or risks
+6. Entry conditions for the next phase
 
-## 文档分工建议
+## Project Completion Standard
 
-当前项目里和规划相关的文档，大致可以这样分工：
+The project reaches its intended complete baseline when:
 
-1. [README.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/README.md)
-   作为规划区首页，负责总览、阶段入口、全局原则和项目目标清单。
-2. [phase-0-architecture-boundary.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/foundation/phase-0-architecture-boundary.md)
-   负责第一版架构边界冻结。
-3. [phase-1-preparation-sheet.md](/Users/qi/Documents/RISC_Pipeline/docs/plans/foundation/phase-1-preparation-sheet.md)
-   负责把 Phase 1 开工前的最小指令子集、decode 控制表、pipeline register 字段和控制动作语义整理成可执行草案。
-4. 各阶段文档
-   负责逐阶段执行计划、产出、验证点和退出条件。
-5. [requirements.md](/Users/qi/Documents/RISC_Pipeline/requirements.md)
-   更像“项目需求与验收标准”，仍然有保留价值。
+1. The five-stage RV32I core, Hazard Unit, and control priorities are stable
+   under repeatable regression.
+2. CSR access, precise traps, return, and at least one interrupt source form a
+   tested Machine Mode loop.
+3. A minimal SoC with UART and Timer runs in simulation and on the NEXYS
+   Artix-7 board.
+4. A known-good system software and verification baseline exists before major
+   extensions are added.
+5. Cache and FPU integration preserve the established integer and system
+   regression.
+6. The final hardware and runtime provide a clear, tested path to lightweight
+   RTOS bring-up.
+
+## Suggested Documentation Roles
+
+The planning documents in this project roughly divide responsibilities as follows:
+
+1. [`README.md`](../../README.md)
+   This is the public project entry point. It owns the short project summary,
+   current milestone, quick-start commands, and top-level documentation links.
+2. [`core-architecture.md`](../core-architecture.md)
+   This is the reader-facing overview of the implemented core.
+3. [`docs/plans/README.md`](README.md)
+   This is the planning homepage. It owns the overview, phase entry points, project-wide principles, and project goals.
+4. [`phase-0-architecture-boundary.md`](foundation/phase-0-architecture-boundary.md)
+   This document freezes the architecture boundary for the first version.
+5. [`phase-1-preparation-sheet.md`](foundation/phase-1-preparation-sheet.md)
+   This document turns the minimum Phase 1 instruction subset, decode table, pipeline-register fields, and control-action semantics into an executable starting draft.
+6. The individual phase documents
+   These own the execution plan, deliverables, verification points, and exit conditions for each phase.

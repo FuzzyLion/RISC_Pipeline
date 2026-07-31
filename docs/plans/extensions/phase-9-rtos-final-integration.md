@@ -1,53 +1,53 @@
-# 阶段 9：RTOS 与最终系统联调
+# Phase 9: RTOS and Final System Integration
 
 ## Time Limit
 
-建议用时：1.5 到 3 周  
-硬上限：4 周
+Recommended: 1.5 to 3 weeks
+Hard limit: 4 weeks
 
-## 目标
+## Goal
 
-在主线、Cache 和 FPU 都已接入的前提下，完成最终系统联调，并验证处理器是否具备支撑更高层软件运行的能力。
+Once the main pipeline, Cache, and FPU are integrated, complete the final system bring-up and verify that the processor can support higher-level software.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：准备 RTOS 运行条件
+### Task 1: Prepare the RTOS Runtime Requirements
 
-1. 固定 RTOS 所需内存布局。
-2. 确认 Timer、UART、中断入口和上下文切换路径可用。
+1. Freeze the memory layout required by the RTOS.
+2. Confirm that the Timer, UART, interrupt entry, and context-switch paths work.
 
-### 任务 2：完成最小 RTOS bring-up
+### Task 2: Complete the Minimum RTOS Bring-up
 
-1. 跑通基础 tick 中断。
-2. 跑通最小任务调度示例。
-3. 验证串口输出和异常处理路径。
+1. Run a basic tick interrupt.
+2. Run a minimal task-scheduling example.
+3. Verify serial output and the exception-handling path.
 
-### 任务 3：完成全系统回归
+### Task 3: Complete Full-System Regression
 
-1. 回归整数程序、系统级程序、Cache 相关程序和浮点相关程序。
-2. 对比仿真与板级行为。
-3. 记录最终已知限制与残留问题。
+1. Regress integer programs, system-level programs, Cache-related programs, and floating-point programs.
+2. Compare simulation and board behavior.
+3. Record the final known limitations and open issues.
 
-## 阶段产出
+## Deliverables
 
-1. RTOS bring-up 记录。
-2. 全系统回归报告。
-3. 最终问题清单与后续方向建议。
+1. RTOS bring-up notes
+2. Full-system regression report
+3. Final issue list and recommended next steps
 
-## 验证要求
+## Verification Requirements
 
-1. RTOS 最小示例可以稳定运行。
-2. 系统级回归在引入 Cache 和 FPU 后仍然可重复通过。
-3. 板级运行结果与仿真结果没有重大不可解释偏差。
+1. The minimum RTOS example runs reliably.
+2. System-level regression remains repeatable after Cache and FPU integration.
+3. Board and simulation results have no major unexplained differences.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 这一阶段会集中暴露之前所有边界问题。
-2. 如果 RTOS 启不来，要先分层定位是中断、内存、Cache、FPU 还是上下文切换问题。
-3. 不要把 RTOS 失败简单归因到单一模块。
+1. This phase will expose unresolved boundary problems from every earlier phase.
+2. If the RTOS does not boot, localize the problem by layer: interrupts, memory, Cache, FPU, or context switching.
+3. Do not assume one module is responsible for an RTOS failure without evidence.
 
-## 退出条件
+## Exit Conditions
 
-1. 项目主线能力已经完成最终联调。
-2. RTOS bring-up 结果明确。
-3. Cache 和 FPU 都已在完整系统路径中被验证过。
+1. Final integration of the project's main capabilities is complete.
+2. The RTOS bring-up result is clear.
+3. Cache and FPU have both been verified through the complete system path.

@@ -1,64 +1,64 @@
-# 阶段 5：SoC 集成与 FPGA 上板
+# Phase 5: SoC Integration and FPGA Bring-up
 
 ## Time Limit
 
-建议用时：1.5 到 2.5 周  
-硬上限：3 周
+Recommended: 1.5 to 2.5 weeks
+Hard limit: 3 weeks
 
-## 目标
+## Goal
 
-把 CPU 从“仿真中的核”推进为“能在板上跑程序的最小系统”。
+Move the CPU from “a core that works in simulation” to “a minimal system that can run a program on the board.”
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：搭建 SoC 顶层
+### Task 1: Build the SoC Top Level
 
-1. 设计最小 SoC 顶层。
-2. 定义统一地址映射。
+1. Design the minimum SoC top level.
+2. Define one shared address map.
 
-### 任务 2：接入基础外设
+### Task 2: Add the Basic Peripherals
 
-1. 集成 ROM、RAM、UART、Timer。
-2. 让 CPU 的握手式接口接入 SoC 侧存储与外设。
+1. Integrate ROM, RAM, UART, and Timer.
+2. Connect the CPU's handshake interfaces to SoC memory and peripherals.
 
-### 任务 3：完成板级工程准备
+### Task 3: Prepare the Board-Level Project
 
-1. 准备 Vivado 工程、约束文件和板级时钟复位。
-2. 建立最小可观测调试路径，例如串口输出或 LED 状态。
+1. Prepare the Vivado project, constraints, and board-level clock and reset handling.
+2. Add a minimal observable debug path, such as serial output or LED status.
 
-### 任务 4：完成第一次 bring-up
+### Task 4: Complete the First Bring-up
 
-1. 在板上运行最小程序。
-2. 记录板级现象、串口输出和已知问题。
+1. Run a minimal program on the board.
+2. Record the board behavior, serial output, and known issues.
 
-## 设计关注点
+## Design Questions
 
-1. 慢速外设访问如何反馈到 CPU stall。
-2. 外设地址映射和主存地址映射如何统一。
-3. 板级 bring-up 时如何快速判断是 CPU、SoC 还是外设问题。
+1. How does a slow peripheral feed a stall back to the CPU?
+2. How do peripheral and main-memory addresses fit into one address map?
+3. During board bring-up, how do we quickly tell whether a problem belongs to the CPU, SoC integration, or a peripheral?
 
-## 阶段产出
+## Deliverables
 
-1. SoC 顶层 RTL。
-2. 地址映射文档。
-3. FPGA 工程与约束文件。
-4. 板级 bring-up 记录。
-5. 外设握手接入说明。
+1. SoC top-level RTL
+2. Address-map document
+3. FPGA project and constraints
+4. Board bring-up notes
+5. Peripheral-handshake integration notes
 
-## 验证要求
+## Verification Requirements
 
-1. SoC 级程序可在仿真中跑通。
-2. FPGA 上能执行最小程序并产生可观察输出。
-3. 慢速外设不会破坏 CPU 流水线控制。
+1. A SoC-level program runs successfully in simulation.
+2. The FPGA runs a minimal program and produces observable output.
+3. Slow peripherals do not break pipeline control.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 很多问题会首次从“CPU 内部逻辑”转为“系统集成问题”。
-2. UART 和 Timer 的慢速行为要和握手式 stall 机制对齐。
-3. 这一阶段不要急着同时并入 Cache。
+1. Many problems will appear here for the first time as system-integration issues rather than CPU-internal logic bugs.
+2. Slow UART and Timer behavior must fit the handshake-based stall mechanism.
+3. Do not fold Cache integration into this phase.
 
-## 退出条件
+## Exit Conditions
 
-1. 最小系统可在板上运行。
-2. UART、Timer 等关键外设可用。
-3. 可以进入系统级测试与软件基线阶段。
+1. The minimal system runs on the board.
+2. Key peripherals such as UART and Timer work.
+3. The project is ready for system-level testing and the software baseline.

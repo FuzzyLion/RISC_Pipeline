@@ -1,51 +1,51 @@
-# 阶段 6：系统级测试与软件基线
+# Phase 6: System-Level Validation and Software Baseline
 
 ## Time Limit
 
-建议用时：1 到 1.5 周  
-硬上限：2 周
+Recommended: 1 to 1.5 weeks
+Hard limit: 2 weeks
 
-## 目标
+## Goal
 
-在 CPU、CSR 和最小 SoC 都稳定后，建立系统级软件测试基线，为后续 Cache 和 FPU 引入前先锁定一个“已知正确”的版本。
+Once the CPU, CSR path, and minimal SoC are stable, establish a system-level software baseline. This gives us one known-good version before Cache and FPU integration begins.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：扩大标准测试覆盖
+### Task 1: Expand Standard-Test Coverage
 
-1. 扩大 `riscv-tests` 覆盖范围。
-2. 统计通过率并分类失败原因。
+1. Expand `riscv-tests` coverage.
+2. Track the pass rate and classify the reasons for failure.
 
-### 任务 2：建立软件运行基线
+### Task 2: Establish a Software Baseline
 
-1. 固定一批稳定可运行的 C/汇编程序。
-2. 固定编译参数、链接脚本和镜像转换流程。
+1. Freeze a set of stable C and assembly programs.
+2. Freeze the compiler flags, linker scripts, and image-conversion flow.
 
-### 任务 3：建立系统级回归入口
+### Task 3: Establish a System-Level Regression Entry Point
 
-1. 将仿真级和板级可复现测试统一到回归流程。
-2. 记录板级与仿真行为差异。
+1. Bring reproducible simulation and board tests into one regression flow.
+2. Record differences between board and simulation behavior.
 
-## 阶段产出
+## Deliverables
 
-1. 标准测试通过率报告。
-2. 系统级基线程序列表。
-3. 固定版编译和运行脚本。
-4. 失败问题分类表。
+1. Standard-test pass-rate report
+2. List of system-level baseline programs
+3. Frozen build and run scripts
+4. Failure-classification table
 
-## 验证要求
+## Verification Requirements
 
-1. `riscv-tests` 通过率可追踪。
-2. 基线程序在仿真和板级都可重复运行。
-3. 后续引入 Cache 和 FPU 时可以直接对比回归结果。
+1. The `riscv-tests` pass rate is traceable.
+2. Baseline programs run repeatably in both simulation and on the board.
+3. Cache and FPU integration can be compared directly against this regression baseline.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 如果这一阶段的基线不稳定，后续 Cache 和 FPU 出问题会很难定位。
-2. 本阶段重点是“冻结基线”，不是继续随意加功能。
+1. If the baseline is unstable, later Cache and FPU failures will be much harder to localize.
+2. This phase is about freezing the baseline, not continuing to add features freely.
 
-## 退出条件
+## Exit Conditions
 
-1. 已有系统能力形成稳定基线。
-2. 有一套可复用的系统级回归入口。
-3. 可以进入 Cache 阶段。
+1. The current system capabilities form a stable baseline.
+2. A reusable system-level regression entry point exists.
+3. The project is ready for the Cache phase.

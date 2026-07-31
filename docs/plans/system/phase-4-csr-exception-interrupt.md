@@ -1,67 +1,67 @@
-# 阶段 4：CSR、异常与中断
+# Phase 4: CSR, Exceptions, and Interrupts
 
 ## Time Limit
 
-建议用时：1 到 1.5 周  
-硬上限：2 周
+Recommended: 1 to 1.5 weeks
+Hard limit: 2 weeks
 
-## 目标
+## Goal
 
-建立最小 Machine Mode 闭环，为系统软件和后续 RTOS 支持打基础。
+Close the minimum Machine Mode loop and lay the groundwork for system software and later RTOS support.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：冻结最小 CSR 集
+### Task 1: Freeze the Minimum CSR Set
 
-1. 固定第一版最小 CSR 列表。
+1. Finalize the minimum CSR list for the first version.
 
-### 任务 2：实现 trap 流程
+### Task 2: Implement the Trap Flow
 
-1. 实现异常陷入流程。
-2. 实现异常返回流程。
-3. 至少处理 instruction address misaligned，以及当前支持 load/store 范围内的 address misaligned。异常检测应产生统一 trap 请求，并触发流水线 flush/redirect，而不是由 memory array 私自修正地址。
+1. Implement trap entry for exceptions.
+2. Implement the exception-return path.
+3. Handle at least instruction-address misalignment and address misalignment for the currently supported load/store range. Detection should raise a shared trap request and trigger pipeline flush and redirect. The memory array must not silently repair the address.
 
-### 任务 3：实现关键 CSR
+### Task 3: Implement the Key CSRs
 
-1. 实现 `mstatus`、`mtvec`、`mepc`、`mcause` 等必要 CSR。
+1. Implement the required CSRs, including `mstatus`, `mtvec`, `mepc`, and `mcause`.
 
-### 任务 4：引入中断源
+### Task 4: Add an Interrupt Source
 
-1. 引入至少一种中断源，建议优先定时器中断。
+1. Add at least one interrupt source, preferably a timer interrupt first.
 
-### 任务 5：完成与流水线控制的耦合
+### Task 5: Integrate Traps with Pipeline Control
 
-1. 完成异常与中断下的流水线清空和跳转重定向。
-2. 明确异常、中断与普通 redirect 的优先级。
+1. Flush and redirect the pipeline correctly on exceptions and interrupts.
+2. Define the priority between exceptions, interrupts, and ordinary redirects.
 
-## 设计关注点
+## Design Questions
 
-1. 异常和中断优先级如何定义。
-2. Trap 发生时流水线中哪些级需要清空。
-3. CSR 写入、PC 重定向与冒险控制如何协调。
+1. How should exception and interrupt priorities be defined?
+2. Which pipeline stages need to be flushed when a trap occurs?
+3. How should CSR writes, PC redirects, and hazard control work together?
 
-## 阶段产出
+## Deliverables
 
-1. CSR 模块。
-2. trap/return 设计说明。
-3. 异常与中断测试程序。
-4. 关键波形与行为记录。
-5. 优先级说明表。
+1. CSR module
+2. Trap and return design notes
+3. Exception and interrupt test programs
+4. Key waveform and behavior records
+5. Priority table
 
-## 验证要求
+## Verification Requirements
 
-1. 异常进入后 CSR 写入正确。
-2. 中断进入与返回路径正确。
-3. 异常或中断发生时，流水线状态一致且可解释。
+1. CSR state is written correctly on exception entry.
+2. Interrupt entry and return behave correctly.
+3. Pipeline state remains consistent and explainable when an exception or interrupt occurs.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 这一阶段最容易出现“状态写对了但流水线没清干净”。
-2. 中断与访存等待同时发生时要特别小心。
-3. 后续 RTOS 成败高度依赖这一阶段质量。
+1. The most likely failure in this phase is getting the state update right while leaving part of the pipeline unflushed.
+2. Be especially careful when an interrupt and a memory wait happen together.
+3. Later RTOS bring-up depends heavily on the quality of this phase.
 
-## 退出条件
+## Exit Conditions
 
-1. 最小特权态闭环已经建立。
-2. Timer 中断等关键前置能力可用。
-3. 可以进入 SoC 集成阶段。
+1. The minimum privileged-mode loop is complete.
+2. Key prerequisites such as timer interrupts are available.
+3. The project is ready for SoC integration.

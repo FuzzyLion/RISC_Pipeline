@@ -1,13 +1,14 @@
 # riscv_lite Test Environment
 
-This directory contains the local test environment used to adapt selected
-`riscv-tests` user-level RV32I programs to the current Phase 3 core.
+This directory contains the local test environment introduced in Phase 3 to
+adapt selected `riscv-tests` user-level RV32I programs to this core.
 
-The official `riscv-tests` environment assumes privileged features that this
-core does not implement yet: CSR setup, trap vectors, `ecall`, and `tohost`.
-The lightweight environment keeps the same macro names expected by the test
-sources, but expands them into plain RV32I code that the current pipeline can
-execute.
+The official `riscv-tests` environment assumes a broader privileged and
+host-reporting contract built around CSR setup, trap vectors, `ecall`, and
+`tohost`. The core now has a basic CSR and trap path, but it does not implement
+that complete contract. The lightweight environment keeps the macro names
+expected by the test sources while expanding them into plain RV32I code that
+does not depend on privileged behavior.
 
 ## Directory Roles
 
@@ -88,8 +89,8 @@ bash sim/run_isa_lite_addi.sh
 
 ## Why Some rv32ui Tests Are Skipped For Now
 
-Start with tests whose behavior is fully inside the current Phase 3 boundary:
-integer ALU, compares, branches, jumps, x0, and bypassing. These tests mainly
+Start with tests whose behavior fits the ISA-lite environment: integer ALU,
+compares, branches, jumps, x0, and bypassing. These tests mainly
 exercise instruction decode, ALU behavior, forwarding, branch redirects, and
 writeback.
 
@@ -99,8 +100,10 @@ data memory from ELF sections or a separate data-memory image. The current
 `.hex` flow extracts only executable instruction words for instruction memory.
 
 Defer `fence_i` because it has architectural meaning for instruction-cache
-coherence, which is outside the current core. Defer any case that relies on
-misaligned traps or privileged behavior until the CSR/exception phase.
+coherence, which is outside the current core. The core now has directed
+misaligned-access trap tests, but upstream cases that depend on the official
+privileged trap environment should wait until that environment contract is
+supported.
 
 Some otherwise relevant ALU tests are also temporarily too large for the
 current instruction memory. For example, the official `rv32ui/add.S` expands to

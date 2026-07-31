@@ -1,80 +1,80 @@
-# 阶段 8：FPU 设计与集成
+# Phase 8: FPU Design and Integration
 
 ## Time Limit
 
-建议用时：2 到 4 周  
-硬上限：5 周
+Recommended: 2 to 4 weeks
+Hard limit: 5 weeks
 
-## 目标
+## Goal
 
-完成项目中的 FPU 必做里程碑，并把浮点执行路径稳定接入现有处理器架构。
+Complete the project's required FPU milestone and integrate the floating-point execution path cleanly into the existing processor architecture.
 
-## 本阶段范围建议
+## Recommended Scope
 
-第一版建议先追求“可实现、可验证”，而不是一开始就覆盖过多浮点特性。
+The first version should aim to be implementable and verifiable instead of trying to cover too many floating-point features at once.
 
-建议先明确：
+Decide early:
 
-1. 第一版支持哪些浮点指令。
-2. FPU 是单周期、多周期还是内部流水化。
-3. 如何与整数流水线共享执行级与写回级。
+1. Which floating-point instructions the first version supports
+2. Whether the FPU is single-cycle, multi-cycle, or internally pipelined
+3. How it shares the Execute and Writeback stages with the integer pipeline
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：冻结 FPU 规格
+### Task 1: Freeze the FPU Specification
 
-1. 决定第一版支持的浮点指令子集。
-2. 决定舍入模式、异常标志和 CSR 关联范围。
-3. 决定 FPU 的延迟模型。
+1. Choose the floating-point instruction subset for the first version.
+2. Define the supported rounding modes, exception flags, and CSR interactions.
+3. Choose the FPU latency model.
 
-### 任务 2：定义 FPU 接入方式
+### Task 2: Define the FPU Integration Model
 
-1. 决定 FPU 是作为 EX 阶段协处理单元还是独立流水线。
-2. 明确浮点结果如何写回。
-3. 明确 FPU busy 时如何反馈 stall。
+1. Decide whether the FPU is an EX-stage coprocessor or a separate pipeline.
+2. Define how floating-point results are written back.
+3. Define how FPU busy state stalls the main pipeline.
 
-### 任务 3：实现浮点数据通路与控制
+### Task 3: Implement the Floating-Point Datapath and Control
 
-1. 实现必要的浮点寄存器或共享寄存器策略。
-2. 实现浮点运算核心。
-3. 实现控制译码和结果选择路径。
-4. 实现异常、标志位或状态寄存器更新。
+1. Implement the required floating-point registers or a shared-register strategy.
+2. Implement the floating-point execution core.
+3. Implement decode and result-selection paths.
+4. Implement exception, flag, or status-register updates.
 
-### 任务 4：与主流水线联调
+### Task 4: Integrate with the Main Pipeline
 
-1. 处理 FPU 多周期带来的 stall。
-2. 处理浮点写回与整数写回冲突。
-3. 确保异常、flush、redirect 对 FPU 在途操作的影响有明确定义。
+1. Handle stalls from multi-cycle FPU operations.
+2. Handle conflicts between floating-point and integer writeback.
+3. Define how exceptions, flushes, and redirects affect in-flight FPU operations.
 
-### 任务 5：完成专项验证
+### Task 5: Complete Focused Verification
 
-1. 编写浮点指令专项测试。
-2. 建立整数路径与浮点路径同时存在时的回归测试。
-3. 对比引入 FPU 前后原系统行为是否受影响。
+1. Write focused floating-point instruction tests.
+2. Add regression cases where integer and floating-point paths are both active.
+3. Check that adding the FPU does not change existing system behavior.
 
-## 阶段产出
+## Deliverables
 
-1. FPU 规格说明。
-2. FPU RTL。
-3. 浮点控制与写回策略说明。
-4. FPU 专项测试集。
-5. 集成后回归报告。
+1. FPU specification
+2. FPU RTL
+3. Floating-point control and writeback notes
+4. Focused FPU test suite
+5. Post-integration regression report
 
-## 验证要求
+## Verification Requirements
 
-1. 支持范围内的浮点指令结果正确。
-2. FPU busy/stall 行为正确。
-3. 浮点写回不会破坏整数路径。
-4. 引入 FPU 后，原有整数基线程序仍然稳定通过。
+1. Supported floating-point instructions produce correct results.
+2. FPU busy and stall behavior is correct.
+3. Floating-point writeback does not break the integer path.
+4. The existing integer baseline programs still pass after FPU integration.
 
-## 风险与注意点
+## Risks and Notes
 
-1. FPU 往往不是算术本身难，而是与主流水线耦合最难。
-2. 多周期或流水化 FPU 会快速拉高控制复杂度。
-3. 如果异常、flush 和 FPU busy 三者关系没定义清楚，后面排查会非常痛苦。
+1. The hard part of an FPU is often not the arithmetic itself, but its coupling to the main pipeline.
+2. A multi-cycle or pipelined FPU increases control complexity quickly.
+3. If the relationship between exceptions, flushes, and FPU busy state is unclear, later debugging will be painful.
 
-## 退出条件
+## Exit Conditions
 
-1. FPU 已完成设计、接入和专项验证。
-2. 整数路径与浮点路径可以共同稳定运行。
-3. 可以进入 RTOS 与最终系统联调阶段。
+1. The FPU is designed, integrated, and covered by focused verification.
+2. The integer and floating-point paths run together reliably.
+3. The project is ready for RTOS and final system integration.

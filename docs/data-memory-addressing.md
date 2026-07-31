@@ -1,23 +1,23 @@
-# Data Memory 寻址笔记
+# Data Memory Addressing Notes
 
-## 核心混淆点
+## The Main Source of Confusion
 
-最重要的一点是：地址不是数据本身。地址只是一个编号，用来定位内存里的数据。
+The key point is simple: an address is not the data itself. It is only a number that tells us where the data lives in memory.
 
-在 RISC-V 里，内存是按 byte 编址的，也就是 byte-addressed。意思是每一个地址值都指向一个 byte 大小的内存位置。一个 byte 是 8 bit，但“指向这个 byte 的地址编号”本身可以是 32 bit 宽，也可以是 64 bit 宽。
+RISC-V memory is byte-addressed. Every address points to one byte of memory. A byte contains 8 bits, but the address used to point to that byte may be 32 or 64 bits wide.
 
-所以当我们说 “32-bit byte address” 时，其实是在说两个不同维度的概念：
+So “32-bit byte address” combines two separate ideas:
 
 ```text
-32-bit address -> 地址编号本身是 32 bit 宽
-byte address   -> 每一个地址编号指向 1 byte
+32-bit address -> the address number itself is 32 bits wide
+byte address   -> each address points to 1 byte
 ```
 
-第一个概念描述“地址编号有多宽”。第二个概念描述“一个地址编号对应多大的内存单位”。它们不是同一件事。
+The first tells us how wide the address number is. The second tells us how much memory one address identifies. They are not the same thing.
 
-## 一个现实类比
+## A Real-World Analogy
 
-可以把内存想成一排很长的信箱。每个信箱只能放 1 byte，也就是 8 bit。信箱编号就是地址。
+Think of memory as a long row of mailboxes. Each mailbox holds exactly 1 byte, or 8 bits. The mailbox number is the address.
 
 ```text
 Address 0  -> byte[0]
@@ -30,19 +30,19 @@ Address 6  -> byte[6]
 Address 7  -> byte[7]
 ```
 
-地址只是信箱编号。32-bit address 的意思是“这个信箱编号用 32 bit 表示”，不是“这个信箱里面装了 32 bit”。在 RISC-V 里，每个地址对应的最小内存位置仍然是 1 byte。
+The address is only the mailbox number. A 32-bit address means that the number is represented with 32 bits, not that the mailbox stores 32 bits. In RISC-V, the smallest memory location identified by one address is still 1 byte.
 
-## `lw` 实际做了什么
+## What `lw` Actually Does
 
-`lw` 的意思是 load word。在 RV32I 和 RV64I 里，一个 word 都是 32 bit，也就是 4 bytes。
+`lw` means load word. In both RV32I and RV64I, one word is 32 bits, or 4 bytes.
 
-如果 CPU 执行：
+Suppose the CPU executes:
 
 ```asm
 lw x5, 4(x0)
 ```
 
-那么 effective address 是 `4`。因为 RISC-V 是 byte-addressed，所以地址 `4` 指向的是 `byte[4]`。但是 `lw` 并不是只读 1 byte。`lw` 这条指令本身规定要读一个 32-bit word，所以 memory system 会从地址 `4` 开始连续读 4 个 byte。
+The effective address is `4`. Because RISC-V is byte-addressed, address `4` points to `byte[4]`. But `lw` does not read only 1 byte. The `lw` instruction itself requires a 32-bit word, so the memory system reads 4 consecutive bytes starting at address `4`.
 
 ```text
 lw from address 4 reads:
@@ -53,9 +53,9 @@ byte[6]
 byte[7]
 ```
 
-这 4 个 byte 会被组合成一个 32-bit value，然后写入目标寄存器。
+These 4 bytes are combined into one 32-bit value and written to the destination register.
 
-举一个具体例子。假设内存内容是：
+For example, assume memory contains:
 
 ```text
 Address 4: 0x78
@@ -64,7 +64,7 @@ Address 6: 0x34
 Address 7: 0x12
 ```
 
-RISC-V 是 little-endian，所以最低地址的 byte 会放到结果的最低 8 bit：
+RISC-V is little-endian, so the byte at the lowest address goes into the lowest 8 bits of the result:
 
 ```text
 result[7:0]   = memory[4] = 0x78
@@ -75,11 +75,11 @@ result[31:24] = memory[7] = 0x12
 loaded word = 32'h12345678
 ```
 
-所以不是“地址变成了 word”。地址只是选中了起始 byte。真正决定要读 4 个 byte 并组合成 32-bit word 的，是 `lw` 这条指令。
+The address has not somehow become a word address. It only selects the first byte. The `lw` instruction is what tells the memory system to read 4 bytes and combine them into a 32-bit word.
 
-## 为什么要 word alignment
+## Why Word Alignment Matters
 
-一个 32-bit word 是 4 bytes。自然对齐的 word address，就是能被 4 整除的 byte address。
+A 32-bit word is 4 bytes. A naturally aligned word address is therefore a byte address divisible by 4.
 
 ```text
 Address 0  -> aligned word starts at byte[0]
@@ -88,7 +88,7 @@ Address 8  -> aligned word starts at byte[8]
 Address 12 -> aligned word starts at byte[12]
 ```
 
-在二进制里，能被 4 整除的地址最低两位一定是 0：
+In binary, any address divisible by 4 has its lowest two bits set to 0:
 
 ```text
 0  = ...0000
@@ -99,20 +99,25 @@ Address 12 -> aligned word starts at byte[12]
 addr[1:0] == 2'b00
 ```
 
-对 `lw/sw` 来说，aligned access 意味着 `addr[1:0] == 2'b00`。如果 `addr[1:0]` 不是 0，这就是 misaligned word access。
+For `lw/sw`, an aligned access means `addr[1:0] == 2'b00`. If `addr[1:0]` is not 0, the word access is misaligned.
 
-例如：
+For example:
 
 ```text
 lw from address 4 -> reads byte[4..7], aligned
 lw from address 5 -> reads byte[5..8], misaligned
 ```
 
-完整的 RISC-V core 要么在硬件里支持 misaligned access，要么触发 load/store address-misaligned exception。这个项目目前还没做到 exception 阶段，所以早期的 Data Memory 可以先假设测试程序只发出 aligned `lw/sw`，后面到 CSR 和 exception 阶段再补齐异常处理。
+A RISC-V core must either support misaligned accesses in hardware or raise the
+corresponding address-misaligned exception. This project takes the second path.
+The EX stage classifies misaligned halfword and word accesses, and the current
+directed processor tests prove selected load- and store-address-misaligned trap
+cases. The memory-formatting blocks still suppress invalid write strobes as a
+local safety measure, but trap control owns the architectural response.
 
-## ISA 视角 vs Verilog Memory Model
+## ISA View vs. Verilog Memory Model
 
-从 ISA 视角看，内存是 byte-addressed：
+From the ISA's point of view, memory is byte-addressed:
 
 ```text
 memory address 0 -> one byte
@@ -122,13 +127,13 @@ memory address 3 -> one byte
 memory address 4 -> one byte
 ```
 
-但是当前的 Verilog Data Memory 是一个 word array：
+The current Verilog Data Memory, however, is a word array:
 
 ```systemverilog
 logic [31:0] mem [0:255];
 ```
 
-这表示每个 `mem` entry 已经存了一个 32-bit word，也就是 4 bytes。
+Each `mem` entry already stores one 32-bit word, or 4 bytes.
 
 ```text
 mem[0] contains byte addresses 0, 1, 2, 3
@@ -137,7 +142,7 @@ mem[2] contains byte addresses 8, 9, 10, 11
 mem[3] contains byte addresses 12, 13, 14, 15
 ```
 
-所以如果 CPU 给出 byte address `8`，对应的 word-array index 不是 `8`，而是 `2`。因为 byte address `8` 属于第三个 32-bit word entry：
+If the CPU produces byte address `8`, the word-array index is not `8`; it is `2`. Byte address `8` belongs to the third 32-bit word entry:
 
 ```text
 word index = byte address / 4
@@ -145,73 +150,73 @@ word index = 8 / 4
 word index = 2
 ```
 
-在二进制硬件里，除以 4 等价于右移 2 位：
+In binary hardware, dividing by 4 is the same as shifting right by 2 bits:
 
 ```text
 word index = byte address >> 2
 ```
 
-这就是为什么 Data Memory 要用 `alu_result_M` 的一部分作为 `word_idx`。
+This is why Data Memory uses part of `alu_result_M` as `word_idx`.
 
-## 为什么是 `alu_result_M[MEM_ADDR_WIDTH+1:2]`
+## Why We Use `alu_result_M[MEM_ADDR_WIDTH+1:2]`
 
-假设：
+Assume:
 
 ```systemverilog
 parameter int MEM_WORDS = 256;
 localparam int MEM_ADDR_WIDTH = $clog2(MEM_WORDS);
 ```
 
-因为 `MEM_WORDS = 256`，所以这个 memory 有 256 个 word entry。索引 256 个 entry 需要 8 bit：
+With `MEM_WORDS = 256`, the memory contains 256 word entries. Selecting one of 256 entries requires an 8-bit index:
 
 ```text
 MEM_ADDR_WIDTH = log2(256) = 8
 ```
 
-ALU 算出来的 effective address 仍然是 byte address：
+The effective address produced by the ALU is still a byte address:
 
 ```systemverilog
 input logic [31:0] alu_result_M;
 ```
 
-对 `lw/sw` 来说，最低两位表示这个 byte address 在一个 32-bit word 里面的 byte offset：
+For `lw/sw`, the lowest two bits identify the byte offset inside a 32-bit word:
 
 ```text
 alu_result_M[1:0] = byte offset inside the word
 ```
 
-如果是 aligned `lw/sw`，这两位应该是 `00`。接下来的 8 位用来选择 256 个 word entry 里面的一个：
+For an aligned `lw/sw`, those bits should be `00`. The next 8 bits select one of the 256 word entries:
 
 ```text
 alu_result_M[9:2] = word index
 ```
 
-可以这样看这个地址：
+The address can be read like this:
 
 ```text
 alu_result_M[31:10]  alu_result_M[9:2]  alu_result_M[1:0]
 unused in this model word index         byte offset
 ```
 
-通用写法是：
+The general form is:
 
 ```systemverilog
 assign word_idx = alu_result_M[MEM_ADDR_WIDTH + 1:2];
 ```
 
-当 `MEM_ADDR_WIDTH = 8` 时，这句话等价于：
+When `MEM_ADDR_WIDTH = 8`, this is equivalent to:
 
 ```systemverilog
 assign word_idx = alu_result_M[9:2];
 ```
 
-这句代码同时做了两件事。第一，丢掉最低两位，因为当前的 `mem` 数组每个 entry 已经存了 4 bytes。第二，只保留足够索引当前 memory 大小的位数，也就是 256 entries 需要 8 位 index。
+This line does two things. First, it drops the lowest two address bits because every `mem` entry already stores 4 bytes. Second, it keeps only enough bits to index the current memory: 256 entries require an 8-bit index.
 
-## 为什么不是 `addr * 4`
+## Why It Is Not `addr * 4`
 
-这个方向很容易反过来。
+This conversion is easy to reverse by accident.
 
-CPU 给出的是 byte address。Verilog array 需要的是 word index。4 个 byte 合成 1 个 word，所以 word index 比 byte address 更小：
+The CPU produces a byte address, while the Verilog array needs a word index. 4 bytes make 1 word, so the word index is smaller than the byte address:
 
 ```text
 byte address 0  -> word index 0
@@ -220,31 +225,31 @@ byte address 8  -> word index 2
 byte address 12 -> word index 3
 ```
 
-所以转换方向是：
+The correct direction is:
 
 ```text
 word index = byte address / 4
 ```
 
-不是：
+Not:
 
 ```text
 word index = byte address * 4
 ```
 
-乘以 4 是反方向。如果你已经有了一个 word index，想知道这个 word 的第一个 byte address，才会乘以 4：
+Multiplying by 4 is the reverse conversion. If you already have a word index and want the address of that word's first byte, then you multiply by 4:
 
 ```text
 byte address = word index * 4
 ```
 
-例如，`mem[2]` 的起始 byte address 是 `8`。
+For example, `mem[2]` begins at byte address `8`.
 
-## RV64 里是不是 `lw/sw` 读写 8 bytes
+## Do `lw/sw` Access 8 Bytes in RV64?
 
-不是。RV64 不代表 `lw/sw` 变成 8-byte 操作。RV64 的意思是通用寄存器宽度是 64 bit。一次 memory access 读写多少 byte，是由具体 load/store 指令决定的。
+No. RV64 does not turn `lw/sw` into 8-byte operations. RV64 means that the general-purpose registers are 64 bits wide. The specific load or store instruction still decides how many bytes one memory access transfers.
 
-常见 RV64 memory access size 是：
+Common RV64 access sizes are:
 
 ```text
 lb / sb -> 1 byte
@@ -253,9 +258,9 @@ lw / sw -> 4 bytes
 ld / sd -> 8 bytes
 ```
 
-在 RV64 里，`lw` 读 4 bytes，然后把 32-bit 结果 sign-extend 到 64 bit，再写入目标寄存器。`lwu` 也是读 4 bytes，但会 zero-extend 到 64 bit。真正读 8 bytes 的是 `ld`，真正写 8 bytes 的是 `sd`。
+In RV64, `lw` reads 4 bytes, sign-extends the 32-bit result to 64 bits, and writes it to the destination register. `lwu` also reads 4 bytes, but zero-extends the result to 64 bits. `ld` is the instruction that reads 8 bytes, and `sd` writes 8 bytes.
 
-alignment 取决于 access size：
+Alignment depends on the access size:
 
 ```text
 lb / sb -> any byte address
@@ -264,23 +269,23 @@ lw / sw -> addr[1:0] == 2'b00
 ld / sd -> addr[2:0] == 3'b000
 ```
 
-所以 register width 和 memory access size 有关系，但不是同一件事。
+Register width and memory-access size are related, but they are not the same thing.
 
-## 和 Instruction Memory 的关系
+## How This Relates to Instruction Memory
 
-Instruction Memory 也是类似的地址逻辑。PC 也是 byte address。普通 RV32I 指令是 32 bit，也就是 4 bytes，所以如果 instruction memory 也建成 word-array，那么取指通常也会写成：
+Instruction Memory follows the same addressing idea. The PC is also a byte address. A normal RV32I instruction is 32 bits, or 4 bytes, so an instruction memory modeled as a word array is usually indexed like this:
 
 ```systemverilog
 instr = imem[pc[IMEM_ADDR_WIDTH + 1:2]];
 ```
 
-原因一样：ISA 视角下地址是 byte address，但简单 Verilog 模型可能是一个 entry 存一条 32-bit instruction。
+The reason is the same: the ISA uses byte addresses, while the simple Verilog model stores one complete 32-bit instruction in each entry.
 
-branch 和 jump immediate 也和 alignment 有关，但不是 Data Memory indexing 的同一件事。RISC-V 的 branch/jump offset 隐含最低 bit 为 0，因为控制流目标至少是 2-byte aligned。`imm_ext` 的工作是从指令编码里还原这个 offset。它和 Data Memory 的 `word_idx` 计算不一样，但背后的共同点是：低地址位经常用来表示 alignment，或者表示一个更大单位内部的位置。
+Branch and jump immediates also involve alignment, but they are separate from Data Memory indexing. RISC-V branch and jump offsets implicitly keep the lowest bit at 0 because control-flow targets are at least 2-byte aligned. `imm_ext` reconstructs that offset from the instruction encoding. This is not the same calculation as Data Memory's `word_idx`, although both rely on low address bits to express alignment or a position inside a larger unit.
 
-## 当前项目里的规则
+## The Rule for This Project
 
-对当前这个简单的 `data_mem.sv`，你应该这样记：
+For the current simple `data_mem.sv`, remember it like this:
 
 ```text
 RISC-V address from ALU:
@@ -293,4 +298,7 @@ Index conversion:
 word_idx = alu_result_M[9:2]
 ```
 
-当前设计假设 `lw/sw` 都是 aligned access。后面加入 CSR 和 exception 后，misaligned load/store 应该成为架构异常，而不是被静默忽略。
+For a valid access, the current memory path uses the same byte-address to
+word-index conversion described above. A misaligned halfword or word access is
+classified in EX and enters the precise trap path before the faulting
+instruction can commit a register or memory side effect.

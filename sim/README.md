@@ -8,6 +8,8 @@ flow.
 
 Use the following documents as the source of truth for each topic:
 
+- [Project overview and current status](../README.md)
+- [Core architecture](../docs/core-architecture.md)
 - [Verification strategy and test boundaries](../docs/verification.md)
 - [GCC notes](../docs/tool-chain-notes/gcc.md)
 - [GNU ld notes](../docs/tool-chain-notes/ld.md)
@@ -109,8 +111,8 @@ The repository currently has two related but separate program build paths:
 - `sim/build_hex.sh` builds local smoke and Phase 4 trap programs. It uses the
   project linker script and preserves non-contiguous `.text` and `.trap`
   addresses.
-- `software/scripts/build_riscv_lite_test.sh` builds the selected Phase 3
-  ISA-lite tests. It currently handles a continuous executable instruction
+- `software/scripts/build_riscv_lite_test.sh` builds the selected ISA-lite
+  tests introduced in Phase 3. It currently handles a continuous executable instruction
   stream and does not load trap or data sections.
 
 Changes to one build path do not automatically apply to the other.

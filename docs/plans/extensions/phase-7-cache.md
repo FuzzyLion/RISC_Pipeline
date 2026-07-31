@@ -1,80 +1,80 @@
-# 阶段 7：Cache 设计与集成
+# Phase 7: Cache Design and Integration
 
 ## Time Limit
 
-建议用时：2 到 3 周  
-硬上限：4 周
+Recommended: 2 to 3 weeks
+Hard limit: 4 weeks
 
-## 目标
+## Goal
 
-实现项目中的 Cache 必做里程碑，并保证它与现有流水线、握手式存储接口和 SoC 访问路径稳定协同。
+Complete the project's required Cache milestone and make sure it works cleanly with the existing pipeline, handshake-based memory interface, and SoC access path.
 
-## 本阶段范围建议
+## Recommended Scope
 
-第一版建议优先实现：
+For the first version, prioritize:
 
-1. 数据 Cache。
-2. 直映射或 2-way set associative 中更容易验证的一种。
-3. 写策略优先选一种容易落地的方案，例如 write-through 或设计清晰的 write-back。
+1. A data Cache
+2. Whichever is easier to verify: direct-mapped or 2-way set-associative
+3. One practical write policy, such as write-through or a clearly designed write-back approach
 
-如果时间和复杂度允许，再评估是否加入指令 Cache。
+If time and complexity allow, then consider adding an instruction Cache.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：冻结 Cache 规格
+### Task 1: Freeze the Cache Specification
 
-1. 决定先做数据 Cache 还是同时做 I-Cache。
-2. 决定容量、line size、组相联度和写策略。
-3. 决定 hit/miss 处理流程和 refill 策略。
+1. Decide whether to start with only a data Cache or build an I-Cache at the same time.
+2. Choose the capacity, line size, associativity, and write policy.
+3. Define the hit, miss, and refill behavior.
 
-### 任务 2：定义 Cache 与 CPU/SoC 的接口
+### Task 2: Define the Cache Interfaces to the CPU and SoC
 
-1. 明确 Cache 上游仍然对 CPU 暴露统一握手接口。
-2. 明确 Cache 下游如何访问主存或片外存储控制器。
-3. 明确 miss 时对流水线造成的 stall 行为。
+1. Keep the same handshake interface on the CPU-facing side.
+2. Define how the Cache accesses main memory or an external-memory controller downstream.
+3. Define how a miss stalls the pipeline.
 
-### 任务 3：实现 Cache 数据通路和控制
+### Task 3: Implement the Cache Datapath and Control
 
-1. 实现 tag、data、valid、dirty 等阵列。
-2. 实现 hit 判断。
-3. 实现 miss 处理状态机。
-4. 实现 refill、写回或直写控制。
+1. Implement the tag, data, valid, dirty, and related arrays.
+2. Implement hit detection.
+3. Implement the miss-handling state machine.
+4. Implement refill, writeback, or write-through control.
 
-### 任务 4：接入流水线与 SoC
+### Task 4: Integrate the Cache with the Pipeline and SoC
 
-1. 将 Cache 接入 MEM 路径。
-2. 确保 `memory_wait` 机制在 miss 时正确挂起流水线。
-3. 确保旁路、flush、异常不会破坏 Cache 状态一致性。
+1. Connect the Cache to the MEM path.
+2. Make sure `memory_wait` holds the pipeline correctly on a miss.
+3. Make sure bypassing, flushes, and exceptions do not break Cache-state consistency.
 
-### 任务 5：完成专项验证
+### Task 5: Complete Focused Verification
 
-1. 编写 hit/miss、冲突、替换、写策略专项测试。
-2. 在系统级回归上对比加入 Cache 前后的行为一致性。
-3. 在板级环境验证 Cache 打开后的程序稳定性。
+1. Write focused tests for hits, misses, conflicts, replacement, and the selected write policy.
+2. Compare system-level regression behavior before and after Cache integration.
+3. Verify program stability with the Cache enabled on the board.
 
-## 阶段产出
+## Deliverables
 
-1. Cache 规格说明。
-2. Cache RTL。
-3. miss/refill 状态机说明。
-4. Cache 专项测试集。
-5. 集成后系统回归报告。
+1. Cache specification
+2. Cache RTL
+3. Miss/refill state-machine notes
+4. Focused Cache test suite
+5. Post-integration system regression report
 
-## 验证要求
+## Verification Requirements
 
-1. hit 场景结果正确且不会误 stall。
-2. miss 场景会正确挂起并在 refill 后恢复。
-3. 写策略行为与设计说明一致。
-4. 接入 Cache 后，原有系统级基线程序仍然正确。
+1. Hits return the correct result without unnecessary stalls.
+2. Misses hold the pipeline correctly and resume after refill.
+3. Write behavior matches the documented policy.
+4. The existing system-level baseline programs still pass after Cache integration.
 
-## 风险与注意点
+## Risks and Notes
 
-1. Cache 最容易把“简单流水线控制”变成“复杂系统状态机”。
-2. 如果 miss 状态机设计不清晰，Bug 会非常隐蔽。
-3. 本阶段务必坚持用阶段 6 的系统基线回归做回归对比。
+1. Cache integration is where a simple pipeline controller can turn into a complex system state machine.
+2. If the miss state machine is unclear, bugs will be difficult to see and localize.
+3. Use the Phase 6 system baseline for regression comparison throughout this phase.
 
-## 退出条件
+## Exit Conditions
 
-1. Cache 功能完整并能稳定运行。
-2. 原有系统回归未出现不可解释退化。
-3. 可以进入 FPU 阶段。
+1. The Cache is functionally complete and stable.
+2. The original system regression shows no unexplained regressions.
+3. The project is ready for the FPU phase.

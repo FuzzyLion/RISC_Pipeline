@@ -1,59 +1,59 @@
-# 阶段 3：系统化验证环境
+# Phase 3: Structured Verification Environment
 
 ## Time Limit
 
-建议用时：1 到 2 周  
-硬上限：2 周
+Recommended: 1 to 2 weeks
+Hard limit: 2 weeks
 
-## 目标
+## Goal
 
-把“能调通”升级成“能持续回归验证”，让每次改动都能快速发现问题。
+Move from “we can debug it until it works” to repeatable regression, so every change can reveal problems quickly.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：建立模块级验证
+### Task 1: Establish Module-Level Verification
 
-1. 为 ALU、寄存器堆、控制器、Hazard Unit 编写模块级 testbench。
+1. Write module-level testbenches for the ALU, register file, controller, and Hazard Unit.
 
-### 任务 2：建立处理器级验证
+### Task 2: Establish Processor-Level Verification
 
-1. 为 CPU 顶层建立程序级测试框架。
-2. 固定程序编译、镜像转换、仿真运行和结果检查流程。
+1. Build a program-level test framework for the CPU top level.
+2. Standardize the program build, image conversion, simulation, and result-checking flow.
 
-### 任务 3：建立批量回归
+### Task 3: Build Batch Regression
 
-1. 将 `riscv-tests` 中适合当前阶段的用例纳入回归。
-2. 建立失败用例记录表和缺陷分类方式。
-3. 编写统一回归入口脚本。
+1. Add the `riscv-tests` cases that fit the current implementation.
+2. Create a failure log and a clear way to classify defects.
+3. Add one script as the unified regression entry point.
 
-### 任务 4：评估验证增强工具
+### Task 4: Evaluate Additional Verification Tools
 
-1. 评估是否引入 Cocotb。
-2. 评估 Icarus Verilog 和 Verilator 的分工。
+1. Decide whether Cocotb is worth introducing.
+2. Decide how Icarus Verilog and Verilator should divide responsibilities.
 
-## 阶段产出
+## Deliverables
 
-1. 模块级测试集。
-2. 顶层程序级测试集。
-3. 回归脚本。
-4. `riscv-tests` 接入记录。
-5. 缺陷跟踪表。
-6. 验证工具选型结论。
+1. Module-level test suite
+2. Top-level program test suite
+3. Regression scripts
+4. `riscv-tests` integration notes
+5. Defect tracker
+6. Verification-tool decision
 
-## 验证要求
+## Verification Requirements
 
-1. 可以一键运行基础回归。
-2. 失败用例可快速定位到模块或阶段。
-3. 后续新增功能不会明显拖慢验证效率。
+1. The basic regression can run with one command.
+2. A failure can be narrowed down quickly to a module or phase.
+3. New features do not make the verification flow noticeably less efficient.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 不要只堆测试数量，要保证失败可定位。
-2. 在 Cache 和 FPU 进入前，把回归框架打稳非常关键。
-3. 如果后续接入 Cocotb，要保证目录结构和回归入口不会被打乱。
+1. Do not chase test count alone. Failures must still be easy to localize.
+2. The regression framework needs to be solid before Cache and FPU work begins.
+3. If Cocotb is added later, keep the directory layout and regression entry point stable.
 
-## 退出条件
+## Exit Conditions
 
-1. 可以一键运行基础回归。
-2. 失败用例可快速定位。
-3. 可以进入 CSR、系统级和后续扩展阶段。
+1. The basic regression runs with one command.
+2. Failures can be localized quickly.
+3. The project is ready for CSR, system-level work, and later extensions.

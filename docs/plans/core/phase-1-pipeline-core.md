@@ -1,77 +1,77 @@
-# 阶段 1：五级流水线 CPU 主体
+# Phase 1: Five-Stage Pipeline Core
 
 ## Time Limit
 
-建议用时：1 到 2 周  
-硬上限：2.5 周
+Recommended: 1 to 2 weeks
+Hard limit: 2.5 weeks
 
-## 目标
+## Goal
 
-在没有完整 Hazard Unit 的前提下，先让 CPU 主体跑通无冲突的基础程序。
+Get the main CPU pipeline running simple, hazard-free programs before the complete Hazard Unit is in place.
 
-## 关键约束
+## Key Constraints
 
-1. 不追求本阶段解决所有冒险问题。
-2. 优先保证主数据通路和控制信号跨级传递正确。
-3. 所有存储访问都走阶段 0 定义好的握手接口。
+1. This phase does not need to solve every hazard.
+2. The priority is to get the main datapath and cross-stage control flow right.
+3. Every memory access must use the handshake interface defined in Phase 0.
 
-## 详细任务
+## Detailed Tasks
 
-### 任务 1：实现基础模块
+### Task 1: Implement the Basic Modules
 
-1. 实现 `pc`、`regfile`、`alu`、立即数生成器、基础控制器。
-2. 为各模块定义清晰输入输出接口。
+1. Implement the `pc`, `regfile`, `alu`, immediate generator, and basic controller.
+2. Give every module a clear input and output interface.
 
-### 任务 2：实现五级流水线骨架
+### Task 2: Build the Five-Stage Pipeline Skeleton
 
-1. 实现 IF、ID、EX、MEM、WB 五级主体结构。
-2. 接通 PC、寄存器堆、ALU、立即数生成器和基础控制器。
-3. 添加阶段间流水线寄存器。
-4. 确保控制信号在各级流水中同步传递。
+1. Implement the IF, ID, EX, MEM, and WB stages.
+2. Connect the PC, register file, ALU, immediate generator, and basic controller.
+3. Add the pipeline registers between stages.
+4. Make sure control signals move through the pipeline in step with their instruction.
 
-### 任务 3：实现控制流基础行为
+### Task 3: Implement Basic Control-Flow Behavior
 
-1. 实现 `EX` 阶段 branch 判定与跳转目标生成。
-2. 实现 `jal`、`jalr` 的基础跳转路径。
-3. 在最简单场景下支持 flush/redirect。
+1. Resolve branches and generate branch targets in `EX`.
+2. Implement the basic jump paths for `jal` and `jalr`.
+3. Support flush and redirect in the simplest cases.
 
-### 任务 4：打通最小程序执行闭环
+### Task 4: Close the Minimum Program-Execution Loop
 
-1. 让 CPU 能从初始化镜像中取指。
-2. 跑通无复杂相关的顺序程序。
-3. 验证 Load/Store 的基础行为。
+1. Fetch instructions from an initialized image.
+2. Run sequential programs without complex dependencies.
+3. Verify basic Load/Store behavior.
 
-## 本阶段优先支持
+## First-Priority Instruction Support
 
-1. 基础整数运算。
-2. Load/Store。
-3. `jal`、`jalr`。
-4. 基础 branch。
+1. Basic integer arithmetic
+2. Load/Store
+3. `jal` and `jalr`
+4. Basic branches
 
-## 阶段产出
+## Deliverables
 
-1. CPU 顶层 RTL 初版。
-2. 基础模块 RTL。
-3. 简单 smoke test 程序。
-4. 首轮波形记录。
-5. 各级流水线寄存器当前版定义。
+1. First version of the CPU top-level RTL
+2. RTL for the basic modules
+3. Simple smoke-test programs
+4. Initial waveform captures
+5. Current definitions for every pipeline register
 
-## 验证要求
+## Verification Requirements
 
-1. 运行不含复杂数据相关的基础程序。
-2. 检查寄存器写回结果和 PC 变化。
-3. 验证 `EX` 阶段分支重定向是否符合预期。
-4. 验证握手式取指接口在无等待条件下工作正常。
-5. 第一版 RV32I-only 取指假设 `pc_F[1:0] == 2'b00`。Instruction memory 只负责把 byte address 转成 word-array index，即使用 `pc_F[MEM_ADDR_WIDTH + 1:2]` 取指；本阶段不在 IM 内部处理 misaligned fetch。
+1. Run basic programs without complex data dependencies.
+2. Check register writeback results and PC updates.
+3. Verify that branch redirects from `EX` behave as expected.
+4. Verify that the handshake-based instruction interface works with no wait states.
+5. The first RV32I-only version assumes `pc_F[1:0] == 2'b00`. Instruction memory only converts the byte address into a word-array index by using `pc_F[MEM_ADDR_WIDTH + 1:2]`; misaligned fetches are not handled inside instruction memory in this phase.
 
-## 风险与注意点
+## Risks and Notes
 
-1. 不要在本阶段提前把所有 stall 逻辑写复杂。
-2. 优先确保“正确流动”，再处理“复杂相关”。
-3. 所有访存路径都必须经过统一接口，不要为了图快写旁路特例。
+1. Do not make every stall path complicated in this phase.
+2. First make instructions flow correctly. Handle complex dependencies afterward.
+3. Every memory path must use the shared interface. Do not add one-off bypasses just to move faster.
 
-## 退出条件
+## Exit Conditions
 
-1. CPU 能稳定运行简单程序。
-2. 主数据通路和跨级控制信号没有明显错位。
-3. 可以进入冒险处理收敛阶段。
+1. The CPU can run simple programs reliably.
+2. The main datapath and cross-stage controls are not visibly out of step.
+3. The project is ready to move into hazard-control closure.

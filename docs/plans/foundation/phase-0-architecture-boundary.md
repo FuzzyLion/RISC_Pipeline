@@ -1,146 +1,147 @@
-# 阶段 0：第一版架构边界
+# Phase 0: First-Version Architecture Boundary
 
 ## Time Limit
 
-建议用时：3 到 5 天  
-硬上限：1 周
+Recommended: 3 to 5 days
+Hard limit: 1 week
 
-## 目标
+## Goal
 
-在写大量 RTL 之前，先冻结第一版 CPU 的功能边界、模块边界、关键控制策略和接口语义，避免后续在 Hazard、CSR、Cache、FPU 接入时发生大范围返工。
+Before writing a large amount of RTL, freeze the first version's feature scope, module boundaries, key control policies, and interface semantics. This should prevent broad rework later when Hazard control, CSR, Cache, and FPU are added.
 
-## 冻结原则
+## Principles for Freezing the Design
 
-1. 区分“架构目标”和“阶段 1 bring-up 子集”，不要把两者混在一起。
-2. 本阶段只冻结会影响后续返工的大决策，不在这里展开具体 RTL 细节。
-3. 所有存储访问默认支持可变等待，不允许把接口设计建立在“永远单周期返回”的假设上。
-4. 第一版核心形态固定为单发射、顺序执行、按程序顺序提交的五级流水线。
+1. Keep the architecture target separate from the Phase 1 bring-up subset.
+2. Freeze only the decisions that could cause major rework later. Detailed RTL belongs in later phases.
+3. Assume every memory access may have variable latency. Do not design the interface around an “always returns in one cycle” assumption.
+4. The first core is a single-issue, in-order, five-stage pipeline that retires instructions in program order.
 
-## 本阶段冻结结论
+## Decisions Frozen in This Phase
 
-1. 第一版的架构目标固定为 `RV32I` 五级流水线，但阶段 1 的 bring-up 子集可以比完整 `RV32I` 更小。
-2. `branch` 与 `jump` 的最终跳转判定统一放在 `EX` 阶段。
-3. 指令侧和数据侧都使用极简握手式接口，并约定每个端口最多只有一个 outstanding request。
-4. 第一版不实现 `M`、`F`、Cache、FPU、分支预测、乱序执行和寄存器重命名。
-5. 第一版只要求未来能支持最小 Machine Mode 闭环，本阶段只冻结接口与控制边界，不提前写完整 CSR 逻辑。
+1. The first architecture target is a five-stage `RV32I` pipeline, while the Phase 1 bring-up subset may be smaller than full `RV32I`.
+2. Final `branch` and `jump` decisions are made in `EX`.
+3. Both instruction and data ports use a minimal handshake interface, with at most one outstanding request per port.
+4. The first version does not implement `M`, `F`, Cache, FPU, branch prediction, out-of-order execution, or register renaming.
+5. The first version only needs to support a minimal Machine Mode loop later. This phase freezes the interfaces and control boundaries without implementing the full CSR path early.
+6. The target board is the NEXYS Artix-7. Board clocking, reset, constraints,
+   and peripherals stay outside the CPU core boundary.
 
-## 1. ISA 与功能边界
+## 1. ISA and Feature Boundary
 
-### 1.1 架构目标
+### 1.1 Architecture Target
 
-第一版 CPU 的主线目标是完整 `RV32I`，原因不是为了在阶段 1 一次性写完所有指令，而是为了从第一天开始把控制路径、流水线寄存器字段和验证方向定在一个不会频繁变化的边界上。
+The main target for the first CPU is full `RV32I`. This does not mean every instruction must be implemented in Phase 1. It gives the control paths, pipeline-register fields, and verification plan one stable boundary from the start.
 
-### 1.2 建议的阶段 1 bring-up 子集
+### 1.2 Recommended Phase 1 Bring-up Subset
 
-建议最早跑通的指令子集至少包含：
+The first working instruction subset should include at least:
 
-1. 算术与逻辑：`add`、`sub`、`addi`、`or`
-2. 访存：`lw`、`sw`
-3. 控制流：`beq`、`jal`、`jalr`
-4. 常量构造：强烈建议尽早加入 `lui`，`auipc` 视软件需求尽早补上
+1. Arithmetic and logic: `add`, `sub`, `addi`, `or`
+2. Memory access: `lw`, `sw`
+3. Control flow: `beq`, `jal`, `jalr`
+4. Constant construction: add `lui` early; add `auipc` as soon as the software needs it
 
-这样划分的理由是：
+This split works well because:
 
-1. `addi` 对于写测试程序和构造常量非常关键，只靠 `add/sub/or` 会让最小程序都写得很别扭。
-2. `lui` 和 `auipc` 虽然不复杂，但它们直接影响地址构造和后续软件可用性。
-3. `beq + jal/jalr` 足以先打通最小控制流闭环，更多比较类分支可以后续补齐。
+1. `addi` is essential for small test programs and constant construction. Relying only on `add/sub/or` makes even simple programs awkward.
+2. `lui` and `auipc` are not difficult, but they directly affect address construction and software usability.
+3. `beq + jal/jalr` is enough to close the first control-flow loop. The remaining comparison branches can follow later.
 
-### 1.3 第一版明确暂不支持
+### 1.3 Explicitly Deferred from the First Version
 
-1. `M`、`F`、`A`、`C` 等扩展
-2. 分支预测
-3. 乱序执行
-4. 寄存器重命名
-5. 第一阶段的 byte/halfword load/store
-6. 未对齐访问支持
+1. Extensions such as `M`, `F`, `A`, and `C`
+2. Branch prediction
+3. Out-of-order execution
+4. Register renaming
+5. Byte and halfword loads and stores in the first phase
+6. Misaligned-access support
 
-### 1.4 关于 `lb/lh/lbu/lhu`
+### 1.4 A Note on `lb/lh/lbu/lhu`
 
-它们不是“和 `lw` 同理，只是 `ImmExt` 宽度不同”。
+These instructions are not simply “the same as `lw`, only with a different `ImmExt` width.”
 
-真正新增的点包括：
+They add real work:
 
-1. 根据地址低位选择字内 byte/halfword 位置
-2. 对读回数据做符号扩展或零扩展
-3. 生成更细粒度的 `wstrb`
-4. 决定是否支持未对齐访问或抛出异常
+1. Selecting the byte or halfword within a word from the low address bits
+2. Sign-extending or zero-extending returned data
+3. Generating finer-grained `wstrb` values
+4. Deciding whether to support misaligned accesses or raise an exception
 
-所以阶段 1 完全可以先只做 `lw/sw`，但文档里要明确这是“有意推迟”，而不是“实现 `lw` 后自然就有 `lb/lh`”。
+Phase 1 can reasonably support only `lw/sw`, but the documentation must describe `lb/lh` and the other byte and halfword accesses as intentionally deferred, not as something that appears automatically once `lw` works.
 
-## 2. 微架构边界与模块划分
+## 2. Microarchitecture Boundary and Module Split
 
-### 2.1 CPU 形态
+### 2.1 CPU Shape
 
-第一版核心微架构固定为：
+The first core uses:
 
-1. 五级流水：IF、ID、EX、MEM、WB
-2. 单发射
-3. 顺序执行
-4. 顺序提交
-5. 整数主流水线先稳定，再逐步引入异常中断、Cache、FPU
+1. Five stages: IF, ID, EX, MEM, and WB
+2. Single issue
+3. In-order execution
+4. In-order retirement
+5. A stable integer pipeline first, followed by exceptions and interrupts, Cache, and FPU in later phases
 
-### 2.2 `if_stage/id_stage/ex_stage/...` 和流水线寄存器的区别
+### 2.2 Stages and Pipeline Registers Are Different Things
 
-`if_stage`、`id_stage`、`ex_stage`、`mem_stage`、`wb_stage` 是各级的功能逻辑。  
-它们不是流水线寄存器本身。
+`if_stage/id_stage/ex_stage/...` are the functional logic of each stage. They are not the pipeline registers themselves.
 
-流水线寄存器应该单独建模为：
+Model the pipeline registers separately:
 
 1. `if_id`
 2. `id_ex`
 3. `ex_mem`
 4. `mem_wb`
 
-这样做的好处是：
+This separation gives us:
 
-1. 级内组合逻辑和跨级时序边界分离得更清楚
-2. stall/flush 更容易落地
-3. 后续做波形分析和面试讲解都更直观
+1. A clearer boundary between combinational stage logic and cross-stage sequential state
+2. Cleaner stall and flush behavior
+3. More readable waveforms and a design that is easier to explain in an interview
 
-### 2.3 建议固定的顶层模块职责
+### 2.3 Recommended Top-Level Module Responsibilities
 
 1. `pc`
-   负责当前 PC 保存、next PC 选择和 hold/update 控制。
+   Stores the current PC, selects the next PC, and handles hold and update control.
 2. `if_stage`
-   负责发起取指请求、跟踪待返回请求、接收指令响应，以及在 redirect 后丢弃陈旧返回。
+   Sends instruction requests, tracks an outstanding request, accepts instruction responses, and discards stale responses after a redirect.
 3. `id_stage`
-   负责译码、寄存器堆读取、立即数生成和基础控制信号生成。
+   Decodes instructions, reads the register file, generates immediates, and produces the basic control signals.
 4. `ex_stage`
-   负责 ALU 运算、分支比较、跳转目标计算和最终 redirect 产生。
+   Performs ALU operations and branch comparisons, calculates jump targets, and produces the final redirect.
 5. `mem_stage`
-   负责 load/store 请求生成、数据返回处理和 memory wait 控制。
+   Generates load/store requests, handles returned data, and controls memory waits.
 6. `wb_stage`
-   负责最终写回数据选择和寄存器写回。
+   Selects the final writeback value and writes the register file.
 7. `regfile`
-   提供整数寄存器堆读写端口。
+   Provides the integer register-file read and write ports.
 8. `alu`
-   承担整数运算和比较所需的基础算术逻辑。
+   Provides the basic arithmetic used by integer operations and comparisons.
 9. `controller`
-   负责把指令译码结果打包为跨级传递的控制 bundle。
+   Turns decoded instructions into a control bundle that moves across stages.
 10. `hazard_unit`
-    负责 forwarding、stall、flush、redirect 协调。
+    Coordinates forwarding, stalls, flushes, and redirects.
 
-### 2.4 本阶段如何“预留接口”才算合适
+### 2.4 What It Means to Leave Room for Future Interfaces
 
-本阶段应该预留的是架构边界，而不是强行在 RTL 里堆很多空壳模块。
+This phase should reserve architecture boundaries, not fill the RTL with empty placeholder modules.
 
-当前建议是：
+The recommended approach is:
 
-1. 文档层面先冻结 CSR、Cache、FPU 的接入位置和控制关系。
-2. RTL 早期不必为了“占位”强行实例化空的 `csr`、`cache`、`fpu` 模块。
-3. 只要把后续一定会影响接口的信号语义想清楚，就已经达到了 phase 0 的目标。
+1. Freeze the future integration points and control relationships for CSR, Cache, and FPU in the documentation.
+2. Do not instantiate empty `csr`, `cache`, or `fpu` modules in early RTL just to reserve space.
+3. If the signal semantics that will affect future interfaces are clear, Phase 0 has done its job.
 
-## 3. 流水线寄存器与关键控制路径
+## 3. Pipeline Registers and Key Control Paths
 
-### 3.1 每级流水线寄存器必须携带的字段
+### 3.1 Required Fields in Each Pipeline Register
 
-`IF/ID`：
+`IF/ID`:
 
 1. `valid`
 2. `pc`
 3. `instr`
 
-`ID/EX`：
+`ID/EX`:
 
 1. `valid`
 2. `pc`
@@ -151,9 +152,9 @@
 7. `rd_idx`
 8. `imm`
 9. `ctrl_bundle`
-10. 可选保留 `instr` 作为调试字段
+10. Optionally keep `instr` as a debug field
 
-`EX/MEM`：
+`EX/MEM`:
 
 1. `valid`
 2. `pc`
@@ -162,7 +163,7 @@
 5. `rd_idx`
 6. `ctrl_bundle`
 
-`MEM/WB`：
+`MEM/WB`:
 
 1. `valid`
 2. `pc`
@@ -171,9 +172,9 @@
 5. `rd_idx`
 6. `ctrl_bundle`
 
-### 3.2 推荐放进 `ctrl_bundle` 的信息
+### 3.2 Recommended `ctrl_bundle` Contents
 
-至少建议包含：
+Include at least:
 
 1. `reg_write`
 2. `result_sel`
@@ -183,33 +184,32 @@
 6. `mem_write`
 7. `branch`
 8. `jump`
-9. 为后续扩展预留的 `mem_size`
-10. 为后续扩展预留的 `load_unsigned`
+9. `mem_size`, reserved for later extension
+10. `load_unsigned`, reserved for later extension
 
-即使阶段 1 只做 `lw/sw`，现在就把 `mem_size/load_unsigned` 放进控制定义里，也能减少后面补 `lb/lh` 时的重构量。
+Even if Phase 1 only supports `lw/sw`, adding `mem_size/load_unsigned` to the control definition now reduces later rework when `lb/lh` are added.
 
-### 3.3 哪些字段是“派生的”
+### 3.3 Derived Fields
 
-以下信息建议视为派生值，而不是强制存入所有流水线寄存器：
+Treat the following as derived values rather than fields that must be stored in every pipeline register:
 
 1. `pc_plus4`
-2. 分支比较结果，例如 `zero/lt/ltu`
-3. 分支目标地址
-4. `jalr` 目标地址低位清零后的结果
+2. Branch-comparison results such as `zero/lt/ltu`
+3. The branch target address
+4. The `jalr` target after its low bit has been cleared
 
-判断原则是：如果某个值可以在本级用已经携带的关键信息稳定推导出来，就不要为了“图省事”盲目往流水线寄存器里塞更多字段。
+The rule is simple: if a stage can derive a value reliably from information it already carries, do not add another pipeline-register field just for convenience.
 
-### 3.4 控制优先级建议
+### 3.4 Recommended Control Priority
 
-不要把所有等待都粗暴地叫做一个 `memory_wait`。  
-最少要在语义上区分：
+Do not collapse every wait condition into one vague `memory_wait` signal. At minimum, distinguish:
 
 1. `dmem_wait`
-   来自 `MEM` 级的老指令，通常需要冻结更年轻的级。
+   Comes from an older instruction in `MEM` and usually freezes younger stages.
 2. `imem_wait`
-   来自 `IF` 级的取指等待，主要影响前端抓取。
+   Comes from an instruction-fetch wait in `IF` and mainly affects the front end.
 
-推荐优先级如下：
+Recommended priority:
 
 1. `reset`
 2. `trap_redirect` / `mret_redirect`
@@ -217,28 +217,28 @@
 4. `ex_redirect`
 5. `load_use_stall`
 6. `imem_wait`
-7. 正常推进
+7. Normal progress
 
-推荐理由：
+The reasoning is:
 
-1. trap 或中断是更高优先级的控制流重定向，后续一定高于普通分支。
-2. `dmem_wait` 来自更老的在途指令，必须先保证顺序执行语义。
-3. `ex_redirect` 应高于 `load_use_stall`，因为错误路径上的 hazard 不应阻止真正的 redirect。
-4. `imem_wait` 只意味着“取指还没回来”，不应该压过一个已经在 `EX` 产生的有效 redirect。
+1. A trap or interrupt is a higher-priority control-flow redirect and must eventually outrank an ordinary branch.
+2. `dmem_wait` belongs to an older in-flight instruction, so in-order execution semantics come first.
+3. `ex_redirect` should outrank `load_use_stall`, because a wrong-path hazard must not block a real redirect.
+4. `imem_wait` only means that a fetch has not returned yet. It must not override a valid redirect already produced in `EX`.
 
-### 3.5 Flush 规则
+### 3.5 Flush Rules
 
-在当前“分支于 `EX` 判定”的策略下：
+With branches resolved in `EX`:
 
-1. 普通 branch/jump redirect 至少需要清空 `IF/ID` 和 `ID/EX` 中更年轻的错误路径指令。
-2. `EX/MEM` 和 `MEM/WB` 中的更老指令不应因为普通分支而被误清空。
-3. 未来 trap/interrupt 同样属于 redirect，但它不只是“改 PC”，还要保证精确异常语义和 CSR 状态一致。
+1. An ordinary branch or jump redirect must clear at least the younger wrong-path instructions in `IF/ID` and `ID/EX`.
+2. Older instructions in `EX/MEM` and `MEM/WB` must not be cleared by an ordinary branch.
+3. A future trap or interrupt is also a redirect, but it must do more than update the PC: it must preserve precise-exception behavior and consistent CSR state.
 
-## 4. 存储接口冻结
+## 4. Frozen Memory Interface
 
-### 4.1 最低必需信号
+### 4.1 Minimum Required Signals
 
-最低限度沿用当前项目主线约定：
+Keep the current minimal project-wide contract:
 
 1. `req_valid`
 2. `req_ready`
@@ -248,99 +248,99 @@
 6. `resp_valid`
 7. `resp_rdata`
 
-### 4.2 推荐额外预留的信号
+### 4.2 Recommended Additional Signals
 
-建议从第一天就在接口定义里考虑：
+Consider these in the interface definition from the start:
 
 1. `req_size`
 2. `resp_err`
 
-这两个不是第一版 bring-up 的硬要求，但会明显降低后续补 `lb/lh`、未对齐异常或外设错误处理时的重构压力。
+They are not required for the first bring-up, but they reduce rework later when adding `lb/lh`, misalignment exceptions, or peripheral-error handling.
 
-### 4.3 接口语义
+### 4.3 Interface Semantics
 
-1. 只有在 `req_valid && req_ready` 时，请求才算真正被下游接受。
-2. 每个端口最多只允许一个 outstanding request。
-3. 响应严格按请求顺序返回，不允许乱序。
-4. `req_wstrb == 0` 表示读请求，非零表示写请求。
-5. 数据侧无论读写，都建议用 `resp_valid` 作为本次访问完成的统一确认。
-6. 第一版先按对齐 word 访问处理，byte/halfword 行为后续再扩展。
+1. A request is accepted only when `req_valid && req_ready` is true.
+2. Each port allows at most one outstanding request.
+3. Responses return in request order; out-of-order responses are not allowed.
+4. `req_wstrb == 0` means a read. A nonzero value means a write.
+5. For the data port, use `resp_valid` as the shared completion signal for both reads and writes.
+6. The first version handles aligned word accesses. Byte and halfword behavior comes later.
 
-### 4.4 为什么握手接口对后续阶段重要
+### 4.4 Why the Handshake Matters Later
 
-这套接口要解决的不是“现在内存是不是单周期”，而是后续这些情况：
+This interface is not about whether today's memory happens to respond in one cycle. It prepares for:
 
-1. 慢速外设不能在一个周期内完成访问
-2. SoC 集成后，不同从设备延迟不同
-3. Cache miss 需要停住流水线等待 refill
-4. 指令侧和数据侧将来都可能遇到非固定延迟
+1. Slow peripherals that cannot complete an access in one cycle
+2. SoC slaves with different latencies
+3. Cache misses that hold the pipeline during refill
+4. Variable latency on both instruction and data paths
 
-### 4.5 对 IF 的特殊约定
+### 4.5 Special Requirements for IF
 
-由于分支在 `EX` 判定，而取指请求可能已经发出但尚未返回，所以 `if_stage` 需要具备以下能力：
+Because branches are resolved in `EX`, an instruction request may already be in flight when a redirect occurs. The `if_stage` therefore needs to:
 
-1. 跟踪当前是否有未完成取指请求
-2. 在 redirect 后识别并丢弃旧 PC 对应的陈旧响应
+1. Track whether an instruction request is still outstanding
+2. Recognize and discard a stale response for the old PC after a redirect
 
-如果这一点不提前想清楚，后面一旦内存不是固定一拍返回，控制流 bug 会非常隐蔽。
+If this behavior is not clear up front, control-flow bugs will become very difficult to see as soon as memory latency is no longer fixed at one cycle.
 
-## 5. 后续扩展的明确接入点
+## 5. Clear Integration Points for Later Extensions
 
-### 5.1 CSR / trap
+### 5.1 CSR and Trap
 
-建议现在就冻结以下关系：
+Freeze these relationships now:
 
-1. trap 本质上也是一种 redirect
-2. trap 比普通 branch/jump 拥有更高优先级
-3. trap 需要同时驱动 PC 重定向、流水线清空和 CSR 状态更新
+1. A trap is another kind of redirect.
+2. A trap has higher priority than an ordinary branch or jump.
+3. A trap must drive the PC redirect, pipeline flush, and CSR-state update together.
 
-本阶段只需把这些关系写进文档，不需要提前写完整 RTL。
+This phase only needs to document these relationships. It does not need the full RTL yet.
 
 ### 5.2 Cache
 
-Cache 的接入位置固定为：
+The Cache integration points are:
 
-1. I-Cache 挂在 `if_stage` 与后端存储之间
-2. D-Cache 挂在 `mem_stage` 与后端存储之间
+1. I-Cache between `if_stage` and downstream memory
+2. D-Cache between `mem_stage` and downstream memory
 
-要求是：
+The requirements are:
 
-1. CPU 上游接口语义不变
-2. Cache 只改变 `req_ready/resp_valid` 的时序表现，不改变接口契约
+1. The CPU-facing interface semantics do not change.
+2. The Cache changes only the timing of `req_ready/resp_valid`, not the interface contract.
 
 ### 5.3 FPU
 
-FPU 的接入位置固定为：
+The FPU integration points are:
 
-1. 在 `ID` 做指令分类
-2. 在 `EX` 发起或进入浮点执行路径
-3. 在 `WB` 参与写回仲裁
-4. 通过 busy/ready 信号反馈给 `hazard_unit`
+1. Classify instructions in `ID`.
+2. Start or enter the floating-point execution path in `EX`.
+3. Participate in writeback arbitration in `WB`.
+4. Report busy/ready state to the `hazard_unit`.
 
-### 5.4 `M` 扩展
+### 5.4 `M` Extension
 
-如果未来要加 `M` 扩展，优先把它当作“整数侧的多周期执行单元”接到 `EX` 附近，而不是在 phase 0 为它单独造一套特殊接口。
+If the project adds the `M` extension later, treat it as a multi-cycle integer execution unit near `EX` instead of inventing a separate special-purpose interface during Phase 0.
 
-## 6. 本阶段产出
+## 6. Deliverables
 
-1. 明确区分架构目标和 bring-up 子集的 ISA 说明
-2. 模块职责说明
-3. 各级流水线寄存器字段表
-4. 控制优先级与 flush 规则
-5. 极简握手接口定义与语义说明
-6. CSR、Cache、FPU 的预留接入点说明
+1. An ISA description that clearly separates the architecture target from the bring-up subset
+2. Module-responsibility notes
+3. A field table for every pipeline register
+4. Control-priority and flush rules
+5. Minimal handshake-interface definition and semantics
+6. Reserved integration points for CSR, Cache, and FPU
 
-## 7. 风险与注意点
+## 7. Risks and Notes
 
-1. 不要把 phase 1 最小指令子集误写成整个项目的最终 ISA 边界。
-2. 不要用一张 datapath 图代替真正的信号表和控制说明。
-3. 不要把 flush 理解成只服务于 branch 的机制，trap/interrupt 后面也会走这条控制路径。
-4. 不要把 `memory_wait` 当成一个模糊概念；至少要先区分前端等待和数据侧等待。
-5. 不要为了“以后可能扩展”就过早引入复杂抽象，先把边界写清楚比堆空模块更重要。
+1. Do not describe the minimum Phase 1 instruction subset as the final ISA boundary for the whole project.
+2. Do not use one datapath drawing as a substitute for a real signal table and control description.
+3. Do not treat flush as a branch-only mechanism. Traps and interrupts will use the same control path later.
+4. Do not leave `memory_wait` vague. At least distinguish front-end waits from data-side waits.
+5. Do not add complex abstractions just because they might be useful later. Clear boundaries matter more than empty placeholder modules.
 
-## 8. 退出条件
+## 8. Exit Conditions
 
-1. 第一版功能边界已经明确。
-2. 模块职责和接口语义已经明确。
-3. 流水线寄存器字段和控制优先级已经明确。
-4. 可以在不继续争论架构大方向的前提下进入 phase 1 RTL 编写。
+1. The feature boundary for the first version is clear.
+2. Module responsibilities and interface semantics are clear.
+3. Pipeline-register fields and control priorities are clear.
+4. Phase 1 RTL work can begin without reopening the main architecture direction.

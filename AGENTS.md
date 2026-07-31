@@ -21,8 +21,8 @@ Current project goals include:
 7. Implement FPU as a required milestone.
 8. Eventually run broader tests and a lightweight RTOS.
 
-The project has completed the Phase 3 baseline verification milestone and is
-actively working through Phase 4: CSR, exceptions, and interrupts. A basic
+The project has completed the Phase 3 baseline verification milestone and the
+minimum Phase 4 CSR, exception, and timer-interrupt milestone. A basic
 machine-mode CSR and synchronous-trap path is now integrated end to end,
 including CSR forwarding, `ecall`, `mret`, trap metadata, handler redirect,
 and a repeated CSR/trap smoke program. Directed processor smokes now prove
@@ -36,15 +36,16 @@ acknowledgement, and `mret` recovery. The existing seventeen-test regression
 remains green. Phase 4 is not broad privileged-architecture closure:
 software/external interrupts are absent, periodic scheduling is not yet
 implemented, and broader synchronous-exception coverage remains pending.
-Preserve the Phase 3 baseline and the current CSR/trap closure while adding the
-remaining behavior in small, explainable steps.
+Preserve the Phase 3 baseline and the current CSR/trap closure while moving
+into Phase 5 in small, explainable steps.
 
-Relevant planning docs:
+Relevant project docs:
 
-1. `requirements.md`
-2. `docs/plans/`
+1. `README.md`
+2. `docs/core-architecture.md`
+3. `docs/plans/README.md`
 
-## Current Phase 4 Working Boundary
+## Current CSR/Trap Working Boundary
 
 Treat the current CSR/trap implementation as a useful baseline, not as proof
 of full privileged-architecture compliance.
