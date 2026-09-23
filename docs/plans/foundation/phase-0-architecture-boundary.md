@@ -344,3 +344,15 @@ If the project adds the `M` extension later, treat it as a multi-cycle integer e
 2. Module responsibilities and interface semantics are clear.
 3. Pipeline-register fields and control priorities are clear.
 4. Phase 1 RTL work can begin without reopening the main architecture direction.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. Why did you choose the current instruction subset for the first version?
+2. Why is `branch` resolved in `EX` instead of `ID`?
+3. What exact problem does the handshake memory interface solve for later phases?
+4. Which pipeline register fields are essential, and which are derived?
+5. Where do you expect Cache and FPU to hook into the design later?

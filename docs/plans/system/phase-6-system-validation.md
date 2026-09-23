@@ -49,3 +49,15 @@ Once the CPU, CSR path, and minimal SoC are stable, establish a system-level sof
 1. The current system capabilities form a stable baseline.
 2. A reusable system-level regression entry point exists.
 3. The project is ready for the Cache phase.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. Which tests form your "known good" system baseline?
+2. Why is that baseline strong enough before introducing Cache and FPU?
+3. Which remaining failures are acceptable, and which are blocking?
+4. How do you compare simulation behavior with board behavior?
+5. What metrics tell you the project is stable enough for major extensions?

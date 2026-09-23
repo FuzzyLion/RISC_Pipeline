@@ -78,3 +78,15 @@ Decide early:
 1. The FPU is designed, integrated, and covered by focused verification.
 2. The integer and floating-point paths run together reliably.
 3. The project is ready for RTOS and final system integration.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. Why did you choose this FPU scope for the first version?
+2. Is your FPU single-cycle, multi-cycle, or pipelined, and what are the control consequences?
+3. How does the main pipeline know when FPU results are ready?
+4. What interactions exist between FPU completion, exceptions, and flushes?
+5. What would an interviewer most likely ask about your FPU integration?

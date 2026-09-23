@@ -132,4 +132,4 @@ The planning documents in this project roughly divide responsibilities as follow
 5. [`phase-1-preparation-sheet.md`](foundation/phase-1-preparation-sheet.md)
    This document turns the minimum Phase 1 instruction subset, decode table, pipeline-register fields, and control-action semantics into an executable starting draft.
 6. The individual phase documents
-   These own the execution plan, deliverables, verification points, and exit conditions for each phase.
+   These own the execution plan, deliverables, verification points, exit conditions, and understanding checks for each phase.

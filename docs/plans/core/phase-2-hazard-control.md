@@ -158,3 +158,15 @@ RAW from MEM ALU result           0        0        0        0        select MEM
 RAW from WB result                0        0        0        0        select WB when rs matches
 Load-use: E load feeds D          1        1        0        1        normal this cycle
 Taken branch or jump in EX        0        0        1        1        computed normally
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. What is the priority order between stall, flush, redirect, and memory wait in your design?
+2. Why is that priority order correct?
+3. How do you distinguish load-use hazard from a normal RAW hazard?
+4. What forwarding paths exist in your implementation, and why are they sufficient?
+5. What failure would appear if one forwarding path were missing?

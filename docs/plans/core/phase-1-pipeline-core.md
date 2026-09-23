@@ -75,3 +75,15 @@ Get the main CPU pipeline running simple, hazard-free programs before the comple
 1. The CPU can run simple programs reliably.
 2. The main datapath and cross-stage controls are not visibly out of step.
 3. The project is ready to move into hazard-control closure.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. Can you walk through one instruction from `IF` to `WB` using your actual implementation?
+2. Which control signals are generated in decode and where are they consumed later?
+3. How do you know your pipeline registers are carrying enough information?
+4. What would break first if a branch target were calculated incorrectly?
+5. What assumptions are you still making because Hazard Unit is not complete yet?

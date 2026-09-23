@@ -65,3 +65,15 @@ Close the minimum Machine Mode loop and lay the groundwork for system software a
 1. The minimum privileged-mode loop is complete.
 2. Key prerequisites such as timer interrupts are available.
 3. The project is ready for SoC integration.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. What state must be saved on an exception or interrupt, and why?
+2. How does trap entry interact with in-flight instructions in your pipeline?
+3. Why is your exception and interrupt priority rule correct?
+4. What minimum CSR set did you implement, and why is it enough for the next stage?
+5. What bug would appear if pipeline flush on trap were incomplete?

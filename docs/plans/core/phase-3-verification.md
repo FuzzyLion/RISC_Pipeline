@@ -57,3 +57,15 @@ Move from “we can debug it until it works” to repeatable regression, so ever
 1. The basic regression runs with one command.
 2. Failures can be localized quickly.
 3. The project is ready for CSR, system-level work, and later extensions.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. How do you know your tests are checking behavior rather than just reproducing implementation details?
+2. Which bugs are easiest to catch with module tests, and which need program-level tests?
+3. How are `riscv-tests` integrated into your flow?
+4. If a regression appears, how do you localize it quickly?
+5. What would make you introduce Cocotb, and what would you use it for first?

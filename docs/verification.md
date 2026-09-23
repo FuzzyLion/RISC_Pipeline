@@ -72,6 +72,29 @@ bash sim/run_isa_lite.sh ori
 
 The ISA-lite runner builds each selected upstream `rv32ui` test through `software/scripts/build_riscv_lite_test.sh`, extracts the instruction words into `sim/build/riscv_lite/hex/`, loads the resulting `.hex` file into instruction memory, and uses `tb/core_isa_lite_tb.sv` to watch `x31` for pass/fail completion.
 
+## Directed Testbench Style
+
+Directed SystemVerilog unit tests should favor readability over compact
+parameterization. Keep one instruction or one behavior per task. The preferred
+task shape is:
+
+```systemverilog
+task automatic test_example_instr();
+    apply_instr_defaults();
+
+    instr_D = 32'hXXXXXXXX; // assembly instruction
+    #1;
+
+    check_ctrl_bundle("example control bundle", EXPECTED_CTRL);
+    check_imm_src("example immediate source", EXPECTED_IMM);
+endtask
+```
+
+Keep reusable assertion/check tasks at the bottom of the testbench, but avoid
+hiding instruction stimulus inside generic parameterized execution helpers.
+The test body should show the reset/default step, direct inputs, propagation
+delay, and checks explicitly.
+
 ## Directory Roles
 
 `programs/` contains the local hand-written processor-level test programs. Files such as `programs/smoke_alu.s` and `programs/smoke_branch.s` capture stable test intent and belong to this project. Their matching `.hex` images are the instruction-memory inputs used by the smoke testbenches.

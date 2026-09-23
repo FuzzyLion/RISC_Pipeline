@@ -78,3 +78,15 @@ If time and complexity allow, then consider adding an instruction Cache.
 1. The Cache is functionally complete and stable.
 2. The original system regression shows no unexplained regressions.
 3. The project is ready for the FPU phase.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. Why did you choose this Cache organization and write policy?
+2. How does a miss propagate back into the pipeline control logic?
+3. What prevents Cache control from corrupting architectural state during stalls or flushes?
+4. What are the hardest cases to verify in your Cache?
+5. If performance improves but correctness becomes unclear, how do you prove the Cache is still right?

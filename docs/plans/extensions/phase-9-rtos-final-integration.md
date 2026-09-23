@@ -51,3 +51,15 @@ Once the main pipeline, Cache, and FPU are integrated, complete the final system
 1. Final integration of the project's main capabilities is complete.
 2. The RTOS bring-up result is clear.
 3. Cache and FPU have both been verified through the complete system path.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. What exact hardware features made RTOS bring-up possible?
+2. If RTOS fails, how do you separate interrupt bugs from memory bugs, Cache bugs, FPU bugs, or context-switch bugs?
+3. Which parts of your processor design became most important only at full-system level?
+4. What limitations still exist in the design?
+5. If you had to present this project in an interview in 3 minutes, how would you explain the architecture and the hardest parts you solved?

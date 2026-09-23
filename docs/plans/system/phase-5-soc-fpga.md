@@ -62,3 +62,15 @@ Move the CPU from “a core that works in simulation” to “a minimal system t
 1. The minimal system runs on the board.
 2. Key peripherals such as UART and Timer work.
 3. The project is ready for system-level testing and the software baseline.
+
+## Understanding Check
+
+Use these questions during phase review, grounded in the actual implementation
+and verification evidence. Select the most relevant gaps; do not repeat answers
+already demonstrated in the conversation.
+
+1. What is your address map, and why did you choose it?
+2. How does a slow peripheral stall or delay the CPU safely?
+3. If the board shows wrong behavior, how do you determine whether the fault is in CPU, SoC glue, memory map, or peripheral logic?
+4. What assumptions changed when moving from simulation to FPGA?
+5. Why is your SoC integration structure still compatible with later Cache work?
