@@ -29,6 +29,7 @@ module alu_op
         alu_result_E = '0;
         trap_event_load_store_E = TRAP_EVENT_NONE;
 
+        // 1. ALU
         case (alu_control_E)
             CTRL_ADD: begin
                 alu_result_E = alu_src_AE + alu_src_BE;
@@ -73,6 +74,7 @@ module alu_op
             end
         endcase
 
+        // 2. Load / Store Check
         if (is_load_E) begin
             case (load_type_E)
                 LB, LBU: begin
@@ -114,6 +116,7 @@ module alu_op
             endcase
         end
         
+        // 3. Branch Compare / Zero Detect
         if (branch_E) begin
             case (btype_E)
                 BEQ: begin

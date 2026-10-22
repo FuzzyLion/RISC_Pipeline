@@ -18,10 +18,5 @@ programs/isa/
 # Hook
 .codex/
 
-# Pic
-*.svg
-
 # Third-party riscv-tests
 tools/riscv-tests/
-
-*.drawio
