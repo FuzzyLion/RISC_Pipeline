@@ -1,38 +1,54 @@
 # RISC Pipeline
 
-This repository is a learning-first RV32I processor project. The goal is not
-to collect features as quickly as possible. It is to build a five-stage CPU
-whose datapath, control rules, verification evidence, and design trade-offs
-are clear enough to explain and defend.
+A 32-bit, single-issue RISC-V processor written in SystemVerilog, with a
+five-stage in-order pipeline, forwarding, load-use stalls, and EX-stage
+branch and jump resolution. The integer pipeline is extended with a minimal
+machine-mode CSR, precise-trap, and one-shot timer-interrupt path.
 
-The current RTL implements a five-stage `IF`/`ID`/`EX`/`MEM`/`WB` pipeline with
-forwarding, load-use stalls, EX-stage redirects, a basic Machine Mode CSR and
-precise-trap path, and one machine-timer interrupt source. The Phase 3
-verification baseline and the project's minimum Phase 4 milestone are in
-place. Phase 5, SoC integration and FPGA bring-up, is the next main step.
+This is a learning-first project built around explicit module responsibilities,
+visible control flow, and repeatable verification. The current milestone covers
+the Phase 3 verification baseline and the minimum Phase 4 CSR/trap/timer loop.
+Phase 5, SoC integration and FPGA bring-up, is next.
 
-This is still a focused teaching core, not a complete RV32I or privileged
-architecture implementation.
+## Datapath
 
-## What Works Today
+[![Five-stage RISC-V datapath with forwarding, hazard control, CSR and trap logic, and timer MMIO](docs/Datapath.svg)](docs/Datapath.svg)
 
-- A five-stage in-order pipeline with four explicit pipeline registers
-- Integer ALU and ALU-immediate operations
-- All six base branch conditions, `jal`, `jalr`, `lui`, and `auipc`
-- Byte, halfword, and word loads and stores in the internal memory model
-- MEM/WB-to-EX forwarding, CSR-result forwarding, and load-use stalls
-- Branch, jump, `mret`, and trap redirects with pipeline flushing
-- The six base Zicsr read/modify/write forms used by this project
-- `ecall`, `ebreak`, `mret`, and selected precise synchronous exceptions
-- A one-shot machine-timer interrupt through MMIO-programmable `mtimecmp`
-- Seven module tests and ten processor smoke tests in one directed regression
-- A lightweight path for selected upstream `rv32ui` tests
+[Open the full-size diagram](docs/Datapath.svg) for signal labels and design
+notes. Black paths carry data; blue paths carry control. Follow the main
+pipeline from left to right, with forwarding and PC redirects returning to
+earlier stages and hazard control running along the bottom.
 
-The exact CSR, trap, and timer boundary is documented in
-[`docs/csr-trap-design.md`](docs/csr-trap-design.md). Known limitations are
-listed in [Architecture](docs/core-architecture.md#7-current-boundary-and-known-limitations).
+The [architecture walkthrough](docs/core-architecture.md#datapath-overview)
+connects the drawing to pipeline stages, RTL modules, and control priorities.
 
-## Quick Start
+## Implemented Features
+
+| Area | Current implementation |
+| --- | --- |
+| Pipeline | `IF` / `ID` / `EX` / `MEM` / `WB`, with four explicit pipeline registers carrying `valid` bits |
+| Integer execution | Register and immediate ALU operations, all six base branch conditions, `jal`, `jalr`, `lui`, and `auipc` |
+| Memory | Byte, halfword, and word loads and stores in internal data RAM; separate instruction memory |
+| Hazards | MEM/WB-to-EX forwarding, CSR-result forwarding, load-use stalls, and redirect flushing |
+| CSR access | All six base Zicsr read/modify/write forms for the supported machine-mode CSR set |
+| Traps and return | `ecall`, `ebreak`, `mret`, and selected precise synchronous exceptions, with synchronous exceptions taking priority over timer interrupts |
+| Timer | A one-shot machine-timer interrupt through MMIO-programmable `mtimecmp` |
+
+See the [CSR, trap, and timer design](docs/csr-trap-design.md) for supported
+registers, exception causes, and interrupt behavior.
+
+## Verification and Quick Start
+
+The directed Verilator regression registers **seven module tests and ten
+processor smoke tests**. These check local datapath and control behavior,
+pipeline integration, and selected precise-trap and timer scenarios. A separate
+ISA-lite runner executes selected upstream `rv32ui` programs using a local
+register-based completion protocol.
+
+The runners expect Verilator, a C++ build environment, and a RISC-V GNU
+toolchain exposing `riscv64-elf-*` commands. The ISA-lite flow also requires
+an upstream `riscv-tests` checkout at `tools/riscv-tests/`; follow the
+[setup instructions](tools/README.md#riscv-tests).
 
 Run the complete directed regression:
 
@@ -52,10 +68,25 @@ Run one ISA-lite test:
 bash sim/run_isa_lite.sh ori
 ```
 
-The scripts expect Verilator and a RISC-V GNU toolchain with the
-`riscv64-elf-*` prefix. See [`sim/README.md`](sim/README.md) for the operational
-entry point and [`docs/verification.md`](docs/verification.md) for what the
-tests do and do not prove.
+See the [simulation guide](sim/README.md) for build commands and generated-file
+locations, and [verification evidence and gaps](docs/verification.md) for the
+coverage boundaries.
+
+## Current Boundaries
+
+- The core implements a practical RV32I teaching subset plus selected Zicsr and
+  machine-mode behavior. Full ISA and privileged-architecture compliance remain
+  outside the verified baseline.
+- Instruction and data memories are internal arrays. A CPU-to-SoC
+  request/response interface is the first Phase 5 task.
+- Instruction memory holds 256 words. The ISA-lite flow initializes instruction
+  memory only; loading ELF data sections into data memory remains future work.
+- Timer support is one-shot. Software/external interrupts, nested traps, and a
+  general ABI-safe trap runtime remain future work.
+
+The [architecture limitations](docs/core-architecture.md#7-current-boundary-and-known-limitations)
+and [verification gaps](docs/verification.md#next-verification-work) give the
+full scope.
 
 ## Repository Map
 
@@ -66,12 +97,13 @@ tests do and do not prove.
 | `programs/` | Hand-written assembly smoke programs and instruction images |
 | `sim/` | Build and test runners |
 | `software/` | Linker script, minimal runtime, ISA-lite environment, and build helpers |
-| `docs/` | Architecture, design rationale, verification notes, tool notes, and backlog |
+| `docs/` | Datapath diagram, architecture, design rationale, verification notes, tool notes, and backlog |
 | `docs/plans/` | Phase-by-phase roadmap and exit criteria |
 | `tools/` | External tool or test-suite checkouts that are not owned by this repository |
 
 ## Documentation
 
+- [Datapath diagram](docs/Datapath.svg)
 - [Core architecture](docs/core-architecture.md)
 - [Verification strategy and evidence](docs/verification.md)
 - [CSR, exceptions, and machine-timer design](docs/csr-trap-design.md)
@@ -80,18 +112,17 @@ tests do and do not prove.
 - [Deferred ideas](docs/backlog.md)
 - [Tool-chain notes](docs/tool-chain-notes/)
 
-`agent_context.md` and `AGENTS.md` are collaboration files for Codex and other
-agents. They summarize the current working boundary, but the RTL and the
-registered regression remain authoritative when documentation drifts.
-
 ## Project Direction
 
 The next dependency-ordered path is:
 
 1. Freeze the CPU-to-SoC request/response contract.
-2. Integrate the minimal SoC and bring it up on the NEXYS Artix-7 board.
+2. Integrate a minimal SoC and bring it up on the NEXYS Artix-7 board.
 3. Establish a system-level software and verification baseline.
-4. Add Cache, FPU, and RTOS support only after that baseline is stable.
+4. Add Cache and FPU, followed by lightweight RTOS integration.
+
+These are planned milestones. See the [phase plans and exit criteria](docs/plans/README.md#phase-list)
+for their dependencies and completion standards.
 
 Future ideas that are worth keeping but are not active work belong in
 [`docs/backlog.md`](docs/backlog.md).

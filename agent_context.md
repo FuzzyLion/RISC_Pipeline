@@ -7,6 +7,19 @@ current authorization includes those edits.
 
 ## Current Work Entry Point
 
+The GitHub-facing documentation now includes the completed
+[datapath diagram](docs/Datapath.svg). [README.md](README.md) presents the core,
+implemented features, verification commands, current boundaries, and roadmap.
+The [architecture walkthrough](docs/core-architecture.md#datapath-overview)
+connects the drawing to the pipeline and RTL module responsibilities.
+
+The approved documentation scope covers `README.md`,
+`docs/core-architecture.md`, and this context file. These are local documentation
+changes. Keep implementation claims tied to the RTL and verification claims
+tied to the registered runners and observed results.
+
+## Architecture Baseline and Next Step
+
 The documented baseline is an RV32I-oriented five-stage core with internal
 memories, directed verification, and the minimum machine-mode CSR, precise-trap,
 and one-shot timer-interrupt milestone. This is not full ISA or privileged
@@ -30,7 +43,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | `programs/` | Local assembly smoke programs and instruction images |
 | `sim/` | Test and build runners; generated output in ignored `sim/build/` |
 | `software/` | Linker script, minimal trap runtime, ISA-lite environment, build scripts |
-| `docs/` | Architecture, verification, rationale, tool notes, backlog |
+| `docs/` | Datapath diagram, architecture, verification, rationale, tool notes, backlog |
 | `docs/plans/` | Roadmap, phase deliverables, exit criteria, understanding checks |
 | `tools/` | External reference checkouts; not project-owned source |
 
@@ -39,7 +52,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | Task | Reference |
 | --- | --- |
 | Public overview and quick start | [README.md](README.md) |
-| Pipeline, stage ownership, control and memory behavior | [Core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `core_types_pkg.sv` |
+| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `core_types_pkg.sv` |
 | CSR state, precise traps, timer delivery, redirect ownership | [CSR/trap design](docs/csr-trap-design.md) |
 | Test strategy, ISA-lite completion protocol, evidence and gaps | [Verification](docs/verification.md) |
 | Running tests and generated-file layout | [Simulation commands](sim/README.md) |

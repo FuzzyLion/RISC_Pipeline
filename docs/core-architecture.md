@@ -4,6 +4,35 @@ This document describes the architecture that exists in the current RTL. It
 is a reader-facing overview of the whole core; detailed trap behavior and test
 strategy live in their own documents.
 
+## Datapath Overview
+
+[![Five-stage core datapath, control, forwarding, CSR and trap logic, and timer MMIO](Datapath.svg)](Datapath.svg)
+
+[Open the full-size diagram](Datapath.svg) to read the signal labels and design
+notes. Black lines carry data and blue lines carry control. The drawing uses
+`F`, `D`, `E`, `M`, and `W` suffixes for Fetch, Decode, Execute, Memory, and
+Writeback.
+
+Read the drawing in three passes:
+
+1. Follow an instruction from the PC and instruction memory through Decode,
+   Execute, Memory, and Writeback. The four vertical pipeline registers carry
+   its data, control, and validity between stages.
+2. Trace the MEM and WB feedback paths into the EX operand muxes. The Hazard
+   Unit at the bottom selects forwarding sources and controls stalls and
+   flushes; the sections below explain the priority rules.
+3. Follow the redirect paths back to the PC mux. `pc_target_gen.sv` handles
+   branch/jump targets and target alignment, `trap_ctrl.sv` arbitrates traps and
+   produces metadata, and `csr_file.sv` owns the saved state used by trap entry
+   and `mret`.
+
+The CSR Access Ctrl, CSR Read/Modify, CSR State & Update, and MIP View blocks
+describe internal responsibilities of `csr_file.sv`. Interrupt-enable checks
+and trap arbitration belong to `trap_ctrl.sv`. The drawing separates these
+responsibilities visually; [core.sv](../rtl/core/core.sv) wires the actual
+modules together, using the bundles in
+[core_types_pkg.sv](../rtl/core/core_types_pkg.sv).
+
 ## 1. Design Boundary
 
 The processor is a 32-bit, in-order, single-issue pipeline organized around
@@ -137,6 +166,7 @@ the five-stage behavior explainable and preserve the existing regression.
 Use the documents according to their roles:
 
 - This file explains the whole-core architecture.
+- [`Datapath.svg`](Datapath.svg) provides the visual map of data and control flow.
 - [`csr-trap-design.md`](csr-trap-design.md) owns CSR, exception, and interrupt rationale.
 - [`verification.md`](verification.md) owns verification strategy and evidence.
 - [`plans/README.md`](plans/README.md) owns the project goals, completion
