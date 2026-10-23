@@ -15,7 +15,7 @@ verilator -sv --timing --binary -Wall -Wno-fatal \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o alu_op_tb \
   rtl/core/core_types_pkg.sv \
-  rtl/core/alu_op.sv \
+  rtl/core/datapath/alu_op.sv \
   tb/alu_op_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/alu_op_tb"

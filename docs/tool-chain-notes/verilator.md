@@ -20,7 +20,7 @@ verilator \
   --top-module core_smoke_tb \
   --Mdir sim/build/basic_smoke/obj_dir \
   -o core_basic_smoke \
-  -f rtl/core/filelist.f \
+  -f rtl/filelist.f \
   tb/core_basic_smoke_tb.sv
 ```
 
@@ -78,7 +78,7 @@ Sets the simulation executable name.
 
 ### `-f <filelist>`
 
-Reads RTL source paths from a file such as `rtl/core/filelist.f`.
+Reads RTL source paths from a file such as `rtl/filelist.f`.
 
 ### `-G<parameter>=<value>`
 
@@ -102,7 +102,7 @@ successful test should terminate with `$finish`.
 The project also uses Verilator without running a simulation:
 
 ```bash
-verilator --lint-only --sv -f rtl/core/filelist.f
+verilator --lint-only --sv -f rtl/filelist.f
 ```
 
 This checks parsing, elaboration, ports, widths, and common RTL issues. It does

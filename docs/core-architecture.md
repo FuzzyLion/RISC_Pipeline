@@ -40,13 +40,34 @@ five stages: `IF`, `ID`, `EX`, `MEM`, and `WB`. It targets a practical RV32I
 teaching subset and adds the minimum machine-mode CSR, trap, and timer behavior
 needed for the next SoC phase.
 
-The current top-level integration is `rtl/core/core.sv`. `rtl/core/top.sv` is a
+The current top-level integration is `rtl/core/core.sv`. `rtl/soc/top.sv` is a
 thin wrapper and remains the future handoff point for board- and SoC-level
 integration.
 
 The design favors explicit modules and visible control signals. This makes the
 pipeline easier to inspect and explain, even when that costs a little more
 wiring in `core.sv`.
+
+### RTL Source Organization
+
+| Path under `rtl/` | Responsibility |
+| --- | --- |
+| `core/` | Core integration in `core.sv` and shared types in `core_types_pkg.sv` |
+| `core/pipeline/` | The four pipeline registers: `IF_ID`, `ID_EX`, `EX_MEM`, and `MEM_WB` |
+| `core/datapath/` | ALU, register file, immediate and instruction-field extraction, PC logic, operand/writeback muxes, and load/store formatting |
+| `core/control/` | Instruction decode and hazard control |
+| `core/csr/` | CSR state and trap arbitration, kept in separate modules |
+| `memory/` | Internal instruction and data memory arrays |
+| `peripherals/` | Machine timer |
+| `soc/` | Top-level wrapper, MMIO decoder, and system address map |
+
+Integrated simulations and editor lint use [rtl/filelist.f](../rtl/filelist.f).
+Its paths are relative to the repository root, and packages precede the modules
+that import them. Module tests list only their required source files.
+
+This layout groups files by responsibility. The current `core.sv` still wires
+the internal memories, MMIO decoder, and timer together. Moving that integration
+to the SoC layer requires the Phase 5 CPU request/response contract.
 
 ## 2. Pipeline Stages
 

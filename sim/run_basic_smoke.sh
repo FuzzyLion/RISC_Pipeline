@@ -18,7 +18,7 @@ verilator -sv --timing --binary --trace -Wall -Wno-fatal -Werror-UNOPTFLAT \
   --top-module core_smoke_tb \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o core_basic_smoke \
-  -f rtl/core/filelist.f \
+  -f rtl/filelist.f \
   tb/core_basic_smoke_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/core_basic_smoke"

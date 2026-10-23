@@ -404,11 +404,11 @@ its real behavior.
 
 Relevant implementation and verification files:
 
-- [`rtl/core/csr_file.sv`](../rtl/core/csr_file.sv)
-- [`rtl/core/trap_ctrl.sv`](../rtl/core/trap_ctrl.sv)
-- [`rtl/core/pc_mux.sv`](../rtl/core/pc_mux.sv)
-- [`rtl/core/machine_timer.sv`](../rtl/core/machine_timer.sv)
-- [`rtl/core/mmio_decoder.sv`](../rtl/core/mmio_decoder.sv)
+- [`rtl/core/csr/csr_file.sv`](../rtl/core/csr/csr_file.sv)
+- [`rtl/core/csr/trap_ctrl.sv`](../rtl/core/csr/trap_ctrl.sv)
+- [`rtl/core/datapath/pc_mux.sv`](../rtl/core/datapath/pc_mux.sv)
+- [`rtl/peripherals/machine_timer.sv`](../rtl/peripherals/machine_timer.sv)
+- [`rtl/soc/mmio_decoder.sv`](../rtl/soc/mmio_decoder.sv)
 - [`software/runtime/trap_handler.s`](../software/runtime/trap_handler.s)
 - [`programs/smoke_csr_trap.s`](../programs/smoke_csr_trap.s)
 - [`programs/smoke_timer_interrupt.s`](../programs/smoke_timer_interrupt.s)

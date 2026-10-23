@@ -71,6 +71,11 @@ bash sim/build_hex.sh \
 | `run_isa_lite.sh` | Selected upstream RV32UI tests |
 | `run_regression.sh` | Unified directed regression entry point |
 
+Integrated processor tests compile the RTL through
+[`rtl/filelist.f`](../rtl/filelist.f), whose paths are relative to the repository
+root. Module tests list only the packages and modules they need. When moving a
+source file, update both the RTL filelist and any direct module-test references.
+
 ## Program Build Flow
 
 `build_hex.sh` converts local assembly sources into an instruction-memory

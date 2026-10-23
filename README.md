@@ -92,7 +92,11 @@ full scope.
 
 | Path | Purpose |
 | --- | --- |
-| `rtl/core/` | CPU core, pipeline registers, hazard logic, CSR/trap logic, internal memories, and timer path |
+| `rtl/core/` | Core integration and shared types, with `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
+| `rtl/memory/` | Internal instruction and data memories |
+| `rtl/peripherals/` | Machine timer |
+| `rtl/soc/` | Top-level wrapper, MMIO decoder, and system address map |
+| `rtl/filelist.f` | RTL compilation list, with packages listed before their users |
 | `tb/` | Directed SystemVerilog module and processor testbenches |
 | `programs/` | Hand-written assembly smoke programs and instruction images |
 | `sim/` | Build and test runners |
@@ -100,6 +104,10 @@ full scope.
 | `docs/` | Datapath diagram, architecture, design rationale, verification notes, tool notes, and backlog |
 | `docs/plans/` | Phase-by-phase roadmap and exit criteria |
 | `tools/` | External tool or test-suite checkouts that are not owned by this repository |
+
+These directories group source files by responsibility. The current core still
+instantiates the internal memories, MMIO decoder, and timer; moving their
+integration into the SoC is part of the Phase 5 interface work.
 
 ## Documentation
 

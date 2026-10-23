@@ -168,7 +168,7 @@ instruction-cache coherence becomes meaningful.
 
 ## Instruction Memory Limit
 
-`rtl/core/instr_mem.sv` currently holds 256 instruction words. If an upstream test expands beyond 256 instructions, the flow should reject it instead of silently truncating it.
+`rtl/memory/instr_mem.sv` currently holds 256 instruction words. If an upstream test expands beyond 256 instructions, the flow should reject it instead of silently truncating it.
 
 This is a testbench capacity issue, not an ISA correctness issue. Truncation can remove part of the control flow, including pass/fail paths, later test cases, or branch targets. The program could then pass for the wrong reason, fail in a misleading way, or jump into uninitialized memory.
 

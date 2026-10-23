@@ -7,16 +7,16 @@ current authorization includes those edits.
 
 ## Current Work Entry Point
 
-The GitHub-facing documentation now includes the completed
-[datapath diagram](docs/Datapath.svg). [README.md](README.md) presents the core,
-implemented features, verification commands, current boundaries, and roadmap.
-The [architecture walkthrough](docs/core-architecture.md#datapath-overview)
-connects the drawing to the pipeline and RTL module responsibilities.
+Start with [README.md](README.md) for the project overview and
+[the datapath diagram](docs/Datapath.svg) for data and control flow. The
+[architecture walkthrough](docs/core-architecture.md#datapath-overview) connects
+the drawing to pipeline stages and RTL module responsibilities.
 
-The approved documentation scope covers `README.md`,
-`docs/core-architecture.md`, and this context file. These are local documentation
-changes. Keep implementation claims tied to the RTL and verification claims
-tied to the registered runners and observed results.
+RTL sources are grouped by responsibility, with [rtl/filelist.f](rtl/filelist.f)
+as the integrated compilation entry point. The directory layout does not change
+the current integration: `rtl/core/core.sv` still instantiates the internal
+memories, MMIO decoder, and timer. Keep implementation claims tied to the RTL
+and verification claims tied to the registered runners and observed results.
 
 ## Architecture Baseline and Next Step
 
@@ -38,7 +38,11 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 
 | Path | Responsibility |
 | --- | --- |
-| `rtl/core/` | Pipeline, hazards, CSR/trap logic, internal memories, timer MMIO |
+| `rtl/core/` | Core integration and shared types; `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
+| `rtl/memory/` | Internal instruction and data memories |
+| `rtl/peripherals/` | Machine timer |
+| `rtl/soc/` | Top-level wrapper, MMIO decoder, system address map |
+| `rtl/filelist.f` | Integrated RTL compilation list; packages precede their users |
 | `tb/` | Directed module and processor testbenches |
 | `programs/` | Local assembly smoke programs and instruction images |
 | `sim/` | Test and build runners; generated output in ignored `sim/build/` |
@@ -52,7 +56,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | Task | Reference |
 | --- | --- |
 | Public overview and quick start | [README.md](README.md) |
-| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `core_types_pkg.sv` |
+| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `rtl/core/core_types_pkg.sv` |
 | CSR state, precise traps, timer delivery, redirect ownership | [CSR/trap design](docs/csr-trap-design.md) |
 | Test strategy, ISA-lite completion protocol, evidence and gaps | [Verification](docs/verification.md) |
 | Running tests and generated-file layout | [Simulation commands](sim/README.md) |

@@ -3,7 +3,13 @@
     {
       "dirs": [
         "rtl/core",
-        "rtl",
+        "rtl/core/pipeline",
+        "rtl/core/datapath",
+        "rtl/core/control",
+        "rtl/core/csr",
+        "rtl/memory",
+        "rtl/peripherals",
+        "rtl/soc",
         "tb"
       ],
       "excludeDirs": [
@@ -13,5 +19,5 @@
       ]
     }
   ],
-  "build": "rtl/core/filelist.f"
+  "build": "rtl/filelist.f"
 }

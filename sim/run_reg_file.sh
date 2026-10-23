@@ -15,7 +15,7 @@ verilator -sv --timing --binary --trace -Wall -Wno-fatal \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o reg_file_tb \
   rtl/core/core_types_pkg.sv \
-  rtl/core/reg_file.sv \
+  rtl/core/datapath/reg_file.sv \
   tb/reg_file_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/reg_file_tb"

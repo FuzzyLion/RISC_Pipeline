@@ -19,7 +19,7 @@ verilator -sv --timing --binary --trace -Wall -Wno-fatal -Werror-UNOPTFLAT \
   --top-module core_smoke_timer_interrupt_tb \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o core_smoke_timer_interrupt \
-  -f rtl/core/filelist.f \
+  -f rtl/filelist.f \
   tb/core_smoke_timer_interrupt_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/core_smoke_timer_interrupt"

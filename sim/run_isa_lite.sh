@@ -69,7 +69,7 @@ for test_name in "${tests[@]}"; do
     --top-module core_isa_lite_tb \
     --Mdir "$sim_build_dir/obj_dir" \
     -o "core_isa_lite_${test_name}" \
-    -f rtl/core/filelist.f \
+    -f rtl/filelist.f \
     tb/core_isa_lite_tb.sv
 
   "$sim_build_dir/obj_dir/core_isa_lite_${test_name}"

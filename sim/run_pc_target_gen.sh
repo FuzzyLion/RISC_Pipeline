@@ -15,7 +15,7 @@ verilator -sv --timing --binary -Wall -Wno-fatal \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o pc_target_gen_tb \
   rtl/core/core_types_pkg.sv \
-  rtl/core/pc_target_gen.sv \
+  rtl/core/datapath/pc_target_gen.sv \
   tb/pc_target_gen_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/pc_target_gen_tb"

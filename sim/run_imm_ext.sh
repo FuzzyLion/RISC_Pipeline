@@ -15,7 +15,7 @@ verilator -sv --timing --binary -Wall -Wno-fatal \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
   -o imm_ext_tb \
   rtl/core/core_types_pkg.sv \
-  rtl/core/imm_ext.sv \
+  rtl/core/datapath/imm_ext.sv \
   tb/imm_ext_tb.sv
 
 "$SIM_BUILD_DIR/obj_dir/imm_ext_tb"

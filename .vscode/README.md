@@ -5,7 +5,7 @@ This directory contains the shared VS Code configuration for the project. The go
 `settings.json` keeps two complementary checks enabled:
 
 - The Slang language server provides fast SystemVerilog syntax and semantic diagnostics, symbol lookup, and go-to-definition while editing.
-- Verilator lint checks the complete core compilation view through `rtl/core/filelist.f`. It is better at exposing cross-module port, width, package, and combinational-logic issues.
+- Verilator lint checks the complete core compilation view through `rtl/filelist.f`. It is better at exposing cross-module port, width, package, and combinational-logic issues.
 
 The two tools overlap, but they do not replace each other. Slang keeps the editor responsive; Verilator is closer to the project's actual RTL compilation and elaboration flow. Functional correctness still needs the directed tests or regression under `sim/`.
 
@@ -24,4 +24,4 @@ This rebuilds the program image, compiles the simulator, runs the clocked simula
 
 ## Maintenance
 
-When RTL files are added, removed, or moved, update `rtl/core/filelist.f` first, then review the Verilator arguments and tasks here. Do not add generated `sim/build/` paths to these settings; they should always be reproducible from source.
+When RTL files are added, removed, or moved, update `rtl/filelist.f` first, then review the Verilator arguments and tasks here. Do not add generated `sim/build/` paths to these settings; they should always be reproducible from source.

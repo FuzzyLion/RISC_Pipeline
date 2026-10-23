@@ -17,7 +17,7 @@
         "-Wno-TIMESCALEMOD",
         "-Wno-UNUSEDSIGNAL",
         "-f",
-        "rtl/core/filelist.f"
+        "rtl/filelist.f"
       ],
       "group": "test",
       "problemMatcher": {
@@ -50,7 +50,7 @@
         "--top-module",
         "core_smoke_tb",
         "-f",
-        "rtl/core/filelist.f",
+        "rtl/filelist.f",
         "tb/core_basic_smoke_tb.sv"
       ],
       "group": "test",
