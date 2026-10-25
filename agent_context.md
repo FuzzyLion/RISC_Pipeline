@@ -8,7 +8,7 @@ current authorization includes those edits.
 ## Current Work Entry Point
 
 Start with [README.md](README.md) for the project overview and
-[the datapath diagram](docs/Datapath_v1.1.svg) for data and control flow. The
+[the datapath diagram](docs/Datapath_v1.4.svg) for data and control flow. The
 [architecture walkthrough](docs/core-architecture.md#datapath-overview) connects
 the drawing to pipeline stages and RTL module responsibilities.
 
@@ -56,7 +56,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | Task | Reference |
 | --- | --- |
 | Public overview and quick start | [README.md](README.md) |
-| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath_v1.1.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `rtl/core/core_types_pkg.sv` |
+| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath_v1.4.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `rtl/core/core_types_pkg.sv` |
 | CSR state, precise traps, timer delivery, redirect ownership | [CSR/trap design](docs/csr-trap-design.md) |
 | Test strategy, ISA-lite completion protocol, evidence and gaps | [Verification](docs/verification.md) |
 | Running tests and generated-file layout | [Simulation commands](sim/README.md) |

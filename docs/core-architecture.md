@@ -6,9 +6,9 @@ strategy live in their own documents.
 
 ## Datapath Overview
 
-[![Five-stage core datapath, control, forwarding, CSR and trap logic, and timer MMIO](Datapath_v1.1.svg)](Datapath_v1.1.svg)
+[![Five-stage core datapath, control, forwarding, CSR and trap logic, and timer MMIO](Datapath_v1.4.svg)](Datapath_v1.4.svg)
 
-[Open the full-size diagram](Datapath_v1.1.svg) to read the signal labels and design
+[Open the full-size diagram](Datapath_v1.4.svg) to read the signal labels and design
 notes. Black lines carry data and blue lines carry control. The drawing uses
 `F`, `D`, `E`, `M`, and `W` suffixes for Fetch, Decode, Execute, Memory, and
 Writeback.
@@ -187,7 +187,7 @@ the five-stage behavior explainable and preserve the existing regression.
 Use the documents according to their roles:
 
 - This file explains the whole-core architecture.
-- [`Datapath_v1.1.svg`](Datapath_v1.1.svg) provides the visual map of data and control flow.
+- [`Datapath_v1.4.svg`](Datapath_v1.4.svg) provides the visual map of data and control flow.
 - [`csr-trap-design.md`](csr-trap-design.md) owns CSR, exception, and interrupt rationale.
 - [`verification.md`](verification.md) owns verification strategy and evidence.
 - [`plans/README.md`](plans/README.md) owns the project goals, completion

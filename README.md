@@ -12,9 +12,9 @@ Phase 5, SoC integration and FPGA bring-up, is next.
 
 ## Datapath
 
-[![Five-stage RISC-V datapath with forwarding, hazard control, CSR and trap logic, and timer MMIO](docs/Datapath_v1.1.svg)](docs/Datapath_v1.1.svg)
+[![Five-stage RISC-V datapath with forwarding, hazard control, CSR and trap logic, and timer MMIO](docs/Datapath_v1.4.svg)](docs/Datapath_v1.4.svg)
 
-[Open the full-size diagram](docs/Datapath_v1.1.svg) for signal labels and design
+[Open the full-size diagram](docs/Datapath_v1.4.svg) for signal labels and design
 notes. Black paths carry data; blue paths carry control. Follow the main
 pipeline from left to right, with forwarding and PC redirects returning to
 earlier stages and hazard control running along the bottom.
@@ -111,7 +111,7 @@ integration into the SoC is part of the Phase 5 interface work.
 
 ## Documentation
 
-- [Datapath diagram](docs/Datapath_v1.1.svg)
+- [Datapath diagram](docs/Datapath_v1.4.svg)
 - [Core architecture](docs/core-architecture.md)
 - [Verification strategy and evidence](docs/verification.md)
 - [CSR, exceptions, and machine-timer design](docs/csr-trap-design.md)
