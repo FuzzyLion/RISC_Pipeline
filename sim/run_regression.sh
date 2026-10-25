@@ -17,6 +17,8 @@ tests=(
   "run_smoke_alu.sh"
   "run_smoke_csr_trap.sh"
   "run_smoke_illegal_trap.sh"
+  "run_smoke_unsupported_csr_trap.sh"
+  "run_smoke_sync_exception_timer_priority.sh"
   "run_smoke_instr_misaligned_trap.sh"
   "run_smoke_load_misaligned_trap.sh"
   "run_smoke_store_misaligned_trap.sh"

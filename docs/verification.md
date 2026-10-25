@@ -31,13 +31,14 @@ The two layers are intentionally complementary. Module tests are better at local
 
 ## Current Directed Baseline
 
-`sim/run_regression.sh` registers seventeen tests:
+`sim/run_regression.sh` registers nineteen tests:
 
 - Seven module tests for control decode, immediate generation, ALU behavior,
   PC-target generation, the register file, data memory, and hazard control
-- Ten processor smoke tests for basic execution, branch flushing, hazards,
+- Twelve processor smoke tests for basic execution, branch flushing, hazards,
   ALU/branch behavior, mixed CSR and synchronous traps, four directed precise
-  exception cases, and one-shot machine-timer delivery
+  exception cases, unsupported CSR access and synchronous-exception priority,
+  and one-shot machine-timer delivery
 
 The four precise-exception smokes cover illegal instruction,
 instruction-address misalignment, load-address misalignment, and store-address
@@ -45,6 +46,28 @@ misalignment. They check trap metadata, younger-instruction flushing, and a
 cause-specific suppressed side effect. The timer smoke checks MMIO programming
 of `mtimecmp`, interrupt-enable gating, cause 7 delivery, precise flushing,
 handler acknowledgement, and `mret` recovery.
+
+`core_smoke_unsupported_csr_trap_tb.sv` runs a legal `CSRRW` encoding targeting
+the unsupported CSR address `0x7c0`, with interrupts enabled and no timer
+request. `core_smoke_sync_exception_timer_priority_tb.sv` separately tests the
+collision using a real timer deadline of 80, programmed through MMIO. Its
+program waits for `mip.MTIP` with global interrupts disabled, enables
+`mie.MTIE`, then places the global-MIE enable immediately before the faulting
+CSR instruction. In the current EX-stage CSR implementation, MIE becomes 1
+as that instruction enters EX. A rising-edge monitor requires an observed
+valid unsupported access with MTIP, MTIE, and MIE all set at trap acceptance;
+it also records pending-before-enable. Neither test forces internal signals.
+
+Both cases require illegal-instruction cause 2, the faulting PC in `mepc`, the
+instruction bits in `mtval`, trap redirect and D/E/M flushing, preserved `rd`,
+an older committed marker, a flushed younger marker, and the fatal-handler
+signature. The collision case checks selected and latched metadata, proving
+that this synchronous exception wins over an enabled pending timer interrupt.
+The timer remains pending and its deadline unchanged in the fatal synchronous
+handler. This scheduling depends on the current EX-stage CSR update timing;
+other CSR forms and other synchronous-exception/timer combinations remain
+outside these two cases. The separate timer smoke covers timer-handler
+acknowledgement and `mret` recovery.
 
 These are directed proofs of selected behavior. They are not exhaustive tests
 of every instruction encoding, CSR access, alignment case, or older in-flight
@@ -232,7 +255,7 @@ The next useful improvements are:
 - Add a data-memory image flow so official load/store tests can run without hand-written setup code.
 - Increase instruction-memory capacity intentionally or make it configurable per testbench.
 - Add smaller local R-type ALU programs for upstream cases that are currently too large.
-- Add a program-level unsupported-CSR test and broaden precise-exception side-effect coverage.
+- Broaden unsupported-CSR coverage beyond CSRRW and extend precise-exception side-effect and synchronous-exception/timer collision coverage.
 - Add periodic-timer tests only when readable `mtime` access and next-deadline software exist.
 - Keep module tests focused and readable when a program-level failure exposes a new local bug.
 - Introduce Cocotb only when verification starts to need randomized memory latency, broad test matrices, reference models, or Cache-specific golden-memory checking.

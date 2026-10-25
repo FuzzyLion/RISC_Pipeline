@@ -230,7 +230,8 @@ module csr_file
                     mscratch_reg <= csr_wdata_E;
                 end
                 CSR_MEPC: begin
-                    mepc_reg <= csr_wdata_E;
+                    // IALIGN=32 requires mepc[1:0] to be zero for CSR reads and MRET (Definition)
+                    mepc_reg <= {csr_wdata_E[WORD_WIDTH - 1:2], 2'b00};
                 end
                 CSR_MCAUSE: begin
                    mcause_reg <= csr_wdata_E; 

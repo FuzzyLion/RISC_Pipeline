@@ -23,7 +23,9 @@ module reg_file
     4. read-side bypass: same-cycle WB-to-ID forwarding
     */
 
-    logic [WORD_WIDTH - 1:0] regs [31:0]; // Declaration all of the inner registers in RV32
+    // Declaration all of the inner registers in RV32
+    // Addresses from 5'd0 to 5'd31
+    logic [WORD_WIDTH - 1:0] regs [31:0]; 
 
     always_ff @(posedge clk) begin : initial_and_WB
         if (reset) begin
