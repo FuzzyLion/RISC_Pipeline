@@ -3,6 +3,9 @@ module control_unit
 (
     input logic [WORD_WIDTH - 1:0] instr_D,
     
+    output logic uses_rs1_D,
+    output logic uses_rs2_D,
+
     output imm_src_e imm_src_D,
     output trap_event_e trap_event_illegal_instr_D,
     output control_bundle_t ctrl_D
@@ -61,6 +64,9 @@ module control_unit
         ctrl_D = CTRL_NOP;
         imm_src_D = IMM_I;
         trap_event_illegal_instr_D = TRAP_EVENT_NONE;
+
+        uses_rs1_D = 1'b1;
+        uses_rs2_D = 1'b1;
 
         
         case (opcode_D)
@@ -123,12 +129,14 @@ module control_unit
                         ctrl_D.result_src = RSLT_RDATA;
                         ctrl_D.alu_src = BE_IMM_E;
                         ctrl_D.load_type = itype_load_D;
+                        uses_rs2_D = 1'b0;
                     end
                     default: begin
                         ctrl_D.rf_write = 1'b0;
                         ctrl_D.result_src = RSLT_ALU;
                         ctrl_D.alu_src = BE_RDATA_E;
                         ctrl_D.load_type = LB;
+                        uses_rs2_D = 1'b1;
                         trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase
@@ -141,31 +149,37 @@ module control_unit
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_ADD;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     SLTI: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SLT;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     SLTIU: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_SLTU;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     XORI: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_XOR;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     ORI: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_OR;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     ANDI: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.alu_ctrl = CTRL_AND;
                         ctrl_D.alu_src = BE_IMM_E;
+                        uses_rs2_D = 1'b0;
                     end
                     default: begin
 
@@ -174,21 +188,25 @@ module control_unit
                                 ctrl_D.rf_write = 1'b1;
                                 ctrl_D.alu_ctrl = CTRL_SLL;
                                 ctrl_D.alu_src = BE_IMM_E;
+                                uses_rs2_D = 1'b0;
                             end
                             SRLI: begin
                                 ctrl_D.rf_write = 1'b1;
                                 ctrl_D.alu_ctrl = CTRL_SRL;
                                 ctrl_D.alu_src = BE_IMM_E;
+                                uses_rs2_D = 1'b0;
                             end
                             SRAI: begin
                                 ctrl_D.rf_write = 1'b1;
                                 ctrl_D.alu_ctrl = CTRL_SRA;
                                 ctrl_D.alu_src = BE_IMM_E;
+                                uses_rs2_D = 1'b0;
                             end
                             default: begin
                                 ctrl_D.rf_write = 1'b0;
                                 ctrl_D.alu_ctrl = CTRL_ADD;
                                 ctrl_D.alu_src = BE_RDATA_E;
+                                uses_rs2_D = 1'b1;
                                 trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                             end
                         endcase
@@ -203,6 +221,8 @@ module control_unit
                 ctrl_D.alu_ctrl = CTRL_PASS_B;
                 ctrl_D.alu_src = BE_IMM_E;
                 imm_src_D = IMM_U;
+                uses_rs1_D = 1'b0;
+                uses_rs2_D = 1'b0;
             end
 
             OP_UTYPE_AUIPC: begin // (23)
@@ -212,6 +232,8 @@ module control_unit
                 ctrl_D.alu_ctrl = CTRL_PASS_B4PC;
                 imm_src_D = IMM_U;  
                 ctrl_D.alu_src = BE_IMM_E;
+                uses_rs1_D = 1'b0;
+                uses_rs2_D = 1'b0;
             end
 
             OP_STYPE: begin // (35)
@@ -290,12 +312,14 @@ module control_unit
                     ctrl_D.jump = 1'b1;
                     ctrl_D.pc_target_src = PC_TARGET_RS1_IMM;
                     ctrl_D.alu_src = BE_IMM_E;
+                    uses_rs2_D = 1'b0;
                 end else begin
                     ctrl_D.rf_write = 1'b0;
                     ctrl_D.result_src = RSLT_ALU;
                     ctrl_D.jump = 1'b0;
                     ctrl_D.pc_target_src = PC_TARGET_PC_IMM;
                     ctrl_D.alu_src = BE_RDATA_E;
+                    uses_rs2_D = 1'b1;
                     trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                 end
             end
@@ -306,6 +330,8 @@ module control_unit
                 ctrl_D.result_src = RSLT_PCPLUS4;
                 ctrl_D.jump = 1'b1;
                 imm_src_D = IMM_J;
+                uses_rs1_D = 1'b0;
+                uses_rs2_D = 1'b0;
             end
 
             OP_CSR: begin // (115)
@@ -317,22 +343,32 @@ module control_unit
 
                         case (csr_imm_D)
                             CSR_ECALL: begin
+                                uses_rs1_D = 1'b0;
+                                uses_rs2_D = 1'b0;
                                 trap_event_illegal_instr_D = TRAP_EVENT_ENV_CALL_M_MODE;
                             end
                             CSR_EBREAK: begin
+                                uses_rs1_D = 1'b0;
+                                uses_rs2_D = 1'b0;
                                 trap_event_illegal_instr_D = TRAP_EVENT_BREAKPOINT;
                             end
                             CSR_MRET: begin
                                 if ((instr_D[19:15] == 5'b0) &&
                                     (instr_D[11:7] == 5'b0)) begin
+                                    uses_rs1_D = 1'b0;
+                                    uses_rs2_D = 1'b0;
                                     ctrl_D.mret_en = 1'b1;
                                 end
                                 else begin
+                                    uses_rs1_D = 1'b1;
+                                    uses_rs2_D = 1'b1;
                                     ctrl_D.mret_en = 1'b0;
                                     trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                                 end
                             end
                             default: begin
+                                uses_rs1_D = 1'b1;
+                                uses_rs2_D = 1'b1;
                                 trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                             end
                         endcase
@@ -342,36 +378,47 @@ module control_unit
                         ctrl_D.rf_write = 1'b1;  
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRW;
+                        uses_rs2_D = 1'b0;
                     end
                     CSRRS: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRS;
+                        uses_rs2_D = 1'b0;
                     end
                     CSRRC: begin
                         ctrl_D.rf_write = 1'b1;
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRC;
+                        uses_rs2_D = 1'b0;
                     end
                     CSRRWI: begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRWI;
+                        uses_rs1_D = 1'b0;
+                        uses_rs2_D = 1'b0;
                     end
                     CSRRSI: begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRSI;
+                        uses_rs1_D = 1'b0;
+                        uses_rs2_D = 1'b0;
                     end
                     CSRRCI:begin
                         ctrl_D.rf_write = 1'b1;
                         imm_src_D = IMM_CSR;
                         ctrl_D.result_src = RSLT_CSR_RDATA;
                         ctrl_D.csrtype = CSRRCI;
+                        uses_rs1_D = 1'b0;
+                        uses_rs2_D = 1'b0;
                     end
                     default: begin
+                        uses_rs1_D = 1'b1;
+                        uses_rs2_D = 1'b1;
                         trap_event_illegal_instr_D = TRAP_EVENT_ILLEGAL_INSTR;
                     end
                 endcase

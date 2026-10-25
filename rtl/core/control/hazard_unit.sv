@@ -20,6 +20,8 @@ module hazard_unit
     input ex_mem_control_t ctrl_M,
     input mem_wb_control_t ctrl_W,
     
+    input uses_rs1_D,
+    input uses_rs2_D,
     input pc_src_e pc_src_E,
 
     input logic trap_flush_D,
@@ -96,7 +98,8 @@ module hazard_unit
                     ctrl_E.rf_write &&
                     (rd_idx_E != '0) && // Make sure no architectual effect is existing (x0)
                     (ctrl_E.result_src == RSLT_RDATA) &&
-                    ((rs1_idx_D == rd_idx_E) || (rs2_idx_D == rd_idx_E));
+                    (((rs1_idx_D == rd_idx_E) && uses_rs1_D) || 
+                    ((rs2_idx_D == rd_idx_E) && uses_rs2_D));
 
         redirect = (pc_src_E == PC_TARGET) || (pc_src_E == PC_MRET);
 

@@ -11,4 +11,15 @@ or x3, x7, x2 // x3 = 23
 lw x6, 0(x1) // x6 = 18
 sub x8, x6, x3 // x8 = -5
 
+# Load a jump target and immediately consume it as JALR's rs1.
+# x11 starts at zero so missing the load-use stall selects a wrong target.
+la   x10, load_jalr_target
+sw   x10, 4(x1)
+addi x11, x0, 0
+lw   x11, 4(x1)
+jalr x12, 0(x11)
+addi x13, x0, 1 // Wrong path: must be flushed.
+
+load_jalr_target:
+addi x14, x0, 1
 addi x31, x0, 1

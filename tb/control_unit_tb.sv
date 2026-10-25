@@ -9,6 +9,8 @@ module control_unit_tb
     imm_src_e imm_src_D;
     trap_event_e trap_event_illegal_instr_D;
     control_bundle_t ctrl_D;
+    logic uses_rs1_D;
+    logic uses_rs2_D;
 
     localparam control_bundle_t CTRL_NOP = '{
         rf_write: 1'b0,
@@ -556,6 +558,8 @@ module control_unit_tb
 
     control_unit dut(
         .instr_D(instr_D),
+        .uses_rs1_D(uses_rs1_D),
+        .uses_rs2_D(uses_rs2_D),
         .imm_src_D(imm_src_D),
         .trap_event_illegal_instr_D(trap_event_illegal_instr_D),
         .ctrl_D(ctrl_D)
@@ -646,6 +650,7 @@ module control_unit_tb
         check_ctrl_bundle("I-Type-IMM control bundle", CTRL_ITYPE_IMM);
         check_imm_src("I mode imm", IMM_I);
         check_trap_event("ADDI trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_addi_instr", 1'b1, 1'b0);
     endtask 
 
     task automatic test_lui_instr();
@@ -656,6 +661,7 @@ module control_unit_tb
 
         check_ctrl_bundle("U-Type control bundle", CTRL_UTYPE);
         check_imm_src("U mode imm", IMM_U);
+        check_source_usage("test_lui_instr", 1'b0, 1'b0);
     endtask 
 
     task automatic test_auipc_instr();
@@ -666,6 +672,7 @@ module control_unit_tb
 
         check_ctrl_bundle("U-Type AUIPC control bundle", CTRL_UTYPE_AUIPC);
         check_imm_src("U mode imm", IMM_U);
+        check_source_usage("test_auipc_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_add_instr();
@@ -676,6 +683,7 @@ module control_unit_tb
 
         check_ctrl_bundle("R-Type ADD control bundle", CTRL_RTYPE);
         check_imm_src("no imm source", IMM_I);
+        check_source_usage("test_add_instr", 1'b1, 1'b1);
     endtask
 
     task automatic test_sub_instr();
@@ -776,6 +784,7 @@ module control_unit_tb
 
         check_ctrl_bundle("B-Type BEQ control bundle", CTRL_BTYPE);
         check_imm_src("B mode imm", IMM_B);
+        check_source_usage("test_beq_instr", 1'b1, 1'b1);
     endtask 
 
     task automatic test_bne_instr();
@@ -836,6 +845,7 @@ module control_unit_tb
 
         check_ctrl_bundle("J-Type JAL control bundle", CTRL_JTYPE);
         check_imm_src("J mode imm", IMM_J);
+        check_source_usage("test_jal_instr", 1'b0, 1'b0);
     endtask 
 
     task automatic test_lw_instr();
@@ -850,6 +860,7 @@ module control_unit_tb
 
         check_ctrl_bundle("I-Type-Load LW control bundle", expected_ctrl);
         check_imm_src("I mode imm", IMM_I);
+        check_source_usage("test_lw_instr", 1'b1, 1'b0);
     endtask 
 
     task automatic test_lb_instr();
@@ -947,6 +958,7 @@ module control_unit_tb
 
         check_ctrl_bundle("S-Type control bundle", CTRL_STYPE);
         check_imm_src("S mode imm", IMM_S);
+        check_source_usage("test_sw_instr", 1'b1, 1'b1);
     endtask 
 
     task automatic test_jalr_instr();
@@ -957,6 +969,7 @@ module control_unit_tb
 
         check_ctrl_bundle("I-Type JALR control bundle", CTRL_ITYPE_JALR);
         check_imm_src("I mode imm", IMM_I);
+        check_source_usage("test_jalr_instr", 1'b1, 1'b0);
     endtask 
 
     task automatic test_slti_instr();
@@ -1109,6 +1122,7 @@ module control_unit_tb
         check_ctrl_bundle("ECALL control bundle", expected_ctrl);
         check_imm_src("ECALL imm source", IMM_I);
         check_trap_event("ECALL trap event", TRAP_EVENT_ENV_CALL_M_MODE);
+        check_source_usage("test_ecall_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_ebreak_instr();
@@ -1124,6 +1138,7 @@ module control_unit_tb
         check_ctrl_bundle("EBREAK control bundle", expected_ctrl);
         check_imm_src("EBREAK imm source", IMM_I);
         check_trap_event("EBREAK trap event", TRAP_EVENT_BREAKPOINT);
+        check_source_usage("test_ebreak_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_mret_instr();
@@ -1140,6 +1155,7 @@ module control_unit_tb
         check_ctrl_bundle("MRET control bundle", expected_ctrl);
         check_imm_src("MRET imm source", IMM_I);
         check_trap_event("MRET trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_mret_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_malformed_mret_instr();
@@ -1172,6 +1188,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRW control bundle", expected_ctrl);
         check_imm_src("CSRRW imm source", IMM_I);
         check_trap_event("CSRRW trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrw_instr", 1'b1, 1'b0);
     endtask
 
     task automatic test_csrrs_instr();
@@ -1189,6 +1206,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRS control bundle", expected_ctrl);
         check_imm_src("CSRRS imm source", IMM_I);
         check_trap_event("CSRRS trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrs_instr", 1'b1, 1'b0);
     endtask
 
     task automatic test_csrrc_instr();
@@ -1206,6 +1224,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRC control bundle", expected_ctrl);
         check_imm_src("CSRRC imm source", IMM_I);
         check_trap_event("CSRRC trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrc_instr", 1'b1, 1'b0);
     endtask
 
     task automatic test_csrrwi_instr();
@@ -1223,6 +1242,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRWI control bundle", expected_ctrl);
         check_imm_src("CSRRWI imm source", IMM_CSR);
         check_trap_event("CSRRWI trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrwi_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_csrrsi_instr();
@@ -1240,6 +1260,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRSI control bundle", expected_ctrl);
         check_imm_src("CSRRSI imm source", IMM_CSR);
         check_trap_event("CSRRSI trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrsi_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_csrrci_instr();
@@ -1257,6 +1278,7 @@ module control_unit_tb
         check_ctrl_bundle("CSRRCI control bundle", expected_ctrl);
         check_imm_src("CSRRCI imm source", IMM_CSR);
         check_trap_event("CSRRCI trap event", TRAP_EVENT_NONE);
+        check_source_usage("test_csrrci_instr", 1'b0, 1'b0);
     endtask
 
     task automatic test_unsupported_csr_funct3();
@@ -1275,6 +1297,17 @@ module control_unit_tb
     endtask
 
     // --------------------------- CHECK TASKS ---------------------------
+    task automatic check_source_usage(
+        input string name,
+        input logic expected_rs1,
+        input logic expected_rs2
+    );
+        if ({uses_rs1_D, uses_rs2_D} !== {expected_rs1, expected_rs2}) begin
+            $fatal(1, "%s: source usage expected %0b%0b, got %0b%0b",
+                   name, expected_rs1, expected_rs2, uses_rs1_D, uses_rs2_D);
+        end
+    endtask
+
     task automatic check_ctrl_bundle(
         input string name,
         input control_bundle_t expected_ctrl_bundle

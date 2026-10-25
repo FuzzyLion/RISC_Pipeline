@@ -21,6 +21,8 @@ module hazard_unit_tb
     ex_mem_control_t ctrl_M;
     mem_wb_control_t ctrl_W;
     pc_src_e pc_src_E;
+    logic uses_rs1_D;
+    logic uses_rs2_D;
     logic trap_flush_D;
     logic trap_flush_E;
 
@@ -42,6 +44,8 @@ module hazard_unit_tb
         .ctrl_E(ctrl_E),
         .ctrl_M(ctrl_M),
         .ctrl_W(ctrl_W),
+        .uses_rs1_D(uses_rs1_D),
+        .uses_rs2_D(uses_rs2_D),
         .pc_src_E(pc_src_E),
         .trap_flush_D(trap_flush_D),
         .trap_flush_E(trap_flush_E),
@@ -60,6 +64,9 @@ module hazard_unit_tb
         test_csr_mem_forward_rs2();
         test_load_use_rs1();
         test_load_use_rs2();
+        test_unused_rs2_no_load_stall();
+        test_csr_immediate_no_load_stall();
+        test_register_csr_load_use_rs1();
         test_redirect();
         test_mret_redirect();
         test_trap_flush();
@@ -129,6 +136,8 @@ module hazard_unit_tb
         };
 
         pc_src_E = PC_PLUS4;
+        uses_rs1_D = 1'b1;
+        uses_rs2_D = 1'b1;
         trap_flush_D = 1'b0;
         trap_flush_E = 1'b0;
     endtask
@@ -245,6 +254,54 @@ module hazard_unit_tb
 
         check_forward("no hazard forward", AE_RS1_VAL, BE_RDATA_RS2_VAL);
         check_stallflush("hazard lwstall", 1'b1, 1'b1, 1'b0, 1'b1);
+    endtask
+
+    task automatic test_unused_rs2_no_load_stall();
+        apply_no_hazard_defaults();
+
+        // E: lw x5, 0(x1); D: addi x6, x2, 5.
+        ctrl_E.rf_write = 1'b1;
+        ctrl_E.result_src = RSLT_RDATA;
+        rd_idx_E = 5'd5;
+        rs1_idx_D = 5'd2;
+        rs2_idx_D = 5'd5; // Immediate bits, not a register source.
+        uses_rs1_D = 1'b1;
+        uses_rs2_D = 1'b0;
+        #1;
+
+        check_stallflush("unused rs2 field does not stall", 1'b0, 1'b0, 1'b0, 1'b0);
+    endtask
+
+    task automatic test_csr_immediate_no_load_stall();
+        apply_no_hazard_defaults();
+
+        // E: lw x5, 0(x1); D: csrrwi x6, mtvec, 5.
+        ctrl_E.rf_write = 1'b1;
+        ctrl_E.result_src = RSLT_RDATA;
+        rd_idx_E = 5'd5;
+        rs1_idx_D = 5'd5; // uimm=5, not x5.
+        rs2_idx_D = 5'd5; // Low bits of CSR address 0x305.
+        uses_rs1_D = 1'b0;
+        uses_rs2_D = 1'b0;
+        #1;
+
+        check_stallflush("CSR immediate fields do not stall", 1'b0, 1'b0, 1'b0, 1'b0);
+    endtask
+
+    task automatic test_register_csr_load_use_rs1();
+        apply_no_hazard_defaults();
+
+        // E: lw x5, 0(x1); D: csrrw x6, mtvec, x5.
+        ctrl_E.rf_write = 1'b1;
+        ctrl_E.result_src = RSLT_RDATA;
+        rd_idx_E = 5'd5;
+        rs1_idx_D = 5'd5;
+        rs2_idx_D = 5'd5; // CSR address bits are still not a source.
+        uses_rs1_D = 1'b1;
+        uses_rs2_D = 1'b0;
+        #1;
+
+        check_stallflush("register CSR source still stalls", 1'b1, 1'b1, 1'b0, 1'b1);
     endtask
 
     task automatic test_redirect();

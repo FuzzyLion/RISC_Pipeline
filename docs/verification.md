@@ -29,6 +29,22 @@ Verification has two layers:
 
 The two layers are intentionally complementary. Module tests are better at localizing a broken control signal or datapath rule. Program-level tests are better at finding integration bugs in forwarding, pipeline-register fields, redirect flushing, writeback selection, and instruction-to-instruction interactions.
 
+### Source-Register Usage and Load-to-JALR Coverage
+
+The control-unit test checks `uses_rs1_D` and `uses_rs2_D` for representative
+integer, load/store, branch/jump, and system instructions, including all six CSR
+forms. The hazard-unit test drives those inputs explicitly and checks both real
+load-use dependencies and ignored immediate/CSR fields. These module checks
+cover decode outputs and hazard decisions at their respective boundaries.
+
+The existing hazard smoke program also stores a code address in data RAM, then
+executes `lw x11, 4(x1)` immediately followed by `jalr x12, 0(x11)`. Its TB
+requires exactly one load-use overlap with Fetch/Decode held and an EX bubble,
+the loaded target and link address, a flushed wrong-path marker, and a reached
+target marker. This provides an integrated check of decode, stall, load-result
+forwarding, and JALR redirection for this sequence. It does not cover every
+source-use encoding or memory-wait timing.
+
 ## Current Directed Baseline
 
 `sim/run_regression.sh` registers nineteen tests:

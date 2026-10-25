@@ -17,6 +17,8 @@ module core_smoke_hazard_tb
     localparam int CLK_PERIOD_NS = 10;
     localparam int TIMEOUT_CYCLES = 80;
     localparam logic [WORD_WIDTH - 1:0] PASS_VALUE = 32'd1;
+    localparam logic [WORD_WIDTH - 1:0] LOAD_TARGET_JALR = 32'h00058667; // jalr x12, 0(x11)
+    int unsigned load_jalr_stall_cycles;
 
     initial begin
         clk = 1'b0;
@@ -40,6 +42,25 @@ module core_smoke_hazard_tb
         reset = 1'b0;
     end
 
+    always_ff @(posedge clk) begin : load_jalr_monitor
+        if (reset) begin
+            load_jalr_stall_cycles <= 0;
+        end
+        else if (dut.core_processor.data_D_ifid.valid &&
+                 dut.core_processor.data_E_idex.valid &&
+                 (dut.core_processor.data_D_ifid.instr == LOAD_TARGET_JALR) &&
+                 (dut.core_processor.ctrl_E.result_src == RSLT_RDATA) &&
+                 (dut.core_processor.data_E_idex.rd_idx == 5'd11)) begin
+            if (!dut.core_processor.hazard_stallflush_ctrl.stall_F ||
+                !dut.core_processor.hazard_stallflush_ctrl.stall_D ||
+                !dut.core_processor.hazard_stallflush_ctrl.flush_E ||
+                dut.core_processor.hazard_stallflush_ctrl.flush_D) begin
+                $fatal(1, "SMOKE FAIL: load-to-JALR must hold F/D and insert an EX bubble");
+            end
+            load_jalr_stall_cycles <= load_jalr_stall_cycles + 1;
+        end
+    end
+
     initial begin : test_sequence
         wait (!reset);
         wait (dut.core_processor.reg_file1.regs[31] == PASS_VALUE);
@@ -55,6 +76,16 @@ module core_smoke_hazard_tb
         check_word("x7", dut.core_processor.reg_file1.regs[7], 32'd18);
         check_word("x8", dut.core_processor.reg_file1.regs[8], 32'hffff_fffb); // x8 = -5
         check_word("data_mem[9]", dut.core_processor.data_mem1.mem[9], 32'd18);
+        check_word("loaded JALR target", dut.core_processor.reg_file1.regs[11],
+                   dut.core_processor.reg_file1.regs[10]);
+        check_word("JALR link PC+4", dut.core_processor.reg_file1.regs[12],
+                   dut.core_processor.reg_file1.regs[10] - 32'd4);
+        check_word("JALR wrong-path marker", dut.core_processor.reg_file1.regs[13], 32'd0);
+        check_word("JALR target marker", dut.core_processor.reg_file1.regs[14], 32'd1);
+        if (load_jalr_stall_cycles != 1) begin
+            $fatal(1, "SMOKE FAIL: expected one load-to-JALR stall, got %0d",
+                   load_jalr_stall_cycles);
+        end
 
         $display("SMOKE PASS: hazard program completed");
         $finish; // End all tests, like clock generator or etc.

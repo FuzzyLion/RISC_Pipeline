@@ -19,6 +19,8 @@ module core
 
     // Control Unit
     control_bundle_t ctrl_D;
+    logic uses_rs1_D;
+    logic uses_rs2_D;
     imm_src_e imm_src_D;
     trap_event_e trap_event_illegal_instr_D;
 
@@ -189,6 +191,8 @@ module core
     // Control Unit
     control_unit control_unit1 (
         .instr_D(data_D_ifid.instr),
+        .uses_rs1_D(uses_rs1_D),
+        .uses_rs2_D(uses_rs2_D),
         .imm_src_D(imm_src_D),
         .trap_event_illegal_instr_D(trap_event_illegal_instr_D),
         .ctrl_D(ctrl_D)
@@ -210,6 +214,8 @@ module core
         .ctrl_E(ctrl_E),
         .ctrl_M(ctrl_M),
         .ctrl_W(ctrl_W),
+        .uses_rs1_D(uses_rs1_D),
+        .uses_rs2_D(uses_rs2_D),
         .pc_src_E(pc_src_E),
         .trap_flush_D(trap_flush_D),
         .trap_flush_E(trap_flush_E),
