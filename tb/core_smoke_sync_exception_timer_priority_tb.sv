@@ -8,7 +8,7 @@ module core_smoke_sync_exception_timer_priority_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("sim/build/smoke_sync_exception_timer_priority/program.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_sync_exception_timer_priority.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

@@ -38,7 +38,7 @@ echo "Running riscv_lite ISA tests..."
 
 for test_name in "${tests[@]}"; do
   asm_file="tools/riscv-tests/isa/rv32ui/${test_name}.S"
-  hex_file="sim/build/riscv_lite/hex/rv32ui_${test_name}.hex"
+  hex_file="programs/hex/riscv_lite/rv32ui_${test_name}.hex"
   sim_build_dir="$SCRIPT_DIR/build/riscv_lite/verilator/${test_name}"
   isa_test_name="rv32ui_${test_name}"
 

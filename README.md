@@ -98,7 +98,7 @@ full scope.
 | `rtl/soc/` | Top-level wrapper, MMIO decoder, and system address map |
 | `rtl/filelist.f` | RTL compilation list, with packages listed before their users |
 | `tb/` | Directed SystemVerilog module and processor testbenches |
-| `programs/` | Hand-written assembly smoke programs and instruction images |
+| `programs/` | `asm/` for local assembly sources; `hex/` for instruction images |
 | `sim/` | Build and test runners |
 | `software/` | Linker script, minimal runtime, ISA-lite environment, and build helpers |
 | `docs/` | Datapath diagram, architecture, design rationale, verification notes, tool notes, and backlog |

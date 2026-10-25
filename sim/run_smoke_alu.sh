@@ -10,8 +10,8 @@ cd "$REPO_ROOT"
 mkdir -p "$SIM_BUILD_DIR"
 
 bash "$SCRIPT_DIR/build_hex.sh" \
-  programs/smoke_alu.s \
-  programs/smoke_alu.hex
+  programs/asm/smoke_alu.s \
+  programs/hex/smoke_alu.hex
 
 verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
   -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \

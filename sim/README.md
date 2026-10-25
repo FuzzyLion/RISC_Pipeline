@@ -47,9 +47,13 @@ Build one local assembly program:
 
 ```bash
 bash sim/build_hex.sh \
-  programs/smoke_basic.s \
-  programs/smoke_basic.hex
+  programs/asm/smoke_basic.s \
+  programs/hex/smoke_basic.hex
 ```
+
+If the output argument is omitted, `build_hex.sh` writes
+`programs/hex/<source-basename>.hex`. Keep local assembly sources in
+`programs/asm/`; the shared trap handler remains in `software/runtime/`.
 
 Build an image from multiple assembly sources:
 
@@ -98,16 +102,21 @@ above for the details of this flow.
 
 ## Generated Files
 
-Generated output is stored under `sim/build/`:
+Instruction images are grouped under `programs/hex/`; intermediate compiler
+and simulator output stays under the ignored `sim/build/` directory:
 
 | Path | Contents |
 | --- | --- |
+| `programs/asm/` | Local hand-written assembly sources |
+| `programs/hex/` | Local program instruction images |
+| `programs/hex/riscv_lite/` | Generated upstream ISA-lite instruction images, ignored by Git |
 | `sim/build/programs/` | Preprocessed assembly, ELF, dump, and map files for local programs |
 | `sim/build/<test>/obj_dir/` | Verilator-generated C++ and simulation executables |
-| `sim/build/riscv_lite/` | ISA-lite ELF, dump, hex, and Verilator output |
+| `sim/build/riscv_lite/` | ISA-lite ELF, dump, and Verilator output |
 
-These files are build artifacts. They may be deleted and regenerated and
-should not be edited as source files.
+HEX images and intermediate output can be regenerated from the assembly
+sources. Edit assembly sources, not generated instruction images. The local
+HEX images remain tracked; ISA-lite images and intermediate output are ignored.
 
 ## Build-Path Boundary
 

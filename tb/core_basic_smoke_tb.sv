@@ -15,7 +15,7 @@ module core_smoke_tb
     */
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_basic.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_basic.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

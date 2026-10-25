@@ -8,7 +8,7 @@ module core_smoke_unsupported_csr_trap_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("sim/build/smoke_unsupported_csr_trap/program.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_unsupported_csr_trap.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

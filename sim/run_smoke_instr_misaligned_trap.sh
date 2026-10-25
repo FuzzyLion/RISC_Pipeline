@@ -10,8 +10,8 @@ cd "$REPO_ROOT"
 mkdir -p "$SIM_BUILD_DIR"
 
 bash "$SCRIPT_DIR/build_hex.sh" \
-  programs/smoke_instr_misaligned_trap.s \
-  programs/smoke_instr_misaligned_trap.hex \
+  programs/asm/smoke_instr_misaligned_trap.s \
+  programs/hex/smoke_instr_misaligned_trap.hex \
   software/runtime/trap_handler.s
 
 verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \

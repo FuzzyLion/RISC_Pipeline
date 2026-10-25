@@ -10,8 +10,8 @@ cd "$REPO_ROOT"
 mkdir -p "$SIM_BUILD_DIR"
 
 bash "$SCRIPT_DIR/build_hex.sh" \
-  programs/smoke_timer_interrupt.s \
-  programs/smoke_timer_interrupt.hex \
+  programs/asm/smoke_timer_interrupt.s \
+  programs/hex/smoke_timer_interrupt.hex \
   software/runtime/trap_handler.s
 
 verilator -sv --timing --binary --trace -Wall -Wno-fatal -Werror-UNOPTFLAT \

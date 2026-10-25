@@ -8,7 +8,7 @@ module core_smoke_hazard_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_hazard.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_hazard.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

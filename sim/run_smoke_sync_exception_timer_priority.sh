@@ -9,8 +9,8 @@ cd "$REPO_ROOT"
 mkdir -p "$SIM_BUILD_DIR"
 
 bash "$SCRIPT_DIR/build_hex.sh" \
-  programs/smoke_sync_exception_timer_priority.s \
-  programs/smoke_sync_exception_timer_priority.hex \
+  programs/asm/smoke_sync_exception_timer_priority.s \
+  programs/hex/smoke_sync_exception_timer_priority.hex \
   software/runtime/trap_handler.s
 
 verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \

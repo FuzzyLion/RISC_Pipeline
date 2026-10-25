@@ -8,7 +8,7 @@ module core_smoke_alu_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_alu.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_alu.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

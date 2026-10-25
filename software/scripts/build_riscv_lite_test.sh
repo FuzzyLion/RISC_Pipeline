@@ -7,7 +7,7 @@ if [[ $# -lt 1 || $# -gt 2 ]]; then
 fi
 
 ASM_FILE="$1"
-HEX_FILE="${2:-sim/build/riscv_lite/hex/$(basename "${ASM_FILE%.S}").hex}"
+HEX_FILE="${2:-programs/hex/riscv_lite/$(basename "${ASM_FILE%.S}").hex}"
 
 if [[ ! -f "$ASM_FILE" ]]; then
   echo "ERROR: input assembly file not found: $ASM_FILE" >&2

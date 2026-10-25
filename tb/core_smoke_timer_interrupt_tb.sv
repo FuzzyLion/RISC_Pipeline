@@ -8,7 +8,7 @@ module core_smoke_timer_interrupt_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_timer_interrupt.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_timer_interrupt.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

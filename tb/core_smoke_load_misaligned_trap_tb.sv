@@ -8,7 +8,7 @@ module core_smoke_load_misaligned_trap_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_load_misaligned_trap.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_load_misaligned_trap.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

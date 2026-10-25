@@ -9,8 +9,8 @@ cd "$REPO_ROOT"
 mkdir -p "$SIM_BUILD_DIR"
 
 bash "$SCRIPT_DIR/build_hex.sh" \
-  programs/smoke_unsupported_csr_trap.s \
-  programs/smoke_unsupported_csr_trap.hex \
+  programs/asm/smoke_unsupported_csr_trap.s \
+  programs/hex/smoke_unsupported_csr_trap.hex \
   software/runtime/trap_handler.s
 
 verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \

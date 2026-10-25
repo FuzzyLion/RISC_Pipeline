@@ -8,7 +8,7 @@ module core_smoke_illegal_trap_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_illegal_trap.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_illegal_trap.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

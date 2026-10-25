@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module core_isa_lite_tb #(
-    parameter string IMEM_INIT_FILE = "programs/isa/rv32ui_addi.hex",
+    parameter string IMEM_INIT_FILE = "programs/hex/riscv_lite/rv32ui_addi.hex",
     parameter string ISA_TEST_NAME = "rv32ui_addi"
 );
 

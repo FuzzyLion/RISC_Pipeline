@@ -93,7 +93,7 @@ Run one ISA-lite test by name:
 bash sim/run_isa_lite.sh ori
 ```
 
-The ISA-lite runner builds each selected upstream `rv32ui` test through `software/scripts/build_riscv_lite_test.sh`, extracts the instruction words into `sim/build/riscv_lite/hex/`, loads the resulting `.hex` file into instruction memory, and uses `tb/core_isa_lite_tb.sv` to watch `x31` for pass/fail completion.
+The ISA-lite runner builds each selected upstream `rv32ui` test through `software/scripts/build_riscv_lite_test.sh`, extracts the instruction words into `programs/hex/riscv_lite/`, loads the resulting `.hex` file into instruction memory, and uses `tb/core_isa_lite_tb.sv` to watch `x31` for pass/fail completion.
 
 ## Directed Testbench Style
 
@@ -120,11 +120,11 @@ delay, and checks explicitly.
 
 ## Directory Roles
 
-`programs/` contains the local hand-written processor-level test programs. Files such as `programs/smoke_alu.s` and `programs/smoke_branch.s` capture stable test intent and belong to this project. Their matching `.hex` images are the instruction-memory inputs used by the smoke testbenches.
+`programs/asm/` contains the local hand-written processor-level test programs. Files such as `programs/asm/smoke_alu.s` and `programs/asm/smoke_branch.s` capture stable test intent and belong to this project. Their matching images under `programs/hex/` are the instruction-memory inputs used by the smoke testbenches. `sim/build_hex.sh` defaults to `programs/hex/<source-basename>.hex` when no output path is supplied.
 
-`sim/build/programs/` contains build output. Scripts such as `sim/build_hex.sh` take files from `programs/` and generate temporary `.elf`, `.dump`, and preprocessed assembly files under `sim/build/programs/`. These files are useful for debugging and disassembly, but they can be deleted and regenerated at any time.
+`sim/build/programs/` contains build output. Scripts such as `sim/build_hex.sh` take files from `programs/asm/` and generate temporary `.elf`, `.dump`, and preprocessed assembly files under `sim/build/programs/`. These files are useful for debugging and disassembly, but they can be deleted and regenerated at any time.
 
-The selected upstream `riscv-tests` flow follows the same rule: the external source lives under the ignored `tools/riscv-tests/` tree, the local adaptation is tracked under `software/tests/riscv_lite/`, and generated `.elf`, `.dump`, and `.hex` files stay under the ignored `sim/build/riscv_lite/` directory.
+For the selected upstream `riscv-tests` flow, the external source lives under the ignored `tools/riscv-tests/` tree and the local adaptation is tracked under `software/tests/riscv_lite/`. Generated instruction images go to the ignored `programs/hex/riscv_lite/` directory; `.elf`, `.dump`, and simulator output stay under the ignored `sim/build/riscv_lite/` directory.
 
 ## riscv-tests Integration
 
@@ -163,7 +163,7 @@ upstream rv32ui/*.S
   -> ELF file
   -> riscv64-elf-objdump
   -> awk extracts instruction words
-  -> sim/build/riscv_lite/hex/*.hex
+  -> programs/hex/riscv_lite/*.hex
   -> $readmemh initializes instr_mem
   -> pipeline executes program
   -> x31 reports pass or fail

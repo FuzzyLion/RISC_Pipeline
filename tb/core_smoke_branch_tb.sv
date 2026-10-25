@@ -8,7 +8,7 @@ module core_smoke_branch_tb
     logic reset;
 
     top #(
-        .IMEM_INIT_FILE("programs/smoke_branch.hex")
+        .IMEM_INIT_FILE("programs/hex/smoke_branch.hex")
     ) dut (
         .clk(clk),
         .reset(reset)

@@ -18,10 +18,11 @@ does not depend on privileged behavior.
 - `software/scripts/build_riscv_lite_test.sh` compiles a selected official
   `.S` file into the `.hex` instruction-memory format used by the current
   Verilator tests.
-- `sim/build/riscv_lite/` stores generated `.elf`, `.dump`, and `.hex` files.
-  These are build artifacts and are intentionally not committed.
-- `programs/` is reserved for local hand-written smoke programs that are part
-  of this project.
+- `sim/build/riscv_lite/` stores generated `.elf`, `.dump`, and simulator output.
+- `programs/asm/` stores local hand-written programs; `programs/hex/` stores
+  their instruction images. Upstream instruction images are generated under
+  `programs/hex/riscv_lite/`. These upstream images and the intermediate output
+  under `sim/build/` are intentionally not committed.
 
 To prepare the ignored upstream dependency, run this from the repository root:
 
@@ -70,7 +71,8 @@ Run:
 bash sim/run_isa_lite.sh
 ```
 
-This builds each selected upstream source, writes generated files under
+This builds each selected upstream source, writes instruction images under
+`programs/hex/riscv_lite/` and intermediate output under
 `sim/build/riscv_lite/`, and runs the program on the current core. The default
 set is limited to tests that have been observed passing and do not require
 initialized data memory, CSR behavior, traps, or privileged execution.

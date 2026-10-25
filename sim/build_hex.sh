@@ -7,7 +7,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 ASM_FILE="$1"
-HEX_FILE="${2:-${ASM_FILE%.s}.hex}"
+HEX_FILE="${2:-programs/hex/$(basename "${ASM_FILE%.*}").hex}"
 ASM_FILES=("$ASM_FILE")
 
 if [[ $# -gt 2 ]]; then

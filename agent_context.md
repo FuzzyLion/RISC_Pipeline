@@ -44,7 +44,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | `rtl/soc/` | Top-level wrapper, MMIO decoder, system address map |
 | `rtl/filelist.f` | Integrated RTL compilation list; packages precede their users |
 | `tb/` | Directed module and processor testbenches |
-| `programs/` | Local assembly smoke programs and instruction images |
+| `programs/` | Local assembly sources in `asm/`; instruction images in `hex/` |
 | `sim/` | Test and build runners; generated output in ignored `sim/build/` |
 | `software/` | Linker script, minimal trap runtime, ISA-lite environment, build scripts |
 | `docs/` | Datapath diagram, architecture, verification, rationale, tool notes, backlog |

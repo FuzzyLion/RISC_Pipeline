@@ -9,8 +9,8 @@ cd "$REPO_ROOT"
 
 mkdir -p "$SIM_BUILD_DIR"
 
-if [[ -f programs/smoke_basic.s ]]; then
-  bash "$SCRIPT_DIR/build_hex.sh" programs/smoke_basic.s programs/smoke_basic.hex
+if [[ -f programs/asm/smoke_basic.s ]]; then
+  bash "$SCRIPT_DIR/build_hex.sh" programs/asm/smoke_basic.s programs/hex/smoke_basic.hex
 fi
 
 verilator -sv --timing --binary --trace -Wall -Wno-fatal -Werror-UNOPTFLAT \
