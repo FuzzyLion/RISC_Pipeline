@@ -170,7 +170,8 @@ memory, and the later Cache all depend on it.
 The current RTL and tests establish a focused baseline, not complete ISA or
 privileged compliance. Important limitations include:
 
-- No external request/response memory interface or SoC wrapper
+- No external request/response memory interface or full SoC integration;
+  `rtl/soc/top.sv` is currently a thin wrapper
 - No software or external interrupts
 - No vectored `mtvec`, nested traps, or production-quality context-save runtime
 - Timer support is one-shot; periodic scheduling is not implemented

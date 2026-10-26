@@ -12,7 +12,7 @@ Make the pipeline behave correctly under common data and control hazards, with o
 ## Key Decisions
 
 1. Branches are resolved in `EX`, so the flush range follows that choice.
-2. Memory accesses are not assumed to finish in 1 cycle, so memory-side waits must be part of the stall design.
+2. The completed baseline uses internal memories with fixed timing. Variable-latency memory waits and pipeline holds are deferred to Phase 5.
 3. The first load-use implementation follows the textbook approach: hold Fetch and Decode, clear the Execute pipeline register, and insert one bubble into EX.
 
 ## Detailed Tasks
@@ -27,33 +27,38 @@ Make the pipeline behave correctly under common data and control hazards, with o
 1. Implement flushes caused by branches and jumps.
 2. Align the flush rules with redirect behavior in `EX`.
 
-### Task 3: Handle Stalls from Handshake-Based Memory Access
+### Task 3: Handle Stalls from Handshake-Based Memory Access (Deferred to Phase 5)
 
 1. Add pipeline hold control for memory waits.
 2. Keep a data-hazard stall distinct from a memory-wait stall.
 
 ### Task 4: Unify the Priority Rules
 
-1. Define the priority relationship between `stall`, `flush`, `redirect`, and `memory_wait`.
+1. Define current trap, redirect, and load-use priorities. Add `memory_wait` ordering when Phase 5 introduces request/response memory.
 2. Keep hazard control in a dedicated module or another clearly defined control unit.
 
 ## Current Control Semantics
 
 This section records the conventions already used by the current datapath drawing and pipeline-register RTL.
 
+The current priority is accepted trap, then branch/jump or `mret` redirect,
+then load-use stall, then normal flow. Memory-wait priority remains Phase 5 work.
+
 ### Load-Use Hazard
 
-Use the first-version RV32I load-use rule:
+The current RTL stalls only for a real source-register dependency:
 
 ```systemverilog
-lw_stall = result_src_E_is_load &&
-           ((rd_idx_E == rs1_idx_D) || (rd_idx_E == rs2_idx_D)) &&
-           (rd_idx_E != 5'd0);
+lwstall = valid_D && valid_E && ctrl_E.rf_write &&
+          (rd_idx_E != '0) && (ctrl_E.result_src == RSLT_RDATA) &&
+          (((rs1_idx_D == rd_idx_E) && uses_rs1_D) ||
+           ((rs2_idx_D == rd_idx_E) && uses_rs2_D));
 ```
 
-`result_src_E_is_load` can be written as `result_src_E == MEM_RESULT_ENCODING`, or replaced later with an explicit `mem_read_E`. If `result_src_E` is used, its encoding must stay stable so the Hazard Unit and Control Unit never disagree about whether an instruction is a load.
+Decode supplies `uses_rs1_D` and `uses_rs2_D`; immediate and CSR address fields
+must not create false register dependencies.
 
-When `lw_stall=1`, the control actions are:
+When `lwstall=1`, the control actions are:
 
 1. `stall_F = 1`
    Hold the PC and do not fetch a new instruction.
@@ -66,13 +71,14 @@ This does not remove the load that is already in EX. The load continues into MEM
 
 ### Branch and Jump Redirects
 
-Branches and jumps currently decide redirects in EX. The recommended PC-selection rule is:
+Branches and jumps currently decide redirects in EX. `pc_src_E` is an enum,
+and the Hazard Unit recognizes both normal target and `mret` redirects:
 
 ```systemverilog
-pc_src_E = jump_E || (branch_E && branch_taken_E);
+redirect = (pc_src_E == PC_TARGET) || (pc_src_E == PC_MRET);
 ```
 
-When `pc_src_E=1`, flush the wrong-path instructions that are younger than the instruction in EX. In the current five-stage design, this normally means at least:
+When `redirect=1`, flush the wrong-path instructions that are younger than the instruction in EX. In the current five-stage design, this normally means at least:
 
 1. `flush_D = 1`
    Clear the wrong-path instruction in `IF/ID`.
@@ -86,9 +92,9 @@ Do not flush the branch or jump itself from `EX/MEM` in this phase. It is the ol
 Forwarding should produce the real `rs1` and `rs2` operands used in EX. Keep two selects:
 
 1. `forward_AE`
-   Select `rs1_val_E`, `alu_result_M`, or `result_W`.
+   Select `rs1_val_E`, `alu_result_M`, `csr_rdata_M`, or `result_W`.
 2. `forward_BE`
-   Select `rs2_val_E`, `alu_result_M`, or `result_W`.
+   Select `rs2_val_E`, `alu_result_M`, `csr_rdata_M`, or `result_W`.
 
 The ALU B path should first forward the real `rs2` value, then let `alu_src_E` choose between that forwarded value and `imm_E`. Store data, `write_data_E`, must come from the forwarded `rs2`, not from `src_B_E`. Otherwise, an `sw` with `alu_src_E=1` would incorrectly use the immediate as store data.
 
@@ -133,7 +139,7 @@ When that extension arrives, redefine:
 1. Forwarding selections are correct.
 2. Bubble insertion and stall behavior are correct.
 3. Wrong-path instructions are flushed correctly.
-4. The pipeline does not advance incorrectly while the memory interface is waiting.
+4. Deferred to Phase 5: prove pipeline holds and exactly-once memory side effects under request/response waits.
 
 ## Risks and Notes
 

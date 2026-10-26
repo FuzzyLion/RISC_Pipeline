@@ -10,7 +10,7 @@ If you want to use this as your main internship project, aim for the standard be
 
 ### Non-Negotiable Requirements
 
-1. You can explain the full architecture clearly in 3 to 5 minutes: `RV32I`, the five-stage pipeline, `branch` resolution in `EX`, the handshake-based memory interface, and the main Hazard Unit strategy.
+1. You can explain the full architecture clearly in 3 to 5 minutes: `RV32I`, the five-stage pipeline, `branch` resolution in `EX`, the current internal-memory timing, and the main Hazard Unit strategy. Explain the planned Phase 5 request/response interface separately from implemented behavior.
 2. You can use your own implementation to explain how one instruction moves from `IF` to `WB`.
 3. You can explain what forwarding, stall, and flush each solve.
 4. You have a structured verification flow, not just waveforms that “look about right.”

@@ -10,7 +10,7 @@ The boundary matters. This is not full RISC-V privileged-architecture support.
 It is the smallest design that makes traps precise, testable, and useful for
 the next SoC phase.
 
-The seventeen-test directed regression that protects this milestone is
+The nineteen-test directed regression that protects this milestone is
 registered in `sim/run_regression.sh`.
 
 ## 1. Scope
@@ -327,6 +327,7 @@ streams.
 | Target alignment | JALR bit-0 clearing and taken-target alignment in `pc_target_gen_tb.sv` |
 | Mixed CSR/trap flow | Old-value writeback, pure reads, two `ebreak` sites, one `ecall`, handler preservation, `mepc`, and `mret` in `smoke_csr_trap` |
 | Precise synchronous traps | Separate illegal-instruction and instruction/load/store-misaligned smokes |
+| Unsupported CSR and exception priority | Separate `CSRRW` smokes for unsupported CSR access and collision with an enabled pending real timer; cause 2, metadata, flushing, and suppressed side effects |
 | Machine timer | MMIO programming, disabled pending state, cause 7, D/E/M flushing, one-shot acknowledgement, register preservation, and `mret` re-execution |
 
 The precise-trap smokes check more than `mcause`. They prove that a younger
@@ -342,7 +343,7 @@ The timer smoke checks that:
 5. The handler moves `mtimecmp` into the future and clears `mie.MTIE`.
 6. `mret` returns to the saved `mepc`, and that instruction is re-executed.
 
-The regression contains seven module tests and ten processor smoke tests. A
+The regression contains seven module tests and twelve processor smoke tests. A
 green result is strong evidence for this scoped milestone, but it does not
 claim complete privileged compliance.
 
@@ -356,8 +357,9 @@ meaning of a nonzero value; the architectural trap record remains `mcause`,
 Future work should preserve the current ownership boundaries. Do not widen
 `csr_file.sv` or `trap_ctrl.sv` without a clear contract.
 
-1. **Broaden precise-exception coverage.** Add a processor-level unsupported
-   CSR test and more combinations of older in-flight side effects. The key
+1. **Broaden precise-exception coverage.** Extend unsupported-CSR coverage
+   beyond the existing `CSRRW` smokes, add other synchronous-exception/timer
+   collisions, and test more combinations of older in-flight side effects. The key
    invariant is still: older work completes once, the faulting instruction has
    no prohibited side effect, and younger work disappears.
 2. **Move timer ownership toward the SoC boundary.** The current internal MMIO

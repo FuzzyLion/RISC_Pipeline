@@ -1,8 +1,8 @@
 # Slang Language Server
 
-This folder is reserved for project-level Slang configuration. It currently contains documentation only; there is no `server.json`, so this folder does not change the language server's behaviour by itself.
+This folder contains project-level Slang configuration. [`server.json`](server.json) indexes the RTL and testbench directories and selects `rtl/filelist.f` as the build entry point.
 
-## Current Setup
+## Recorded Local Editor Setup
 
 - VS Code extension: **Verilog-HDL/SystemVerilog** (`mshr-h.veriloghdl`) **1.28.4**
 - Selected runtime: `bundled-wasm` in [`.vscode/settings.json`](../.vscode/settings.json)
@@ -22,4 +22,4 @@ Slang runs inside the editor and reacts to the file you are currently changing, 
 
 Neither tool executes the processor over clock cycles. That is dynamic simulation, and it still belongs to the directed tests and regression scripts under `sim/`.
 
-If the project later needs an explicit Slang file index, build configuration, or top-level setting, add the appropriate project configuration here and document why it is needed. Keep Verilator lint enabled as well: it checks the project's actual RTL file list and remains the closer match to the simulation build.
+When source directories or the compilation entry point change, update `server.json` alongside `rtl/filelist.f` and document any additional configuration here. Keep Verilator lint enabled as well: it checks the project's actual RTL file list and remains the closer match to the simulation build.

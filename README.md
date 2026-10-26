@@ -39,7 +39,7 @@ registers, exception causes, and interrupt behavior.
 
 ## Verification and Quick Start
 
-The directed Verilator regression registers **seven module tests and ten
+The directed Verilator regression registers **seven module tests and twelve
 processor smoke tests**. These check local datapath and control behavior,
 pipeline integration, and selected precise-trap and timer scenarios. A separate
 ISA-lite runner executes selected upstream `rv32ui` programs using a local
@@ -119,6 +119,11 @@ integration into the SoC is part of the Phase 5 interface work.
 - [Phased implementation plan](docs/plans/README.md)
 - [Deferred ideas](docs/backlog.md)
 - [Tool-chain notes](docs/tool-chain-notes/)
+
+[AGENTS.md](AGENTS.md) defines a teaching-first AI collaboration workflow: the
+author leads design, implementation, and validation, with AI supporting
+explanations, design discussions, and review. [agent_context.md](agent_context.md)
+provides a concise project map, current status, and technical boundaries.
 
 ## Project Direction
 

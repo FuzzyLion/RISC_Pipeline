@@ -399,6 +399,14 @@ assign mem_write_real_M = valid_M && mem_write_M;
 
 Do not place this combinational logic inside the pipeline-register modules. A pipeline register only stores, clears, or holds fields. The WB stage, MEM stage, or top-level datapath decides how those fields produce architectural side effects.
 
+### Current RTL Versus the Initial Conventions
+
+Sections 10.5–10.7 retain the initial bring-up conventions. In the current RTL,
+the fourth writeback encoding carries CSR read data, and `pc_src_E` is an enum
+including `PC_TARGET` and `PC_MRET`, rather than the Boolean shown below.
+See [the current architecture](../../core-architecture.md) and
+[current hazard semantics](../core/phase-2-hazard-control.md#current-control-semantics).
+
 ### 10.5 WB Result-Mux Encoding
 
 `result_src_[D/E/M/W]` remains 2 bits. The first version should use:

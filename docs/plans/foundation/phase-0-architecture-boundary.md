@@ -9,6 +9,14 @@ Hard limit: 1 week
 
 Before writing a large amount of RTL, freeze the first version's feature scope, module boundaries, key control policies, and interface semantics. This should prevent broad rework later when Hazard control, CSR, Cache, and FPU are added.
 
+## Implementation Status
+
+This document records the original architecture target. The current baseline
+through the minimum Phase 4 milestone uses internal instruction and data
+memories. The request/response ports and variable-latency holds described below
+are deferred to Phase 5. Read the
+[current architecture](../../core-architecture.md) for implemented behavior.
+
 ## Principles for Freezing the Design
 
 1. Keep the architecture target separate from the Phase 1 bring-up subset.
@@ -20,7 +28,7 @@ Before writing a large amount of RTL, freeze the first version's feature scope, 
 
 1. The first architecture target is a five-stage `RV32I` pipeline, while the Phase 1 bring-up subset may be smaller than full `RV32I`.
 2. Final `branch` and `jump` decisions are made in `EX`.
-3. Both instruction and data ports use a minimal handshake interface, with at most one outstanding request per port.
+3. The Phase 5 target is a minimal request/response interface for both instruction and data ports, with at most one outstanding request per port. The current baseline still uses internal memories.
 4. The first version does not implement `M`, `F`, Cache, FPU, branch prediction, out-of-order execution, or register renaming.
 5. The first version only needs to support a minimal Machine Mode loop later. This phase freezes the interfaces and control boundaries without implementing the full CSR path early.
 6. The target board is the NEXYS Artix-7. Board clocking, reset, constraints,

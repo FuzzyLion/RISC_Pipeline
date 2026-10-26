@@ -13,7 +13,7 @@ Get the main CPU pipeline running simple, hazard-free programs before the comple
 
 1. This phase does not need to solve every hazard.
 2. The priority is to get the main datapath and cross-stage control flow right.
-3. Every memory access must use the handshake interface defined in Phase 0.
+3. The completed Phase 1 baseline uses internal memories. The request/response interface originally targeted in Phase 0 is deferred to Phase 5.
 
 ## Detailed Tasks
 
@@ -61,14 +61,14 @@ Get the main CPU pipeline running simple, hazard-free programs before the comple
 1. Run basic programs without complex data dependencies.
 2. Check register writeback results and PC updates.
 3. Verify that branch redirects from `EX` behave as expected.
-4. Verify that the handshake-based instruction interface works with no wait states.
+4. Verify instruction fetch and program execution with the current internal instruction memory. Request/response and wait-state checks belong to Phase 5.
 5. The first RV32I-only version assumes `pc_F[1:0] == 2'b00`. Instruction memory only converts the byte address into a word-array index by using `pc_F[MEM_ADDR_WIDTH + 1:2]`; misaligned fetches are not handled inside instruction memory in this phase.
 
 ## Risks and Notes
 
 1. Do not make every stall path complicated in this phase.
 2. First make instructions flow correctly. Handle complex dependencies afterward.
-3. Every memory path must use the shared interface. Do not add one-off bypasses just to move faster.
+3. Preserve the current internal-memory contract during this baseline. Introduce a shared request/response interface and its adapter deliberately in Phase 5.
 
 ## Exit Conditions
 
