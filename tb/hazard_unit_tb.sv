@@ -54,6 +54,17 @@ module hazard_unit_tb
     );
 
     // -------------------------- FUNCTION TESTS -------------------------
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, hazard_unit_tb);
+        end
+    end
+`endif
+
     initial begin : test_sequence
         test_no_hazard();
         test_mem_forward_rs1();

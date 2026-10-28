@@ -32,6 +32,17 @@ module pc_target_gen_tb
         .pc_src_E(pc_src_E)
     );
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, pc_target_gen_tb);
+        end
+    end
+`endif
+
     initial begin
         test_pc_relative_positive_offset();
         test_pc_relative_negative_offset();

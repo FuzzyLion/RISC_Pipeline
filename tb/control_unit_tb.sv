@@ -566,6 +566,17 @@ module control_unit_tb
     );
 
     // -------------------------- FUNCTION TESTS -------------------------
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, control_unit_tb);
+        end
+    end
+`endif
+
     initial begin
         test_no_instr();
         test_addi_instr();
@@ -956,7 +967,7 @@ module control_unit_tb
         expected_ctrl = CTRL_STYPE;
         #1;
 
-        check_ctrl_bundle("S-Type control bundle", CTRL_STYPE);
+        check_ctrl_bundle("S-Type SW control bundle", expected_ctrl);
         check_imm_src("S mode imm", IMM_S);
         check_source_usage("test_sw_instr", 1'b1, 1'b1);
     endtask 

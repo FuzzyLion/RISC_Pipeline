@@ -83,6 +83,11 @@ You can also run a subset by name:
 bash sim/run_isa_lite.sh addi beq
 ```
 
+Tracing is disabled by default. To inspect one case's signal timing, run
+`TRACE=1 bash sim/run_isa_lite.sh ori`; its VCD is saved as
+`sim/build/riscv_lite/verilator/ori/rv32ui_ori.vcd`. See the
+[waveform guide](../../../sim/README.md#waveforms) for viewing commands.
+
 The legacy single-test wrapper still works:
 
 ```bash

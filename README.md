@@ -68,6 +68,17 @@ Run one ISA-lite test:
 bash sim/run_isa_lite.sh ori
 ```
 
+Waveform tracing is disabled by default. Set `TRACE=1` to generate a VCD
+for a test, then open it with GTKWave if installed:
+
+```bash
+TRACE=1 bash sim/run_data_mem.sh
+gtkwave sim/build/data_mem/data_mem_tb.vcd
+```
+
+The same switch works with the regression and ISA-lite runners. See the
+[waveform guide](sim/README.md#waveforms) for output paths and examples.
+
 See the [simulation guide](sim/README.md) for build commands and generated-file
 locations, and [verification evidence and gaps](docs/verification.md) for the
 coverage boundaries.

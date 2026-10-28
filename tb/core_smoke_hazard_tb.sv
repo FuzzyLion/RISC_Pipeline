@@ -20,17 +20,21 @@ module core_smoke_hazard_tb
     localparam logic [WORD_WIDTH - 1:0] LOAD_TARGET_JALR = 32'h00058667; // jalr x12, 0(x11)
     int unsigned load_jalr_stall_cycles;
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, core_smoke_hazard_tb);
+        end
+    end
+`endif
+
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;
         // Always flip per half period, 5ns
-    end
-
-    initial begin
-        $dumpfile("sim/build/smoke/hazard_smoke.vcd"); 
-        // Create the VCD (Value Change Dump) files to observe the waveforms
-        $dumpvars(0, core_smoke_hazard_tb);
-        // Variables oberservations control
     end
 
     initial begin

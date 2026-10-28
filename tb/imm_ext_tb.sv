@@ -14,6 +14,17 @@ module imm_ext_tb
         .imm_D(imm_D)
     );
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, imm_ext_tb);
+        end
+    end
+`endif
+
     initial begin : test_sequence
         test_default_zero_ext();
         test_itype_ext();

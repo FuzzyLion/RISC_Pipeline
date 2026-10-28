@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+source "$SCRIPT_DIR/trace.sh"
 SIM_BUILD_DIR="$SCRIPT_DIR/build/smoke_unsupported_csr_trap"
 
 cd "$REPO_ROOT"
@@ -13,7 +15,7 @@ bash "$SCRIPT_DIR/build_hex.sh" \
   programs/hex/smoke_unsupported_csr_trap.hex \
   software/runtime/trap_handler.s
 
-verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
+run_verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
   -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
   --top-module core_smoke_unsupported_csr_trap_tb \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
@@ -21,4 +23,5 @@ verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
   -f rtl/filelist.f \
   tb/core_smoke_unsupported_csr_trap_tb.sv
 
-"$SIM_BUILD_DIR/obj_dir/core_smoke_unsupported_csr_trap"
+run_simulation "$SIM_BUILD_DIR/core_smoke_unsupported_csr_trap_tb.vcd" \
+  "$SIM_BUILD_DIR/obj_dir/core_smoke_unsupported_csr_trap"

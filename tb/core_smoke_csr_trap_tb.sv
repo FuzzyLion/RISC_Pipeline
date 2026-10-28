@@ -18,14 +18,20 @@ module core_smoke_csr_trap_tb
     localparam int TIMEOUT_CYCLES = 400;
     localparam logic [WORD_WIDTH - 1:0] PASS_VALUE = 32'd1;
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, core_smoke_csr_trap_tb);
+        end
+    end
+`endif
+
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;
-    end
-
-    initial begin
-        $dumpfile("sim/build/smoke_csr_trap/smoke_csr_trap.vcd");
-        $dumpvars(0, core_smoke_csr_trap_tb);
     end
 
     initial begin

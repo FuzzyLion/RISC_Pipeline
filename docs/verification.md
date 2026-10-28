@@ -111,6 +111,11 @@ bash sim/run_isa_lite.sh ori
 
 The ISA-lite runner builds each selected upstream `rv32ui` test through `software/scripts/build_riscv_lite_test.sh`, extracts the instruction words into `programs/hex/riscv_lite/`, loads the resulting `.hex` file into instruction memory, and uses `tb/core_isa_lite_tb.sv` to watch `x31` for pass/fail completion.
 
+All testbenches support optional VCD output through `TRACE=1`; tracing is
+disabled by default. Waveforms help inspect timing and signal interactions,
+while pass/fail remains determined by the testbench checks. See the
+[waveform guide](../sim/README.md#waveforms) for commands and output paths.
+
 ## Directed Testbench Style
 
 Directed SystemVerilog unit tests should favor readability over compact
@@ -239,6 +244,11 @@ Use this order:
 6. After fixing the issue, run both the focused test and the full regression.
 
 The dump identifies the failing instruction stream, not the root cause by itself. Find the root cause by reducing the sequence and matching the symptom to the smallest module or integration boundary that can explain it.
+
+When signal timing is needed, rerun the failing case with tracing, for example
+`TRACE=1 bash sim/run_isa_lite.sh ori`. This writes
+`sim/build/riscv_lite/verilator/ori/rv32ui_ori.vcd`. A `.dump` file is an
+assembly disassembly listing; a `.vcd` file records simulation signal changes.
 
 ## Issues Encountered During Integration
 

@@ -18,26 +18,21 @@ module core_smoke_branch_tb
     localparam int TIMEOUT_CYCLES = 80;
     localparam logic [WORD_WIDTH - 1:0] PASS_VALUE = 32'd1;
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, core_smoke_branch_tb);
+        end
+    end
+`endif
+
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;
         // Toggle clock every half period
-    end
-
-    initial begin
-        $dumpfile("sim/build/smoke_branch/core_branch_smoke.vcd"); 
-        // Create the VCD (Value Change Dump) files to observe the waveforms
-        $dumpvars(0, core_smoke_branch_tb);
-        
-        /* 
-        Variables oberservations control,
-
-        For example: 
-        0 means record signals in all layers; 
-        1 means only record the signals in core module;
-        2 means only record the signals in core & it's lower level modules...
-        etc.
-        */
     end
 
     initial begin

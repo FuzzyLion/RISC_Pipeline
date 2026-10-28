@@ -31,6 +31,17 @@ module core_smoke_sync_exception_timer_priority_tb
     logic [31:0] captured_mepc;
     logic [31:0] captured_mtvec;
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, core_smoke_sync_exception_timer_priority_tb);
+        end
+    end
+`endif
+
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;

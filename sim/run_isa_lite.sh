@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+source "$SCRIPT_DIR/trace.sh"
+
 default_tests=(
   addi
   slti
@@ -62,7 +64,7 @@ for test_name in "${tests[@]}"; do
     exit 1
   fi
 
-  verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
+  run_verilator -sv --timing --binary -Wall -Wno-fatal -Werror-UNOPTFLAT \
     -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL \
     -GIMEM_INIT_FILE="\"$hex_file\"" \
     -GISA_TEST_NAME="\"$isa_test_name\"" \
@@ -72,7 +74,8 @@ for test_name in "${tests[@]}"; do
     -f rtl/filelist.f \
     tb/core_isa_lite_tb.sv
 
-  "$sim_build_dir/obj_dir/core_isa_lite_${test_name}"
+  run_simulation "$sim_build_dir/${isa_test_name}.vcd" \
+    "$sim_build_dir/obj_dir/core_isa_lite_${test_name}"
 
   echo "$isa_test_name PASSED"
 done

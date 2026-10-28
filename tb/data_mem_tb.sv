@@ -26,14 +26,20 @@ module data_mem_tb
     localparam int CLK_PERIOD_NS = 10;
     localparam int TIMEOUT_CYCLES = 80;
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, data_mem_tb);
+        end
+    end
+`endif
+
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS / 2) clk = ~clk;
-    end
-
-    initial begin
-        $dumpfile("sim/build/data_mem/data_mem_tb.vcd");
-        $dumpvars(0, data_mem_tb);
     end
 
     initial begin : test_sequence

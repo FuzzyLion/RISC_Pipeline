@@ -36,6 +36,17 @@ module alu_op_tb
         .alu_result_E(alu_result_E)
     );
 
+`ifdef TRACE_VCD
+    // The runner supplies an absolute path only when TRACE=1.
+    initial begin : waveform_dump
+        string trace_file;
+        if ($value$plusargs("trace=%s", trace_file)) begin
+            $dumpfile(trace_file);
+            $dumpvars(0, alu_op_tb);
+        end
+    end
+`endif
+
     initial begin : test_sequence
         test_add_instr();
         test_add_overflow_instr();

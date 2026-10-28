@@ -3,13 +3,15 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+source "$SCRIPT_DIR/trace.sh"
 SIM_BUILD_DIR="$SCRIPT_DIR/build/hazard_unit"
 
 cd "$REPO_ROOT"
 
 mkdir -p "$SIM_BUILD_DIR"
 
-verilator -sv --timing --binary -Wall -Wno-fatal \
+run_verilator -sv --timing --binary -Wall -Wno-fatal \
   -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM \
   --top-module hazard_unit_tb \
   --Mdir "$SIM_BUILD_DIR/obj_dir" \
@@ -18,4 +20,5 @@ verilator -sv --timing --binary -Wall -Wno-fatal \
   rtl/core/control/hazard_unit.sv \
   tb/hazard_unit_tb.sv
 
-"$SIM_BUILD_DIR/obj_dir/hazard_unit_tb"
+run_simulation "$SIM_BUILD_DIR/hazard_unit_tb.vcd" \
+  "$SIM_BUILD_DIR/obj_dir/hazard_unit_tb"

@@ -43,6 +43,45 @@ Run one ISA-lite test:
 bash sim/run_isa_lite.sh ori
 ```
 
+## Waveforms
+
+All testbenches support optional VCD output. By default, runners compile and
+run without tracing. Set `TRACE=1` to enable both Verilator tracing and the
+testbench's `$dumpfile` / `$dumpvars` block:
+
+```bash
+TRACE=1 bash sim/run_data_mem.sh
+gtkwave sim/build/data_mem/data_mem_tb.vcd
+```
+
+The runner prints the absolute VCD path and saves the file in its own
+`sim/build/<test>/` directory, alongside `obj_dir/`. In particular, Basic and
+Hazard smoke waveforms are `sim/build/basic_smoke/basic_smoke.vcd` and
+`sim/build/smoke_hazard/hazard_smoke.vcd`.
+
+The same switch applies to the complete directed regression or selected
+ISA-lite cases:
+
+```bash
+TRACE=1 bash sim/run_regression.sh
+TRACE=1 bash sim/run_isa_lite.sh ori
+gtkwave sim/build/riscv_lite/verilator/ori/rv32ui_ori.vcd
+```
+
+ISA-lite saves a separate VCD for each case. Prefer selecting the case being
+debugged rather than exporting the entire batch. `TRACE=0` explicitly disables
+tracing; other values are rejected. A run without tracing leaves existing VCD
+files untouched, so their presence alone does not prove the latest run exported
+a waveform.
+
+The shared [`trace.sh`](trace.sh) helper controls compilation and passes the
+output path as `+trace=<absolute-path>`. Each testbench keeps an explicit
+`waveform_dump` block guarded by `TRACE_VCD`, which is defined only for tracing
+builds. When adding a test, follow this pattern and call `run_verilator` and
+`run_simulation` from its runner.
+
+## Building Programs
+
 Build one local assembly program:
 
 ```bash
@@ -112,7 +151,9 @@ and simulator output stays under the ignored `sim/build/` directory:
 | `programs/hex/riscv_lite/` | Generated upstream ISA-lite instruction images, ignored by Git |
 | `sim/build/programs/` | Preprocessed assembly, ELF, dump, and map files for local programs |
 | `sim/build/<test>/obj_dir/` | Verilator-generated C++ and simulation executables |
+| `sim/build/<test>/*.vcd` | Directed-test waveforms generated with `TRACE=1` |
 | `sim/build/riscv_lite/` | ISA-lite ELF, dump, and Verilator output |
+| `sim/build/riscv_lite/verilator/<case>/rv32ui_<case>.vcd` | Per-case ISA-lite waveforms generated with `TRACE=1` |
 
 HEX images and intermediate output can be regenerated from the assembly
 sources. Edit assembly sources, not generated instruction images. The local
