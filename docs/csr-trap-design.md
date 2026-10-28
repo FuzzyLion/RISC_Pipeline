@@ -93,9 +93,11 @@ handler
         +--> mret: restore mstatus and PC <- mepc
 ```
 
-This split adds a few explicit signals to `core.sv`, but the ownership stays
-easy to explain. It also keeps `csr_file.sv` from becoming a second Control
-Unit and `trap_ctrl.sv` from turning into a hidden CSR bank.
+`trap_ctrl` and `csr_file` are separate instances inside `ex_stage1`; the PC
+mux is inside `if_stage1`. `core.sv` connects the redirect/CSR feedback and
+D/E flush requests between stages and the Hazard Unit. The E-to-M kill stays
+inside `ex_stage1`, alongside `EX_MEM`. This keeps `csr_file.sv` from becoming
+a second Control Unit and `trap_ctrl.sv` from turning into a hidden CSR bank.
 
 ## 3. Key Design Decisions and Trade-offs
 

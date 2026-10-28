@@ -29,8 +29,8 @@ Read the drawing in three passes:
 The CSR Access Ctrl, CSR Read/Modify, CSR State & Update, and MIP View blocks
 describe internal responsibilities of `csr_file.sv`. Interrupt-enable checks
 and trap arbitration belong to `trap_ctrl.sv`. The drawing separates these
-responsibilities visually; [core.sv](../rtl/core/core.sv) wires the actual
-modules together, using the bundles in
+responsibilities visually; [core.sv](../rtl/core/core.sv) connects five stage
+modules and the Hazard Unit, using the bundles in
 [core_types_pkg.sv](../rtl/core/core_types_pkg.sv).
 
 ## 1. Design Boundary
@@ -52,7 +52,8 @@ wiring in `core.sv`.
 
 | Path under `rtl/` | Responsibility |
 | --- | --- |
-| `core/` | Core integration in `core.sv` and shared types in `core_types_pkg.sv` |
+| `core/` | Connections between stage modules and the Hazard Unit in `core.sv`; shared types in `core_types_pkg.sv` |
+| `core/stages/` | Independent `if_stage`, `id_stage`, `ex_stage`, `mem_stage`, and `wb_stage` modules with explicit ports |
 | `core/pipeline/` | The four pipeline registers: `IF_ID`, `ID_EX`, `EX_MEM`, and `MEM_WB` |
 | `core/datapath/` | ALU, register file, immediate and instruction-field extraction, PC logic, operand/writeback muxes, and load/store formatting |
 | `core/control/` | Instruction decode and hazard control |
@@ -65,9 +66,10 @@ Integrated simulations and editor lint use [rtl/filelist.f](../rtl/filelist.f).
 Its paths are relative to the repository root, and packages precede the modules
 that import them. Module tests list only their required source files.
 
-This layout groups files by responsibility. The current `core.sv` still wires
-the internal memories, MMIO decoder, and timer together. Moving that integration
-to the SoC layer requires the Phase 5 CPU request/response contract.
+This layout groups files by responsibility. Instruction memory remains inside
+`if_stage`, while data memory, the MMIO decoder, and the timer remain inside
+`mem_stage`, all below `core`. Moving that integration to the SoC layer requires
+the Phase 5 CPU request/response contract.
 
 ## 2. Pipeline Stages
 
@@ -82,6 +84,34 @@ to the SoC layer requires the Phase 5 CPU request/response contract.
 The four pipeline registers carry explicit `valid` bits. Flushes insert bubbles
 by clearing validity and side-effecting controls rather than allowing wrong-path
 or faulting instructions to continue.
+
+### Stage Module Boundaries
+
+Each stage is an ordinary `.sv` module with its own `core_types_pkg` import and
+explicit input/output ports. `core.sv` instantiates the stages and connects
+pipeline bundles, writeback feedback, redirects, timer IRQ, and hazard control.
+Stage wiring does not use textual `.svh` includes or require an include directory.
+
+| Source | Instance under `core` | Internal wiring and outgoing register |
+| --- | --- | --- |
+| [if_stage.sv](../rtl/core/stages/if_stage.sv) | `if_stage1` | PC mux/register, `PC + 4`, instruction memory, and `IF_ID` |
+| [id_stage.sv](../rtl/core/stages/id_stage.sv) | `id_stage1` | Control decode, register file, instruction fields, immediate, and `ID_EX` |
+| [ex_stage.sv](../rtl/core/stages/ex_stage.sv) | `ex_stage1` | Forwarding, ALU, target generation, separate CSR/trap modules, and `EX_MEM` |
+| [mem_stage.sv](../rtl/core/stages/mem_stage.sv) | `mem_stage1` | Load/store formatting, data memory, timer/MMIO, and `MEM_WB` |
+| [wb_stage.sv](../rtl/core/stages/wb_stage.sv) | `wb_stage1` | Final result mux; no additional pipeline register |
+
+The producing stage owns its outgoing pipeline register. Consequently,
+`ex_stage1` produces the registered MEM bundle and also uses its ALU/CSR result
+for forwarding back into EX. `wb_stage1` returns the selected result to both EX
+and the register-file write port in `id_stage1`; the write-enable and destination
+index still come from WB. Physical placement of the register file in the ID
+wrapper does not move architectural writeback into Decode.
+
+These wrappers add hierarchy, not clock cycles. There are still four pipeline
+registers and five stages. The Hazard Unit remains a separate instance in
+`core.sv`, and EX still owns trap arbitration and CSR updates. Internal-state
+observation paths now pass through the appropriate stage instance; see the
+[verification guide](verification.md#stage-hierarchy-and-observation-paths).
 
 ## 3. Control Ownership
 

@@ -2,6 +2,11 @@ rtl/core/core_types_pkg.sv
 rtl/soc/soc_addr_map_pkg.sv
 rtl/soc/mmio_decoder.sv
 rtl/peripherals/machine_timer.sv
+rtl/core/stages/if_stage.sv
+rtl/core/stages/id_stage.sv
+rtl/core/stages/ex_stage.sv
+rtl/core/stages/mem_stage.sv
+rtl/core/stages/wb_stage.sv
 rtl/core/core.sv
 rtl/soc/top.sv
 rtl/core/control/hazard_unit.sv

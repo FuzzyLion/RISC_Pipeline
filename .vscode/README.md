@@ -25,3 +25,9 @@ This rebuilds the program image, compiles the simulator, runs the clocked simula
 ## Maintenance
 
 When RTL files are added, removed, or moved, update `rtl/filelist.f` first, then review the Verilator arguments and tasks here. Do not add generated `sim/build/` paths to these settings; they should always be reproducible from source.
+
+The five stage modules in `rtl/core/stages/` are independent compilation
+sources with explicit package imports and ports. Slang indexes that directory
+through [`.slang/server.json`](../.slang/server.json). See the
+[Slang guide](../.slang/README.md) if diagnostics still refer to removed stage
+header files after the refactor.

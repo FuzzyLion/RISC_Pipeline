@@ -89,6 +89,38 @@ These are directed proofs of selected behavior. They are not exhaustive tests
 of every instruction encoding, CSR access, alignment case, or older in-flight
 side effect.
 
+### Stage Hierarchy and Observation Paths
+
+Processor testbenches instantiate `top` as `dut`, which instantiates `core` as
+`core_processor`. The five stage wrappers introduce one hierarchy level below
+the core. Representative observation paths are:
+
+| Observation | Path from `dut.core_processor` |
+| --- | --- |
+| Register-file state and ISA-lite `x31` completion | `id_stage1.reg_file1.regs[...]` |
+| Data RAM | `mem_stage1.data_mem1.mem[...]` |
+| Timer deadline | `mem_stage1.machine_timer1.mtimecmp` |
+| Saved trap CSRs | `ex_stage1.csr_file1.mcause_reg`, `.mepc_reg`, `.mtval_reg` |
+| Trap selection and E-to-M kill | `ex_stage1.trap_entry_E`, `.trap_mcause_E`, `.trap_flush_M` |
+| Fetch PC | `if_stage1.pc_F_out` |
+
+Cross-stage bundles and control signals, including `data_E_idex`, `ctrl_E`,
+`hazard_stallflush_ctrl`, `trap_flush_D/E`, and `timer_irq`, remain observable in
+`core`. Use a stage's ports or internal paths according to the boundary being
+checked; adding a wrapper does not expand a test's coverage claim.
+
+The 2026-10-28 stage-module refactor retained the leaf-module logic and all
+existing test stimulus, assertions, and expected values. Thirteen processor
+testbenches changed only their internal observation paths. Fresh validation
+passed integrated Verilator lint, all nineteen directed regression tests, and
+all nineteen default ISA-lite cases, with no Verilator warnings or errors.
+After loading the new modules and restarting the bundled Slang language server,
+VS Code's Problems panel also reported zero errors and zero warnings. Slang's
+default time scale is configured to match the testbenches; see the
+[editor configuration](../.slang/README.md).
+This verifies the existing covered behavior through the new hierarchy; it does
+not add instruction coverage or establish formal equivalence.
+
 ## How to Run the Baseline
 
 Run the directed regression:

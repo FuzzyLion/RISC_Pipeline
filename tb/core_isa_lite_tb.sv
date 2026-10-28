@@ -47,10 +47,10 @@ module core_isa_lite_tb #(
         logic [WORD_WIDTH - 1:0] completion_code;
 
         wait (!reset);
-        wait (dut.core_processor.reg_file1.regs[31] != '0);
+        wait (dut.core_processor.id_stage1.reg_file1.regs[31] != '0);
         #1;
 
-        completion_code = dut.core_processor.reg_file1.regs[31];
+        completion_code = dut.core_processor.id_stage1.reg_file1.regs[31];
         if (completion_code !== PASS_VALUE) begin
             $fatal(1,
                    "ISA LITE FAIL: expected x31=1, got 0x%08h. If odd and >1, failing testnum is (x31 - 1) / 2.",

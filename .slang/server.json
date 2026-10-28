@@ -3,6 +3,7 @@
     {
       "dirs": [
         "rtl/core",
+        "rtl/core/stages",
         "rtl/core/pipeline",
         "rtl/core/datapath",
         "rtl/core/control",
@@ -19,5 +20,6 @@
       ]
     }
   ],
-  "build": "rtl/filelist.f"
+  "build": "rtl/filelist.f",
+  "flags": "--timescale=1ns/1ps"
 }

@@ -13,10 +13,12 @@ Start with [README.md](README.md) for the project overview and
 the drawing to pipeline stages and RTL module responsibilities.
 
 RTL sources are grouped by responsibility, with [rtl/filelist.f](rtl/filelist.f)
-as the integrated compilation entry point. The directory layout does not change
-the current integration: `rtl/core/core.sv` still instantiates the internal
-memories, MMIO decoder, and timer. Keep implementation claims tied to the RTL
-and verification claims tied to the registered runners and observed results.
+as the integrated compilation entry point. `rtl/core/core.sv` connects five
+independent modules in `rtl/core/stages/` and the Hazard Unit. Each stage owns
+its outgoing pipeline register; internal instruction memory is inside IF, and
+data memory, MMIO decode, and the timer are inside MEM. Keep implementation
+claims tied to the RTL and verification claims tied to the registered runners
+and observed results.
 
 ## Architecture Baseline and Next Step
 
@@ -38,7 +40,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 
 | Path | Responsibility |
 | --- | --- |
-| `rtl/core/` | Core integration and shared types; `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
+| `rtl/core/` | Core integration and shared types; `stages/`, `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
 | `rtl/memory/` | Internal instruction and data memories |
 | `rtl/peripherals/` | Machine timer |
 | `rtl/soc/` | Top-level wrapper, MMIO decoder, system address map |
@@ -56,7 +58,7 @@ lightweight RTOS integration; the target board is NEXYS Artix-7.
 | Task | Reference |
 | --- | --- |
 | Public overview and quick start | [README.md](README.md) |
-| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath_v1.4.svg); [core architecture](docs/core-architecture.md); inspect `rtl/core/core.sv` and `rtl/core/core_types_pkg.sv` |
+| Pipeline, stage ownership, control and memory behavior | [Datapath diagram](docs/Datapath_v1.4.svg); [stage boundaries](docs/core-architecture.md#stage-module-boundaries); inspect `rtl/core/core.sv`, `rtl/core/stages/`, and `rtl/core/core_types_pkg.sv` |
 | CSR state, precise traps, timer delivery, redirect ownership | [CSR/trap design](docs/csr-trap-design.md) |
 | Test strategy, ISA-lite completion protocol, evidence and gaps | [Verification](docs/verification.md) |
 | Running tests and generated-file layout | [Simulation commands](sim/README.md) |

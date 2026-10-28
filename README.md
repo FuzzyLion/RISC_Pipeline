@@ -103,7 +103,8 @@ full scope.
 
 | Path | Purpose |
 | --- | --- |
-| `rtl/core/` | Core integration and shared types, with `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
+| `rtl/core/` | Stage/Hazard Unit connections and shared types, with `stages/`, `pipeline/`, `datapath/`, `control/`, and `csr/` subdirectories |
+| `rtl/core/stages/` | Five independent stage modules; each producing stage contains its outgoing pipeline register |
 | `rtl/memory/` | Internal instruction and data memories |
 | `rtl/peripherals/` | Machine timer |
 | `rtl/soc/` | Top-level wrapper, MMIO decoder, and system address map |

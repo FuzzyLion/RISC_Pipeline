@@ -2,6 +2,17 @@
 
 This folder contains project-level Slang configuration. [`server.json`](server.json) indexes the RTL and testbench directories and selects `rtl/filelist.f` as the build entry point.
 
+The index explicitly includes `rtl/core/stages/`. Its five `.sv` files are
+independent modules, each importing `core_types_pkg` and declaring its own
+ports. They are ordinary sources in `rtl/filelist.f`, after the packages.
+There are no stage `.svh` fragments or stage include paths to configure.
+
+The flags set `--timescale=1ns/1ps` as the default for design elements without
+an explicit time scale, matching the testbenches. This lets Slang analyze the
+RTL together with the indexed testbenches without mixed/missing-time-scale
+errors. It changes the editor's analysis configuration; simulation runners
+and explicit testbench time scales are unchanged.
+
 ## Recorded Local Editor Setup
 
 - VS Code extension: **Verilog-HDL/SystemVerilog** (`mshr-h.veriloghdl`) **1.28.4**
@@ -23,3 +34,9 @@ Slang runs inside the editor and reacts to the file you are currently changing, 
 Neither tool executes the processor over clock cycles. That is dynamic simulation, and it still belongs to the directed tests and regression scripts under `sim/`.
 
 When source directories or the compilation entry point change, update `server.json` alongside `rtl/filelist.f` and document any additional configuration here. Keep Verilator lint enabled as well: it checks the project's actual RTL file list and remains the closer match to the simulation build.
+
+If the editor retains diagnostics for removed stage `.svh` files after a
+checkout or refactor, close those obsolete tabs and run **Verilog: Restart
+slang-server** from the Command Palette. Open the replacement modules under
+`rtl/core/stages/` and inspect Problems again. A successful Verilator run alone
+does not confirm that the language server has refreshed its diagnostics.

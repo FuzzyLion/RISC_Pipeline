@@ -67,25 +67,25 @@ module core_smoke_hazard_tb
 
     initial begin : test_sequence
         wait (!reset);
-        wait (dut.core_processor.reg_file1.regs[31] == PASS_VALUE);
+        wait (dut.core_processor.id_stage1.reg_file1.regs[31] == PASS_VALUE);
         #1;
 
-        check_word("x1", dut.core_processor.reg_file1.regs[1], 32'd36);
-        check_word("x2", dut.core_processor.reg_file1.regs[2], 32'd7);
-        check_word("x3", dut.core_processor.reg_file1.regs[3], 32'd23);
+        check_word("x1", dut.core_processor.id_stage1.reg_file1.regs[1], 32'd36);
+        check_word("x2", dut.core_processor.id_stage1.reg_file1.regs[2], 32'd7);
+        check_word("x3", dut.core_processor.id_stage1.reg_file1.regs[3], 32'd23);
         // reg_file.sv had make some alteration to support the bypass procedure
-        check_word("x4", dut.core_processor.reg_file1.regs[4], 32'd22);
-        check_word("x5", dut.core_processor.reg_file1.regs[5], 32'd19);
-        check_word("x6", dut.core_processor.reg_file1.regs[6], 32'd18);
-        check_word("x7", dut.core_processor.reg_file1.regs[7], 32'd18);
-        check_word("x8", dut.core_processor.reg_file1.regs[8], 32'hffff_fffb); // x8 = -5
-        check_word("data_mem[9]", dut.core_processor.data_mem1.mem[9], 32'd18);
-        check_word("loaded JALR target", dut.core_processor.reg_file1.regs[11],
-                   dut.core_processor.reg_file1.regs[10]);
-        check_word("JALR link PC+4", dut.core_processor.reg_file1.regs[12],
-                   dut.core_processor.reg_file1.regs[10] - 32'd4);
-        check_word("JALR wrong-path marker", dut.core_processor.reg_file1.regs[13], 32'd0);
-        check_word("JALR target marker", dut.core_processor.reg_file1.regs[14], 32'd1);
+        check_word("x4", dut.core_processor.id_stage1.reg_file1.regs[4], 32'd22);
+        check_word("x5", dut.core_processor.id_stage1.reg_file1.regs[5], 32'd19);
+        check_word("x6", dut.core_processor.id_stage1.reg_file1.regs[6], 32'd18);
+        check_word("x7", dut.core_processor.id_stage1.reg_file1.regs[7], 32'd18);
+        check_word("x8", dut.core_processor.id_stage1.reg_file1.regs[8], 32'hffff_fffb); // x8 = -5
+        check_word("data_mem[9]", dut.core_processor.mem_stage1.data_mem1.mem[9], 32'd18);
+        check_word("loaded JALR target", dut.core_processor.id_stage1.reg_file1.regs[11],
+                   dut.core_processor.id_stage1.reg_file1.regs[10]);
+        check_word("JALR link PC+4", dut.core_processor.id_stage1.reg_file1.regs[12],
+                   dut.core_processor.id_stage1.reg_file1.regs[10] - 32'd4);
+        check_word("JALR wrong-path marker", dut.core_processor.id_stage1.reg_file1.regs[13], 32'd0);
+        check_word("JALR target marker", dut.core_processor.id_stage1.reg_file1.regs[14], 32'd1);
         if (load_jalr_stall_cycles != 1) begin
             $fatal(1, "SMOKE FAIL: expected one load-to-JALR stall, got %0d",
                    load_jalr_stall_cycles);

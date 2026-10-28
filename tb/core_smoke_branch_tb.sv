@@ -45,14 +45,14 @@ module core_smoke_branch_tb
 
     initial begin : test_sequence
         wait (!reset);
-        wait (dut.core_processor.reg_file1.regs[31] == PASS_VALUE);
+        wait (dut.core_processor.id_stage1.reg_file1.regs[31] == PASS_VALUE);
         #1;
 
-        check_word("x1", dut.core_processor.reg_file1.regs[1], 32'd0);
-        check_word("x2", dut.core_processor.reg_file1.regs[2], 32'd7);
-        check_word("x3", dut.core_processor.reg_file1.regs[3], 32'd7);
-        check_word("x5", dut.core_processor.reg_file1.regs[5], 32'd0);
-        check_word("x4", dut.core_processor.reg_file1.regs[4], 32'd7);
+        check_word("x1", dut.core_processor.id_stage1.reg_file1.regs[1], 32'd0);
+        check_word("x2", dut.core_processor.id_stage1.reg_file1.regs[2], 32'd7);
+        check_word("x3", dut.core_processor.id_stage1.reg_file1.regs[3], 32'd7);
+        check_word("x5", dut.core_processor.id_stage1.reg_file1.regs[5], 32'd0);
+        check_word("x4", dut.core_processor.id_stage1.reg_file1.regs[4], 32'd7);
 
         $display("SMOKE PASS: branch program completed");
         $finish; // End all tests, like clock generator or etc.
