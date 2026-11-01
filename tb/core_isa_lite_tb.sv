@@ -10,11 +10,27 @@ module core_isa_lite_tb #(
     logic clk;
     logic reset;
 
+    // Observation outputs exposed by top.
+    logic [WORD_WIDTH - 1:0] observation_wb_data;
+    logic observation_wb_rf_write;
+    logic [ADDR_WIDTH - 1:0] observation_wb_rd_idx;
+    logic [WORD_WIDTH - 1:0] observation_store_data;
+    logic observation_data_mem;
+    logic [MEM_ADDR_WIDTH - 1:0] observation_idx_mem;
+    logic [3:0] observation_store_wstrb;
+
     top #(
         .IMEM_INIT_FILE(IMEM_INIT_FILE)
     ) dut (
         .clk(clk),
-        .reset(reset)
+        .reset(reset),
+        .observation_wb_data(observation_wb_data),
+        .observation_wb_rf_write(observation_wb_rf_write),
+        .observation_wb_rd_idx(observation_wb_rd_idx),
+        .observation_store_data(observation_store_data),
+        .observation_data_mem(observation_data_mem),
+        .observation_idx_mem(observation_idx_mem),
+        .observation_store_wstrb(observation_store_wstrb)
     );
 
     localparam int CLK_PERIOD_NS = 10;

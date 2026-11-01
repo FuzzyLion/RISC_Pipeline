@@ -13,6 +13,7 @@ module data_mem_tb
     logic [3:0] store_wstrb_M;
 
     logic [WORD_WIDTH - 1:0] mem_rdata_M;
+    logic [MEM_ADDR_WIDTH - 1:0] word_idx;
 
     data_mem dut (
         .clk(clk),
@@ -20,7 +21,8 @@ module data_mem_tb
         .alu_result_M(alu_result_M),
         .store_wdata_M(store_wdata_M),
         .store_wstrb_M(store_wstrb_M),
-        .mem_rdata_M(mem_rdata_M)
+        .mem_rdata_M(mem_rdata_M),
+        .word_idx(word_idx)
     );
 
     localparam int CLK_PERIOD_NS = 10;
