@@ -9,7 +9,12 @@ module mem_stage
     input ex_mem_data_t data_M_exmem,
     output mem_wb_control_t ctrl_W,
     output mem_wb_data_t data_W_memwb,
-    output logic timer_irq
+    output logic timer_irq,
+
+    output logic [WORD_WIDTH - 1:0] observation_store_data,
+    output logic observation_data_mem,
+    output logic [MEM_ADDR_WIDTH - 1:0] observation_idx_mem,
+    output logic [3:0] observation_store_wstrb
 );
 
     // Internal stage signals.
@@ -23,6 +28,10 @@ module mem_stage
     logic [WORD_WIDTH - 1:0] mem_rdata_M_out;
     logic [WORD_WIDTH - 1:0] load_result_M_out;
     mem_wb_data_t data_M_memwb;
+
+    assign observation_store_data = store_wdata_M_out;
+    assign observation_data_mem = data_mem_write;
+    assign observation_store_wstrb = store_wstrb_M_en;
 
     assign ctrl_next_M = '{
         rf_write: ctrl_M.rf_write,
@@ -76,7 +85,9 @@ module mem_stage
         .alu_result_M(data_M_exmem.alu_result),
         .store_wdata_M(store_wdata_M_out),
         .store_wstrb_M(store_wstrb_M_en),
-        .mem_rdata_M(mem_rdata_M_out)
+        .mem_rdata_M(mem_rdata_M_out),
+        // Observation Signals in Vivado
+        .word_idx(observation_idx_mem)
     );
 
     // Load Data Instructions Alignment

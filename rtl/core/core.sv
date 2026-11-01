@@ -7,7 +7,15 @@ module core
 )
 (
     input logic clk,
-    input logic reset
+    input logic reset,
+
+    output logic [WORD_WIDTH - 1:0] observation_wb_data,
+    output logic observation_wb_rf_write,
+    output logic [ADDR_WIDTH - 1:0] observation_wb_rd_idx,
+    output logic [WORD_WIDTH - 1:0] observation_store_data,
+    output logic observation_data_mem,
+    output logic [MEM_ADDR_WIDTH - 1:0] observation_idx_mem,
+    output logic [3:0] observation_store_wstrb
 );
 
     // Cross-stage data, control, redirect, and feedback signals.
@@ -64,7 +72,11 @@ module core
         .data_D_idex(data_D_idex),
         .data_E_idex(data_E_idex),
         .ctrl_E(ctrl_E),
-        .trap_event_illegal_instr_E(trap_event_illegal_instr_E)
+        .trap_event_illegal_instr_E(trap_event_illegal_instr_E),
+        // Observation Signal in Vivado
+        .observation_wb_data(observation_wb_data),
+        .observation_wb_rf_write(observation_wb_rf_write),
+        .observation_wb_rd_idx(observation_wb_rd_idx)
     );
 
     ex_stage ex_stage1 (
@@ -94,7 +106,12 @@ module core
         .data_M_exmem(data_M_exmem),
         .ctrl_W(ctrl_W),
         .data_W_memwb(data_W_memwb),
-        .timer_irq(timer_irq)
+        .timer_irq(timer_irq),
+        // Observation Signals in Vivado
+        .observation_store_data(observation_store_data),
+        .observation_data_mem(observation_data_mem),
+        .observation_idx_mem(observation_idx_mem),
+        .observation_store_wstrb(observation_store_wstrb)
     );
 
     wb_stage wb_stage1 (

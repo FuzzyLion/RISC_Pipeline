@@ -15,7 +15,11 @@ module id_stage
     output id_ex_data_t data_D_idex,
     output id_ex_data_t data_E_idex,
     output control_bundle_t ctrl_E,
-    output trap_event_e trap_event_illegal_instr_E
+    output trap_event_e trap_event_illegal_instr_E,
+
+    output logic [WORD_WIDTH - 1:0] observation_wb_data,
+    output logic observation_wb_rf_write,
+    output logic [ADDR_WIDTH - 1:0] observation_wb_rd_idx
 );
 
     // Internal stage signals.
@@ -28,6 +32,10 @@ module id_stage
     logic [ADDR_WIDTH - 1:0] rs1_idx_D_out;
     logic [ADDR_WIDTH - 1:0] rs2_idx_D_out;
     logic [ADDR_WIDTH - 1:0] rd_idx_D_out;
+
+    assign observation_wb_data = result_W_out;
+    assign observation_wb_rf_write = rf_write_W;
+    assign observation_wb_rd_idx = rd_idx_W;
 
     assign data_D_idex = '{
         valid: data_D_ifid.valid,

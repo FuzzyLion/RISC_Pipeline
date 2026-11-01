@@ -8,6 +8,13 @@ package core_types_pkg;
 
     localparam logic [2:0] JALR = 3'b000;
 
+    parameter int MEM_WORDS = 256;
+    localparam int MEM_ADDR_WIDTH = $clog2(MEM_WORDS); 
+    /* 
+    MEM_ADDR_WIDTH = 8
+    According to the data size to derive to the MEM_ADDR_WIDTH
+    */
+
     //--------------------------------------------------------------------------------------
 
     typedef enum logic [6:0] { 

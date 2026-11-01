@@ -1,7 +1,6 @@
 module instr_mem
     import core_types_pkg::*;
 #(
-    parameter int MEM_WORDS = 256, // Amount
     parameter string INIT_FILE = "" 
     // Transfer a file, "" means it is an empty string at first,
     // you can add .hex file into the mem when you're using instance
@@ -10,8 +9,6 @@ module instr_mem
 
     output logic [WORD_WIDTH - 1:0] instr_F
 );
-    
-    localparam int MEM_ADDR_WIDTH = $clog2(MEM_WORDS);
 
     logic [WORD_WIDTH - 1:0] mem_instr [0:MEM_WORDS - 1];
     logic [MEM_ADDR_WIDTH - 1:0] word_idx;
