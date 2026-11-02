@@ -85,44 +85,33 @@ coverage boundaries.
 
 ## Preliminary FPGA Implementation
 
-The latest evaluation, completed on 2026-11-02, used Vivado 2026.1
-project-based synthesis and implementation targeting Artix-7
-`xc7a100tcsg324-1` at **50 MHz (20 ns)**. The fixed instruction ROM used
+Two Vivado 2026.1 project-based synthesis and implementation runs targeted
+Artix-7 `xc7a100tcsg324-1` at **50 MHz (20 ns)**, using different fixed
+instruction ROM images:
+[`smoke_alu.hex`](programs/hex/smoke_alu.hex) and
 [`smoke_csr_trap.hex`](programs/hex/smoke_csr_trap.hex).
-
-| Resource | After synthesis | After placement |
-| --- | ---: | ---: |
-| Total LUTs, including LUTRAM | 2298 (3.62%) | 2283 (3.60%) |
-| LUTRAM (included above) | 128 | 128 |
-| Flip-flops | 1916 (1.51%) | 1922 (1.52%) |
-| BRAM tiles / DSPs | 0 / 0 | 0 / 0 |
-
-After routing, worst setup slack was **+1.406 ns** and worst hold slack was
-**+0.114 ns**. Internal setup, hold, and pulse-width checks passed, with no
-unclocked registers, unconstrained internal endpoints, or routing errors.
-The worst setup path starts at EX/MEM `rd_idx[2]` and ends at the ID/EX
-`rs2_val[29]` synchronous-clear input. Its data-path delay is **17.835 ns**,
-of which 75.812% is routing delay. Resource figures above are from synthesis
-and placement reports; timing figures are from the routed report.
-
-An earlier run used [`smoke_alu.hex`](programs/hex/smoke_alu.hex) with the same
-tool version, device, project-based flow, and 20 ns clock constraint:
 
 | Metric | `smoke_alu` (2026-11-01) | `smoke_csr_trap` (2026-11-02) |
 | --- | ---: | ---: |
-| Total LUTs after synthesis | 1344 | 2298 |
-| LUTRAM after synthesis (included above) | 0 | 128 |
+| LUTs after synthesis, including LUTRAM | 1344 | 2298 |
+| LUTRAM (included above) | 0 | 128 |
 | Flip-flops after synthesis | 1451 | 1916 |
 | BRAM tiles after synthesis | 0 | 0 |
 | Worst setup slack after routing | +2.357 ns | +1.406 ns |
 | Worst hold slack after routing | +0.130 ns | +0.114 ns |
 
-Fixed ROM contents affect constant propagation and logic removal. The earlier
-netlist omitted data RAM, CSR state, and Timer state; the latest retains them,
-including a 256-by-32-bit data RAM mapped to 128 LUTRAMs. Retention does not
-establish that the program exercises every retained function. The resource
-growth and changed worst path reflect different optimized netlists, rather
-than an RTL performance optimization comparison.
+With `smoke_alu`, synthesis removed the data RAM, CSR state, and timer
+state. With `smoke_csr_trap`, these remained, including a 256-by-32-bit
+data RAM mapped to 128 LUTRAMs. The differences reflect program-dependent
+constant propagation and logic removal; they do not measure an RTL
+optimization or prove full functional coverage.
+
+In the `smoke_csr_trap` run, the worst setup path runs from EX/MEM
+`rd_idx[2]` to the ID/EX `rs2_val[29]` synchronous-clear input.
+Its data-path delay is **17.835 ns**, with **75.8%** from routing.
+Internal setup, hold, and pulse-width checks passed, with no unclocked
+registers, unconstrained internal endpoints, or routing errors.
+FPGA board bring-up remains future work.
 
 ## Current Boundaries
 
