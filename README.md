@@ -83,6 +83,35 @@ See the [simulation guide](sim/README.md) for build commands and generated-file
 locations, and [verification evidence and gaps](docs/verification.md) for the
 coverage boundaries.
 
+## Preliminary FPGA Implementation
+
+A 2026-11-01 Vivado 2026.1 out-of-context (OOC) run targeted Artix-7
+`xc7a100tcsg324-1` at **50 MHz (20 ns)**, with the external clock buffer modeled
+outside the block. The fixed instruction ROM used
+[`smoke_alu.hex`](programs/hex/smoke_alu.hex).
+
+| Metric | After synthesis | After routing |
+| --- | ---: | ---: |
+| LUTs | 1344 (2.12%) | 1334 (2.10%) |
+| Flip-flops | 1451 (1.14%) | 1451 (1.14%) |
+| LUTRAM / BRAM tiles / DSPs | 0 / 0 / 0 | 0 / 0 / 0 |
+| Worst setup slack | — | +1.728 ns |
+| Worst hold slack | — | +0.124 ns |
+
+Internal setup, hold, and pulse-width checks passed, with no unclocked registers,
+unconstrained internal endpoints, or routing errors. The worst setup path starts
+at an ID/EX source-register index, passes through forwarding selection,
+arithmetic and trap/flush logic, and ends at an EX/MEM synchronous-clear input.
+Its data-path delay is 17.475 ns, of which 71.725% is routing delay.
+
+**Scope:** Fixed ROM contents allowed some instruction functionality and memory
+logic to be optimized away; these counts describe this configuration, not a
+general-purpose core with all implemented functionality retained. External
+reset/output timing and board operation remain unverified. This is a passing
+50 MHz internal-timing result, not an Fmax measurement. Raw reports and
+checkpoints are retained locally in the ignored
+`sim/build/fpga_eval/ooc_20p000ns_20261101_233200/` directory.
+
 ## Current Boundaries
 
 - The core implements a practical RV32I teaching subset plus selected Zicsr and
