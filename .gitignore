@@ -20,3 +20,6 @@ programs/hex/riscv_lite/
 
 # Third-party riscv-tests
 tools/riscv-tests/
+
+# Not-important notes
+mock-interview-log.md
