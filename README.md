@@ -1,14 +1,14 @@
 # RISC Pipeline
 
-A 32-bit, single-issue RISC-V processor written in SystemVerilog, with a
-five-stage in-order pipeline, forwarding, load-use stalls, and EX-stage
-branch and jump resolution. The integer pipeline is extended with a minimal
-machine-mode CSR, precise-trap, and one-shot timer-interrupt path.
+I'm building a 32-bit, single-issue RISC-V processor in SystemVerilog. It has a
+five-stage in-order pipeline with forwarding, load-use stalls, and EX-stage
+branch and jump resolution, plus a minimal machine-mode CSR, precise-trap,
+and one-shot timer-interrupt path.
 
-This is a learning-first project built around explicit module responsibilities,
-visible control flow, and repeatable verification. The current milestone covers
-the Phase 3 verification baseline and the minimum Phase 4 CSR/trap/timer loop.
-Phase 5, SoC integration and FPGA bring-up, is next.
+I'm using this project to learn CPU design, so I want to be able to explain
+what each module owns and how the control decisions fit together. The current
+milestone covers the Phase 3 verification baseline and the minimum Phase 4
+CSR/trap/timer loop. SoC integration and FPGA bring-up are next, in Phase 5.
 
 ## Datapath
 
@@ -39,8 +39,8 @@ registers, exception causes, and interrupt behavior.
 
 ## Verification and Quick Start
 
-The directed Verilator regression registers **seven module tests and twelve
-processor smoke tests**. These check local datapath and control behavior,
+The directed Verilator regression contains seven module tests and twelve
+processor smoke tests. These check local datapath and control behavior,
 pipeline integration, and selected precise-trap and timer scenarios. A separate
 ISA-lite runner executes selected upstream `rv32ui` programs using a local
 register-based completion protocol.
@@ -102,16 +102,17 @@ instruction ROM images:
 
 With `smoke_alu`, synthesis removed the data RAM, CSR state, and timer
 state. With `smoke_csr_trap`, these remained, including a 256-by-32-bit
-data RAM mapped to 128 LUTRAMs. The differences reflect program-dependent
-constant propagation and logic removal; they do not measure an RTL
-optimization or prove full functional coverage.
+data RAM mapped to 128 LUTRAMs. The ROM image changes what synthesis can
+treat as constant and remove, so these numbers depend on the program. I don't
+treat the smaller result as an RTL optimization or either run as proof of
+full functional coverage.
 
 In the `smoke_csr_trap` run, the worst setup path runs from EX/MEM
 `rd_idx[2]` to the ID/EX `rs2_val[29]` synchronous-clear input.
 Its data-path delay is **17.835 ns**, with **75.8%** from routing.
 Internal setup, hold, and pulse-width checks passed, with no unclocked
 registers, unconstrained internal endpoints, or routing errors.
-FPGA board bring-up remains future work.
+I haven't tested the core on the FPGA board yet.
 
 ## Current Boundaries
 
@@ -169,7 +170,7 @@ provides a concise project map, current status, and technical boundaries.
 
 ## Project Direction
 
-The next dependency-ordered path is:
+I plan to tackle the next steps in this order:
 
 1. Freeze the CPU-to-SoC request/response contract.
 2. Integrate a minimal SoC and bring it up on the NEXYS Artix-7 board.
